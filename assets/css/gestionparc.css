@@ -21,22 +21,14 @@
 #gpform-addfieldtype .select2-container--default .select2-selection--single .select2-selection__arrow b {margin-top: 2px;margin-left: -8px;}
 #gpform-addfieldtype button {padding: 12px;margin-left: 6px;cursor: pointer;}
 
-
 @media screen and (max-width: 882px){
 	
 	.gestionparc-table tbody tr.titre {}
 	.gestionparc-table tbody tr.liste_titre th {display: none;}
-	.gestionparc-table tbody tr.liste_titre th.gestionparc-addbutton-th {display: block;text-align: center;}
 	.gestionparc-table tbody tr.gestionparc-line {border: 1px solid #051641;display: block;margin-bottom: 12px;display: flex;flex-wrap: wrap;width: 100%;box-sizing: border-box;}
 	.gestionparc-table tbody tr.gestionparc-line td {display: block;height: auto;flex: 0 0 100%;box-sizing: border-box;}
 	.gestionparc-table tbody tr.gestionparc-line td .gp-infos-label {display: inline;font-weight: 500;color: #051641}
 	.gestionparc-table tbody tr.gestionparc-line td:last-child {width: 100%;box-sizing: border-box;background: #051641;flex-basis: 100%;border-bottom: none !important;}
-
-	.gestionparc-table tbody tr.gestionparc-newline {border: 1px solid #051641;display: block;margin-bottom: 12px;display: flex;flex-wrap: wrap;width: 100%;box-sizing: border-box;}
-	.gestionparc-table tbody tr.gestionparc-newline td {display: block;height: auto;flex: 0 0 100%;box-sizing: border-box;}
-	.gestionparc-table tbody tr.gestionparc-newline td .gp-infos-label {display: inline;font-weight: 500;color: #051641}
-	.gestionparc-table tbody tr.gestionparc-newline td:last-child {width: 100%;box-sizing: border-box;background: #051641;flex-basis: 100%;border-bottom: none !important;}
-	.gestionparc-table tbody tr.gestionparc-newline td.gp-verif-td {display: none;}
 	
 	
 	

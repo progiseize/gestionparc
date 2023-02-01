@@ -83,6 +83,7 @@ class GestionParc {
 					$fields['verif'] = array('type'=>'BOOLEAN','null' => 'NOT NULL');
 				endif;
 
+
 				$check_creatable = $this->db->DDLCreateTable(MAIN_DB_PREFIX.$this->table_element.'__'.$this->parc_key, $fields, 'rowid', 'innoDB');
 
 				if($check_creatable) : $this->db->commit(); return $this->rowid;
@@ -1228,18 +1229,12 @@ class GestionParcVerif {
         if($resUpdate): 
 
         	if($maj_verifid):
-        		$sql_bis = "UPDATE ".MAIN_DB_PREFIX.$this->table_element;
-        		if($val):		        	
-		        	$sql_bis.= " SET nb_verified = nb_verified + 1";
-		        	$sql_bis.= " WHERE rowid = '".$maj_verifid."'";
-		        	$res_bis = $this->db->query($sql_bis);
-		        	$this->nb_verified++;
-		        else:
-		        	$sql_bis.= " SET nb_verified = nb_verified - 1";
-		        	$sql_bis.= " WHERE rowid = '".$maj_verifid."'";
-		        	$res_bis = $this->db->query($sql_bis);
-		        	$this->nb_verified--;
-		        endif;
+	        	$sql_bis = "UPDATE ".MAIN_DB_PREFIX.$this->table_element;
+	        	$sql_bis.= " SET nb_verified = nb_verified + 1";
+	        	$sql_bis.= " WHERE rowid = '".$maj_verifid."'";
+	        	$res_bis = $this->db->query($sql_bis);
+
+	        	$this->nb_verified++;
 
 	        endif;
 
@@ -1350,15 +1345,7 @@ class GestionParcVerif {
 	            $csv_labels = array('verif');
 	            $csv_labels_type = array('Text');
 	            foreach($pos as $key_field => $key_pos):
-	            	if($enabled[$key_field]): 
-	            		array_push($csv_labels,$key_field); 
-	            		array_push($csv_labels_type,'Text');
-
-	            		if($types[$key_field] == 'prodserv'):
-	            			array_push($csv_labels,$key_field.' (label)'); 
-	            			array_push($csv_labels_type,'Text');
-	            		endif;
-	            	endif;
+	            	if($enabled[$key_field]): array_push($csv_labels,$key_field); array_push($csv_labels_type,'Text'); endif;
 	            endforeach;
 	            $csv_parc->write_title($csv_labels,$csv_labels,$langs,$csv_labels_type);
 
@@ -1377,18 +1364,9 @@ class GestionParcVerif {
 	            	endif;
 
 	            	//var_dump($pos,$labels,$types,$enabled);
-	            	foreach($pos as $key_field => $key_pos): 
+	            	foreach($pos as $key_field => $key_pos):
 	            		if($enabled[$key_field]): 
-
-	            			if(!empty($parcline->{$key_field})): 
-
-	            				array_push($csv_line,$parcline->{$key_field});
-	            				if($types[$key_field] == 'prodserv'):
-	            					$p = new Product($this->db);
-	            					$p->fetch($parcline->{$key_field});
-	            					array_push($csv_line,$p->label);
-	            				endif;
-
+	            			if(!empty($parcline->{$key_field})): array_push($csv_line,$parcline->{$key_field});
 	            			else: array_push($csv_line,''); endif;
 	            			array_push($csv_line_type,'Text');
 	            		endif;
@@ -1441,6 +1419,8 @@ class GestionParcVerif {
 
         	endforeach;
         endif;*/
+
+        //$error++;
 
         
         //$intervention->generateDocument($intervention->modelpdf,$langs);

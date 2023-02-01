@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS `llx_gestionparc` (
   `position` int NOT NULL,
   `author` int NOT NULL,
   `date_creation` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `author_maj` int NOT NULL,
+  `author_maj` int NOT NULL DEFAULT 0,
   `tms` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `entity` int NOT NULL,
   `enabled` tinyint(1) NOT NULL,

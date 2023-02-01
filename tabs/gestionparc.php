@@ -151,21 +151,6 @@ switch($action):
         endif;
     break;
 
-    case 'set_line_unverify':
-
-        if(GETPOST('token') != $_SESSION['token']): $error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings'); endif;
-        if(empty(GETPOST('socid'))): $error++; setEventMessages($langs->trans('gp_error_needSocId'), null, 'warnings'); endif;
-        if(empty(GETPOST('itemid'))): $error++; setEventMessages($langs->trans('gp_error_needItemId'), null, 'warnings'); endif;
-        if(empty(GETPOST('parcid'))): $error++; setEventMessages($langs->trans('gp_error_needTypeId'), null, 'warnings'); endif;
-
-        if(!$error):
-            $gestionparc->fetch_parcType(GETPOST('parcid'));
-            if($verification->setLineCheck($socid,$gestionparc->parc_key,GETPOST('itemid'),0,$verification->rowid)): setEventMessages($langs->trans('gp_verifline_success'), null, 'mesgs');
-            else: $error++; setEventMessages($langs->trans('gp_error'), null, 'warnings'); endif;
-        endif;
-
-    break;
-
     // COOKIE
     case 'set_cookie_parc':
 
@@ -603,7 +588,7 @@ echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"),1,'com
                         <?php foreach($parc->fields as $parcfield_key => $parcfield): if($parcfield->enabled): ?>
                             <th><?php echo $parcfield->label; if($parcfield->required): echo ' <span class="required">*</span>'; endif; ?></th>
                         <?php endif; endforeach; ?>
-                        <th class="right gestionparc-addbutton-th">
+                        <th class="right">
                             <?php if($action != 'edit'): ?>
                                 <button class="pgsz-button-submit gestionparc-add" onclick="event.preventDefault();"><i class="fas fa-plus"></i></button>
                             <?php endif; ?>
@@ -613,11 +598,9 @@ echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"),1,'com
                     <?php // AJOUTER LIGNES ?>
                             <?php if($action != 'edit'): ?>
                     <tr class="oddeven pgsz-optiontable-tr gestionparc-newline" <?php if($action == "add" && $error && GETPOST('parcid') == $parc->rowid): echo 'style="display: table-row;"'; endif; ?>>
-                        <?php if($is_mode_verif): ?><td class="gp-verif-td"></td><?php endif; ?>
+                        <?php if($is_mode_verif): ?><td></td><?php endif; ?>
                         <?php foreach($parc->fields as $parcfield_key => $parcfield): if($parcfield->enabled): ?>
-                        <td>
-                            <?php echo '<span class="gp-infos-label">'.$parcfield->label.' : </span>'; ?>
-                            <?php echo $parcfield->construct_field($parc,$societe->id); ?></td>
+                        <td><?php echo $parcfield->construct_field($parc,$societe->id); ?></td>
                         <?php endif; endforeach; ?>
                         <td class="right">
                             <input type="hidden" name="action" value="add">
@@ -632,10 +615,8 @@ echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"),1,'com
                         <?php if($is_mode_verif): ?>
                             <td>
                                 <?php if($action != "edit" || $action == "edit" && $editItem_id != $linecontent->rowid):
-                                    if($linecontent->verif): 
-                                        echo '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?socid='.$societe->id.'&parctype='.$parctype.'&itemid='.$linecontent->rowid.'&action=set_line_unverify&parcid='.$parc->rowid.'&token='.newToken().'">'.img_picto($langs->trans("Activated"), 'switch_on').'</a>';
-                                    else: 
-                                        echo '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?socid='.$societe->id.'&parctype='.$parctype.'&itemid='.$linecontent->rowid.'&action=set_line_verify&parcid='.$parc->rowid.'&token='.newToken().'">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>';
+                                    if($linecontent->verif): echo img_picto($langs->trans("Activated"), 'switch_on');
+                                    else: echo '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?socid='.$societe->id.'&parctype='.$parctype.'&itemid='.$linecontent->rowid.'&action=set_line_verify&parcid='.$parc->rowid.'&token='.newToken().'">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>';
                                     endif; 
                                 endif; ?>
                             </td>                                     
@@ -713,7 +694,175 @@ echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"),1,'com
                 </tbody>
             </table>
 
-        </form> 
+        </form>
+
+        
+
+        <?php /*// POUR CHAQUE TYPE DE PARC ?>
+        <?php foreach($list_parctypes as $parctype_key => $parctype_infos): 
+
+            $gestionparc->fetch_parcType($parctype_key); 
+
+            // ON VERIFIE SI ON PEUT AFFICHER LE PARC SUR CE TYPE DE TIERS
+            $show_parc = true;
+            if(!empty($gestionparc->tags)):
+                foreach($gestionparc->tags as $tagid => $taglabel):
+                    if(!in_array($tagid,$soc_cats)): $show_parc = false; endif; 
+                endforeach;
+            endif;
+
+            // ON VERIFIE S'IL CONTIENT DES CHAMPS
+            if(empty($gestionparc->fields)): $show_parc = false; endif;
+
+            // ON CALCULE LA TAILLE DU TABLEAU
+            $table_size = 1;
+            foreach($gestionparc->fields as $f): if($f->enabled):$table_size++;endif; endforeach;
+
+            if($is_mode_verif):$table_size++;endif;
+
+            // ON RECUPERE LES ENTREES
+            $lines = $gestionparc->getSocParcContent($societe->id,$gestionparc->parc_key);
+            //if(empty($lines)): $show_parc = false; endif;
+
+            // CLASS PARC
+            $parc_class = '';
+            if(empty($lines)): 
+                $parc_class = 'gp-parc-empty';
+                if($isCookieParc && !$is_mode_verif): $parc_class .= ' gp-parc-visible'; endif;
+            endif;
+
+            // SI ON PEUT AFFICHER
+            if($show_parc): ?>
+                 <form enctype="multipart/form-data" action="<?php print $_SERVER["PHP_SELF"]; ?>?socid=<?php echo $societe->id; ?>" method="POST" id="" class="<?php echo $parc_class; ?>">
+                    
+                    <input type="hidden" name="token" value="<?php echo $_SESSION['newtoken']; ?>">
+                    <input type="hidden" name="parcid" value="<?php echo $parctype_key; ?>">
+
+                    <table class="noborder centpercent pgsz-option-table gestionparc-table" style="border-top:none;" id="gestionparc-table-<?php echo $gestionparc->rowid; ?>">
+                        <tbody>
+
+                            <?php // TITRE ?>
+                            <tr class="titre" style="background:#fff;">
+                                <td class="nobordernopadding valignmiddle col-title" style="" colspan="<?php echo $table_size - 1; ?>">
+                                    <div class="titre inline-block" style="padding:16px 0"><?php echo $langs->trans($gestionparc->label).' <span class="opacitymedium colorblack paddingleft" style="font-size:0.8em;">('.count($lines).')</span>'; ?></div>
+                                </td>
+                                <td class="right gp-eye-icon">
+                                    <i class="fas fa-eye-slash"></i>
+                                </td>
+                            </tr>
+
+                            <?php // NOM DES COLONNES ?>
+                            <tr class="liste_titre pgsz-optiontable-coltitle">
+                                <?php if($is_mode_verif): ?>
+                                    <th>Vérification</th>
+                                <?php endif; ?>
+                                <?php foreach($gestionparc->fields as $parcfield_key => $parcfield): if($parcfield->enabled): ?>
+                                    <th><?php echo $parcfield->label; if($parcfield->required): echo ' <span class="required">*</span>'; endif; ?></th>
+                                <?php endif; endforeach; ?>
+                                <th class="right">
+                                    <?php if($action != 'edit'): ?>
+                                        <button class="pgsz-button-submit gestionparc-add" onclick="event.preventDefault();"><i class="fas fa-plus"></i></button>
+                                    <?php endif; ?>
+                                </th>
+                            </tr>
+
+                            <?php // AJOUTER LIGNES ?>
+                            <?php if($action != 'edit'): ?>
+                            <tr class="oddeven pgsz-optiontable-tr gestionparc-newline" <?php if($action == "add" && $error && GETPOST('parcid') == $gestionparc->rowid): echo 'style="display: table-row;"'; endif; ?>>
+                                <?php if($is_mode_verif): ?><td></td><?php endif; ?>
+                                <?php foreach($gestionparc->fields as $parcfield_key => $parcfield): if($parcfield->enabled): ?>
+                                <td><?php echo $parcfield->construct_field($gestionparc,$societe->id); ?></td>
+                                <?php endif; endforeach; ?>
+                                <td class="right">
+                                    <input type="hidden" name="action" value="add">
+                                    <input type="submit" value="<?php echo $langs->trans('Add') ?>" class="pgsz-button-submit">
+                                </td>
+                            </tr>
+                            <?php endif; ?>
+
+                            <?php // CONTENU LIGNES ?>
+                            <?php foreach($lines as $lineid => $linecontent): ?>
+                                <tr class="pgsz-optiontable-tr gestionparc-line <?php if($is_mode_verif && $linecontent->verif): echo 'parcline-ok'; endif; ?>">
+
+                                    <?php if($is_mode_verif): ?>
+                                        <td>
+                                            <?php if($action != "edit" || $action == "edit" && $editItem_id != $linecontent->rowid):
+                                                if($linecontent->verif): echo img_picto($langs->trans("Activated"), 'switch_on');
+                                                else: echo '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?socid='.$societe->id.'&itemid='.$linecontent->rowid.'&action=set_line_verify&parcid='.$parctype_key.'&token='.newToken().'">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>';
+                                                endif; 
+                                            endif; ?>
+                                        </td>                                     
+                                    <?php endif; ?>
+
+                                    <?php foreach($gestionparc->fields as $parcfield_key => $parcfield): if($parcfield->enabled): ?>
+                                        <td class="pgsz-optiontable-fielddesc"><?php 
+
+                                        // SI ON EST EN MODE EDITION
+                                        if($action == 'edit' && $editItem_id == $linecontent->rowid):
+
+                                            echo '<span class="gp-infos-label">'.$parcfield->label.' : </span>';
+
+                                            if($parcfield->type == 'autonumber'): 
+                                                echo $linecontent->{$parcfield->field_key};
+                                                echo '<input type="hidden" name="gpfield_'.$parcfield->field_key.'" id="gpfield_'.$parcfield->field_key.'" value="'.$linecontent->{$parcfield->field_key}.'">';
+                                            else: echo $parcfield->construct_field($gestionparc,$societe->id,$linecontent->{$parcfield->field_key});
+                                            endif;
+
+                                        // MODE AFFICHAGE
+                                        else:
+
+                                            echo '<span class="gp-infos-label">'.$parcfield->label.' : </span>';
+
+                                            // SI ON DOIT RETROUVER UN PRODUIT
+                                            if($parcfield->type == 'prodserv'):
+                                                 
+                                                if(!empty($linecontent->{$parcfield->field_key})):
+                                                    $prodserv = new Product($db);
+                                                    $check_prodserv = $prodserv->fetch($linecontent->{$parcfield->field_key});
+                                                    if($check_prodserv): echo '<a href="'.dol_buildpath('product/card.php?id='.$linecontent->{$parcfield->field_key},1).'" >'.$prodserv->label.'</a>';
+                                                    else: echo $langs->trans('gp_product_unknown');
+                                                    endif;
+                                                endif;
+
+                                            // SI DBLIST PERSO
+                                            elseif($parcfield->type == 'dblist'):
+                                                if(!empty($linecontent->{$parcfield->field_key})):
+                                                    $l_content = $gestionparc->getContentForDbList($linecontent->{$parcfield->field_key},$parcfield->params);
+                                                    if($l_content): echo $l_content; endif;
+                                                endif;
+                                                 
+                                            // ON AFFICHE LA VALEUR DU CHAMP
+                                            else: echo $linecontent->{$parcfield->field_key};
+                                            endif; 
+
+                                        endif;
+
+
+                                        ?>                                        
+                                        </td>
+                                    <?php endif; endforeach; ?>
+                                    <td width="120" class="right">
+                                        <?php if($action != "edit"): ?>
+                                            <div>
+                                            <?php echo '<a class="reposition gp-duplicate" href="'.$_SERVER['PHP_SELF'].'?socid='.$socid.'&action=duplicate&itemid='.$linecontent->rowid.'&parcid='.$parctype_key.'&token='.newToken().'"><i class="fas fa-clone"></i></a> &nbsp; '; ?>
+                                            <?php echo '<a class="reposition editfielda paddingrightonly" href="'.$_SERVER['PHP_SELF'].'?socid='.$socid.'&action=edit&itemid='.$linecontent->rowid.'&parcid='.$parctype_key.'&token='.newToken().'">'.img_edit().'</a> &nbsp; '; ?>
+                                            <?php echo '<a class="reposition" href="'.$_SERVER['PHP_SELF'].'?socid='.$socid.'&action=delete&itemid='.$linecontent->rowid.'&parcid='.$parctype_key.'&token='.newToken().'">'.img_delete().'</a>'; ?>
+                                        </div>
+                                        <?php elseif($action == "edit" && GETPOST('itemid') == $linecontent->rowid): ?>
+                                            <input type="hidden" name="action" value="edit_item">
+                                            <input type="hidden" name="itemid" value="<?php echo $linecontent->rowid; ?>">
+                                            <input type="submit" class="button buttongen button-save" value="<?php echo $langs->trans('Save'); ?>">                                
+                                            <input type="button" class="button buttongen button-save" value="<?php echo $langs->trans('Cancel'); ?>" onClick="window.location='<?php echo $_SERVER['PHP_SELF']; ?>?socid=<?php echo $socid; ?>'">
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+
+                 </form>
+            <?php endif; ?>
+        <?php endforeach;*/ ?>     
         
 
     </div>

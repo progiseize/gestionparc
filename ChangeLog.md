@@ -7,6 +7,9 @@
 
 
 ***
+### 1.3.2 (01/06/2022) 
+* FIX - Ajout valeur par defaut pour author_maj (SQL)
+
 ### 1.3.1 (01/06/2022) 
 * NEW - Affichage mises à jour pages modules
 
