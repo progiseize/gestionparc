@@ -1,0 +1,32 @@
+# GestionParc
+
+[comment]: <> (TODO)
+[comment]: <> (Option champ visible uniquement en mode vérif)
+[comment]: <> (Modele pdf)
+[comment]: <> (Type de champ date)
+
+
+***
+### 1.3.1 (01/06/2022) 
+* NEW - Affichage mises à jour pages modules
+
+### 1.3 (23/05/2022)
+NEW - Activation / Désactivation des parcs
+NEW - Nouvelle interface à onglets
+MAJ - Champ désactivé par défaut lors de la création
+MAJ - Fichiers CSV - En attente du modèle en cours de dev
+
+### 1.2 (04/05/2022)
+NEW - fusion des parcs et des interventions lors de la fusion de tiers
+NEW - Option pour saisie des heures par l'utilisateur ou en automatique.
+
+### 1.1 (16/03/2022)
+MAJ - Le bouton vérification n'est plus visible si l'ensemble des parcs sont vides
+NEW - Il est possible d'annuler une vérification
+NEW - Possibilité de masquer le contenu des parcs
+NEW - Option pour redirection vers les fiches d'interventions générées
+
+### 1.0 (16/03/2022)
+* Module permettant de créer des parcs clients et créer des interventions sur ces parcs.
+* Traductible  100%
+* Box Accueil : Suivi du nombre de parcs, nombre total d'items 

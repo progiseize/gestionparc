@@ -1,0 +1,156 @@
+# <GestionParc>
+# Copyright (C) 2021 Anthony Damhet <anthony.damhet@outlook.fr>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+# Dolibarr language file - fr_FR - gestionparc
+
+Module300320Name = Gestion Parc Client
+
+gestionparc_desc = Gestion de parc client
+gestionparc_desclong = Gestion de parc client. Assignez et modéliser des données relatives aux tiers et à votre production.
+
+# BOX
+gp_boxNb_title = Gestion des parcs clients
+gp_boxNb_parcType = Nom du parc
+gp_boxNb_countItems = Nombre d'éléments
+gp_boxNb_countParcs = Clients possédant un parc
+gp_boxNb_lastEntry = Dernier parc modifié
+
+# ONGLETS TIERS
+gp_clientparc = Parc Client
+gp_showEmptyParcs = Afficher les parcs vides
+gp_client_verifmode = Mode vérification
+gp_client_lastverif = Dernière vérification
+gp_verifcom = Ajouter un commentaire sur l'intervention
+gp_verif_open = Activer vérification
+gp_verif_close = Clôturer vérification
+gp_verif_cancel = Annuler vérification
+
+# VERIFS
+gp_verif_error_twice = Deux instances de vérifications sont ouvertes pour ce tiers.
+gp_verif_error_needIntercom = Vous devez saisir une raison de clôture
+gp_verif_error_needDuration = Vous devez saisir une duree d'intervention
+gp_verif_error_onclose = Erreur lors de la clôture de la vérification.
+gp_verif_success_onclose = Intervention "%s" validée
+gp_verif_success_oncancel = Intervention annulée
+gp_verifline_success = Item vérifié
+
+# FIELDS
+gp_error_autonumber_exist = Ce numéro est déjà attribué
+gp_duplicate_success = La ligne a été copiée
+gp_field_delete_success = Enregistrement supprimé
+
+# ONGLETS OPTIONS
+gp_options_tab_setup = Configuration
+gp_options_tab_manager = Gestion des parcs
+
+# LISTE OPTIONS
+gp_options_setup_pagetitle = Configuration module
+gp_setup_title = Configurer GestionParc
+gp_setup_desc = Options du module GestionParc
+gp_setup_verif = Activer les vérifications ?
+gp_setup_verif_desc = Cette option permet de créér une vérification des éléments d'un parc tiers et de créer des interventions. Le module "Interventions" doit être activé.
+gp_setup_verifmodel = Détails parc sur les interventions
+gp_setup_verifmodel_desc = Détermine si les informations sur vos parcs sont renseignées sur les fiches d'interventions.
+gp_setup_verif_redirect = Redirection vers intervention
+gp_setup_verif_redirect_desc = A la validation d'une vérification, vous serez redirigé automatiquement vers la fiche d'intervention créée
+
+# PARC MANAGER
+gp_manager_pagetitle = Gestion des types de parc
+gp_manager_pagedescription = Sur cette page vous pouvez ajouter / modifier / supprimer des types de parcs client.
+gp_manager_newparclabel = Nom du type de parc (ou clé de traduction)
+gp_manager_newparcdescription = Description de votre parc
+gp_manager_newparctags = Assigner à la catégorie de tiers
+gp_manager_newparctags_help = Si aucune catégorie n'est sélectionnée, le parc sera visible sur l'ensemble des tiers clients.
+gp_manager_newparcposition = Position
+gp_manager_newparcposition_help = Permet de déterminer l'ordre d'affichage des parcs
+gp_manager_newparcNb = Nombre de champs
+gp_manager_allsocs = Tout les clients
+
+# GESTION DES CHAMPS
+gp_parc_titlepage = Champs du parc: "%s"
+gp_parc_col_fieldpreview_help = Aperçu du champ avec les paramètres que vous avez appliqué.
+gp_parc_addfieldtitle = Ajouter un champ "%s"
+gp_parc_editfieldtitle = Editer le champ "%s"
+
+# GROUPES DE CHAMPS (POUR OPTGROUP SELECT)
+gp_fieldtype_group_doldata = Données issues de Dolibarr
+gp_fieldtype_group_customdata = Données personnalisées
+
+# TYPES DE CHAMPS
+gp_fieldtype_yearlist = Liste de sélection d'une année
+gp_fieldtype_dblist = Liste issue d'une table
+gp_fieldtype_customlist = Liste personnalisée
+gp_fieldtype_unknown = Type de champ inconnu
+gp_fieldtype_textfield = Champ texte
+gp_fieldtype_prodserv = Liste de produits/services 
+gp_fieldtype_autonumber = Numérotation automatique
+
+# CHAMPS
+gp_field_uniquekey = Identifiant unique
+gp_field_uniquekey_desc = Cette valeur ne doit pas contenir d'espace, ni de caractères spéciaux. ( Caractères autorisés : az AZ 09 _ )
+gp_field_yearstart = Début de la plage de date
+gp_field_yearstop = Fin de la plage de date
+gp_field_yearstart_desc = Année la plus petite à utiliser. Voir les infos pour aide à la saisie.
+gp_field_yearstop_desc = Année la plus grande à utiliser. Voir les infos pour aide à la saisie.
+gp_field_year_help = Plusieurs possibilités de saisie:<li>Date saisie manuellement (Ex: 2014)</li><li>Y => Année en cours</li><li>Y+x => Année en cours + x années</li><li>Y-x => Année en cours - x années</li>
+gp_field_default_desc = Valeur sélectionnée / affichée par défaut.
+gp_field_proddefault_desc = Valeur sélectionnée / affichée par défaut. Saisir l'identifiant produit (ID).
+gp_field_sort = Ordre d'affichage
+gp_field_sort_desc = Détermine le tri et l'affichage des valeurs
+gp_field_customvalue = Autoriser la saisie manuelle ?
+gp_field_customvalue_desc = En cochant cette case, il sera possible de saisir une donnée manuellement dans le formulaire
+gp_field_position_desc = Ce nombre détermine la position du champ par rapport aux autres dans le formulaire
+gp_field_required_desc = Ce champ est-il obligatoire ?
+gp_field_OrderByAsc = Tri Croissant
+gp_field_OrderByDesc = Tri Décroissant
+gp_field_customlist = Valeurs personnalisées
+gp_field_customlist_desc = Séparer les valeurs par des virgules (,)
+gp_field_tagslist = Catégories à utiliser
+gp_field_tagslist_desc = Liste des catégories. Si aucune n'est sélectionnée, toutes les catégories seront prises en compte.
+gp_field_showprodservref = Afficher la référence
+gp_field_showprodservref_desc = Permet d'afficher la référence du produit/service dans le libellé.
+
+# RETOURS / ERREURS
+gp_error = Une erreur est survenue
+gp_modFicheInterEnabled = Le module Intervention a été activé
+gp_error_creafolder = Impossible de créer le dossier Documents/gestionparc
+gp_error_needId = Identifiant inconnu
+gp_error_needSocId = Tiers inconnu
+gp_error_needItemId = Identifiant de la ligne inconnu
+gp_error_needTypeId = Type de parc non identifié
+gp_error_needActionConfirm = Action non confirmée
+
+# MANAGER 
+gp_addnewparc_error = Une erreur est survenue lors de la création du parc
+gp_addnewparc_success = Parc Ajouté
+gp_deleteparc_needId = Aucun identifiant défini
+gp_deleteparc_needRights = Suppression impossible, veuillez vérifiez vos droits
+gp_deleteparc_success = Parc supprimé
+gp_updateparctype_error = Une erreur est survenue lors de la mise à jour du parc
+gp_updateparctype_success = Le parc a été mis à jour
+gp_confirm = Êtes-vous sûr(e) ?
+gp_confirmDeleteParc_xItems = <b>Ce type de parc contient %s champs.</b> Les données de ce type de parc seront supprimées. Êtes vous sûr(e) de vouloir le supprimer ?
+
+# PARC
+gp_parcfield_activated = Champ activé
+gp_parcfield_disactivated = Champ désactivé
+gp_parcfield_delete_success = Champ supprimé
+gp_parcfield_new_needType = Vous devez choisir un type de champ
+gp_addparcfield_success = Le nouveau champ a été ajouté
+gp_updateparcfield_success = Champ modifié
+gp_confirmDeleteParcField = Êtes vous sûr de vouloir supprimer ce champ ? Les données enregistrées seront supprimées.
+gp_newparcfieldType = Choisir le type de champ à ajouter

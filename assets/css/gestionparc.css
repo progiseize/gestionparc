@@ -1,0 +1,44 @@
+.gp-addfield-tr td {padding-top: 36px !important;}
+.gp-addfield-tr td select {padding-left: 120px;}
+.gp-addfield-tr td button i {margin-right: 4px;}
+
+.gestionparc-table .gp-duplicate {color:rgba(204, 204, 204, 1);}
+.gestionparc-table .gp-duplicate:hover {color:rgba(40, 40, 60, 0.9);}
+.gestionparc-table .gestionparc-newline {display: none;}
+.gestionparc-table tbody tr.gestionparc-line td .gp-infos-label {display: none;}
+
+.gp-eye-icon i {color: rgba(120, 120, 120, 1);cursor: pointer;font-size: 15px;}
+.gp-eye-icon i:hover {color: rgba(99, 99, 99, 1);}
+.gp-parc-hidden {display: none;}
+.gp-parc-empty {display: none;}
+.gp-parc-empty.gp-parc-visible {display: block;}
+
+#gpform-addfieldtype {}
+#gpform-addfieldtype .select2.select2-container {border: 1px solid #ccc;padding: 4px;min-width: 320px;}
+#gpform-addfieldtype .select2-container--default .select2-selection--single {border: none !important;}
+#gpform-addfieldtype .select2-container--focus span.select2-selection.select2-selection--single {border: none !important;}
+#gpform-addfieldtype .select2-container .select2-selection--single .select2-selection__rendered {padding-right: 28px;}
+#gpform-addfieldtype .select2-container--default .select2-selection--single .select2-selection__arrow b {margin-top: 2px;margin-left: -8px;}
+#gpform-addfieldtype button {padding: 12px;margin-left: 6px;cursor: pointer;}
+
+
+@media screen and (max-width: 882px){
+	
+	.gestionparc-table tbody tr.titre {}
+	.gestionparc-table tbody tr.liste_titre th {display: none;}
+	.gestionparc-table tbody tr.liste_titre th.gestionparc-addbutton-th {display: block;text-align: center;}
+	.gestionparc-table tbody tr.gestionparc-line {border: 1px solid #051641;display: block;margin-bottom: 12px;display: flex;flex-wrap: wrap;width: 100%;box-sizing: border-box;}
+	.gestionparc-table tbody tr.gestionparc-line td {display: block;height: auto;flex: 0 0 100%;box-sizing: border-box;}
+	.gestionparc-table tbody tr.gestionparc-line td .gp-infos-label {display: inline;font-weight: 500;color: #051641}
+	.gestionparc-table tbody tr.gestionparc-line td:last-child {width: 100%;box-sizing: border-box;background: #051641;flex-basis: 100%;border-bottom: none !important;}
+
+	.gestionparc-table tbody tr.gestionparc-newline {border: 1px solid #051641;display: block;margin-bottom: 12px;display: flex;flex-wrap: wrap;width: 100%;box-sizing: border-box;}
+	.gestionparc-table tbody tr.gestionparc-newline td {display: block;height: auto;flex: 0 0 100%;box-sizing: border-box;}
+	.gestionparc-table tbody tr.gestionparc-newline td .gp-infos-label {display: inline;font-weight: 500;color: #051641}
+	.gestionparc-table tbody tr.gestionparc-newline td:last-child {width: 100%;box-sizing: border-box;background: #051641;flex-basis: 100%;border-bottom: none !important;}
+	.gestionparc-table tbody tr.gestionparc-newline td.gp-verif-td {display: none;}
+	
+	
+	
+	/*.gestionparc-table tbody tr.gestionparc-newline {display: none;}*/
+}
