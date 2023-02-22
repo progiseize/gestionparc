@@ -60,7 +60,6 @@ elseif($id_mode_verif && $id_mode_verif < 0):
     $error++; setEventMessages($langs->trans('gp_verif_error_twice'), null, 'warnings');
 endif;
 
-
 /*******************************************************************
 * ACTIONS
 ********************************************************************/
@@ -187,9 +186,7 @@ switch($action):
     // AJOUTER
     case 'add':
 
-        //var_dump($_POST);
-
-        // ON VERIFIE LES CHAMPS
+        //var_dump($_POST); // ON VERIFIE LES CHAMPS
         if(GETPOST('token') != $_SESSION['token']): $error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings'); endif;
         if(empty(GETPOST('socid'))): $error++; setEventMessages($langs->trans('gp_error_needSocId'), null, 'warnings'); endif;
         if(empty(GETPOST('parcid'))): $error++; setEventMessages($langs->trans('gp_error_needTypeId'), null, 'warnings'); endif;

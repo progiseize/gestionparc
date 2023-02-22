@@ -160,6 +160,8 @@ gp_confirm = Êtes-vous sûr(e) ?
 gp_confirmDeleteParc_xItems = <b>Ce type de parc contient %s champs.</b> Les données de ce type de parc seront supprimées. Êtes vous sûr(e) de vouloir le supprimer ?
 gp_parc_activated = Parc activé
 gp_parc_disactivated = Parc désactivé
+gp_confirmDeleteTitle = Êtes-vous sûr(e) ?
+gp_confirmDelete = Êtes-vous sûr(e) de vouloir supprimer cet élément ?
 
 # PARC
 gp_parcfield_activated = Champ activé
@@ -175,3 +177,4 @@ gp_newparcfieldType = Choisir le type de champ à ajouter
 gp_mergeParcSuccess = %s élément(s) de parcs ont été déplacés vers le nouveau tiers.
 gp_mergeVerifSuccess = %s vérification(s) ont été déplacés vers le nouveau tiers.
 gp_mergeError = Une erreur est survenue lors de la fusion des parcs
+

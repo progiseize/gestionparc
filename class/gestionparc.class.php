@@ -73,7 +73,7 @@ class GestionParc {
 					'rowid'=> array('type'=>'int','value'=>'11','null'=>'NOT NULL','extra'=> 'auto_increment'),
         			'socid'=> array('type'=>'int','value'=>'11','null'=>'NOT NULL','extra'=> ''),
         			'author'=> array('type'=>'int','value'=>'11','null'=>'NOT NULL','extra'=> ''),
-        			'author_maj'=> array('type'=>'int','value'=>'11','null'=>'NOT NULL','extra'=> ''),
+        			'author_maj'=> array('type'=>'int','value'=>'11','null'=>'NOT NULL','extra'=> 'DEFAULT 0'),
         			'date_creation' => array('type'=>'datetime','value'=>'','null'=>'NOT NULL','extra'=> 'DEFAULT CURRENT_TIMESTAMP'),
         			'tms' => array('type'=>'datetime','value'=>'','null'=>'NOT NULL','extra'=> 'DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP'),
 				);

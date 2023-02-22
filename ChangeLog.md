@@ -7,6 +7,12 @@
 
 
 ***
+### 1.3.4 (07/02/2023) 
+* MAJ - Update Lang
+
+### 1.3.3 (01/02/2023) 
+* FIX - SQL, ajout DEFAULT 0 sur author_maj
+
 ### 1.3.2 (01/06/2022) 
 * FIX - Ajout valeur par defaut pour author_maj (SQL)
 
