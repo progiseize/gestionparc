@@ -776,7 +776,7 @@ class GestionParcField {
 					$altersql = "ALTER TABLE ".MAIN_DB_PREFIX.$this->parent_table_element."__".$gp->parc_key." CHANGE ".$old_key." ".$this->field_key." TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL";
 					$check_alter = $this->db->query($altersql);
 					if($check_alter): $this->db->commit(); return true;
-					else: var_dump($this->db);$this->db->rollback(); return false;
+					else: $this->db->rollback(); return false;
 					endif;
 				else: $this->db->commit(); return true; endif;
 			else: $this->db->rollback(); return false;
@@ -1346,8 +1346,7 @@ class GestionParcVerif {
 	            $csv_labels = array('verif');
 	            $csv_labels_type = array('Text');
 	            foreach($pos as $key_field => $key_pos):
-
-	            	var_dump($key_field,$key_pos);
+	            	
 	            	if($enabled[$key_field]): 
 
 	            		$column_name = $key_field;
