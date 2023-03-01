@@ -7,6 +7,10 @@
 
 
 ***
+### 1.3.5 (01/03/2023) 
+* MAJ - CSV séparateur par défault ';'
+* MAJ - CSV : Si produit ou service, ajoute une colonne avec le label du produit/service
+
 ### 1.3.4 (07/02/2023) 
 * MAJ - Update Lang
 

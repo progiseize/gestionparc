@@ -1313,6 +1313,7 @@ class GestionParcVerif {
             if($nb_parclines > 0):
 
             	$csv_parc = new ExportCsv($this->db);
+            	$csv_parc->separator = ';';
 
             	// ON DONNE UN NOM AU FICHIER
 				$upload_dir = $conf->ficheinter->dir_output.'/'.dol_sanitizeFileName($intervention->ref);
@@ -1345,7 +1346,22 @@ class GestionParcVerif {
 	            $csv_labels = array('verif');
 	            $csv_labels_type = array('Text');
 	            foreach($pos as $key_field => $key_pos):
-	            	if($enabled[$key_field]): array_push($csv_labels,$key_field); array_push($csv_labels_type,'Text'); endif;
+
+	            	var_dump($key_field,$key_pos);
+	            	if($enabled[$key_field]): 
+
+	            		$column_name = $key_field;
+	            		if($types[$key_field] == 'prodserv'): $column_name .='-ID'; endif;
+
+	            		array_push($csv_labels,$column_name);
+	            		array_push($csv_labels_type,'Text');
+
+	            		if($types[$key_field] == 'prodserv'):
+	            			array_push($csv_labels,$key_field.'-label');
+	            			array_push($csv_labels_type,'Text');
+	            		endif;
+
+	            	endif;
 	            endforeach;
 	            $csv_parc->write_title($csv_labels,$csv_labels,$langs,$csv_labels_type);
 
@@ -1369,6 +1385,16 @@ class GestionParcVerif {
 	            			if(!empty($parcline->{$key_field})): array_push($csv_line,$parcline->{$key_field});
 	            			else: array_push($csv_line,''); endif;
 	            			array_push($csv_line_type,'Text');
+
+	            			if($types[$key_field] == 'prodserv'):
+
+	            				$p = new Product($this->db);
+	            				$p->fetch($parcline->{$key_field});
+
+		            			array_push($csv_line,$p->label);
+		            			array_push($csv_line_type,'Text');
+		            		endif;
+
 	            		endif;
 	            	endforeach;
 
@@ -1414,16 +1440,9 @@ class GestionParcVerif {
         // ON GENERE LES DOCUMENT 
         /*if(!empty($docs_list)):
         	foreach($docs_list as $parc_id => $parc_infos):
-
-        		$intervention->generateDocument($this->model_pdf,$langs,0,0,0,$parc_infos); // New Doc en cours de dev
-
+        		$intervention->generateDocument($this->model_pdf,$langs,0,0,0,$parc_infos); // New Doc futur dev
         	endforeach;
         endif;*/
-
-        //$error++;
-
-        
-        //$intervention->generateDocument($intervention->modelpdf,$langs);
 
         // ON CLOS LE MODE VERIF
         $sql_close = "UPDATE ".MAIN_DB_PREFIX.$this->table_element;
