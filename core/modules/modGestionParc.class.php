@@ -53,7 +53,7 @@ class modGestionParc extends DolibarrModules
         // It is used to group modules by family in module setup page
         $this->family = "Progiseize";
         // Module position in the family
-        $this->module_position = '018';
+        $this->module_position = '020';
         // Gives the possibility to the module, to provide his own family info and position of this family (Overwrite $this->family and $this->module_position. Avoid this)
         //$this->familyinfo = array('myownfamily' => array('position' => '001', 'label' => $langs->trans("MyOwnFamily")));
 
