@@ -26,10 +26,11 @@ CREATE TABLE IF NOT EXISTS `llx_gestionparc_fields` (
   `default_value` text CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `enabled` tinyint(1) NOT NULL,
   `position` int NOT NULL,
-  `only_verif` BOOLEAN NOT NULL DEFAULT 0
   `author` int NOT NULL,
   `author_maj` int NOT NULL DEFAULT 0,
   `date_creation` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `tms` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`rowid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+ALTER TABLE llx_gestionparc_fields ADD only_verif BOOLEAN NOT NULL DEFAULT 0;

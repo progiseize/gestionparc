@@ -188,7 +188,10 @@ $list_parctypes = $gestionparc->list_parcType();
 /***************************************************
 * VIEW
 ****************************************************/
-llxHeader('',$langs->trans('gp_manager_pagetitle'),''); 
+$array_js = array();
+$array_css = array('custom/gestionparc/assets/css/dolpgs.css');
+
+llxHeader('',$langs->transnoentities('gp_manager_pagetitle').' :: '.$langs->transnoentities('Module300320Name'),'','','','',$array_js,$array_css,'','gestionparc parc-manager');
 
 // ACTIONS NECESSITANT LE HEADER
 if ($action == 'delete'):
@@ -198,10 +201,10 @@ if ($action == 'delete'):
 endif;
 ?>
     
-<div id="pgsz-option" class="pgsz-theme-<?php echo $conf->theme; ?>">
+<div class="dolpgs-main-wrapper">
 
-    <table class="centpercent notopnoleftnoright table-fiche-title"><tbody><tr class="titre"><td class="nobordernopadding widthpictotitle valignmiddle col-picto"><span class="fas fa-tools valignmiddle widthpictotitle pictotitle" style=""></span></td><td class="nobordernopadding valignmiddle col-title"><div class="titre inline-block"><?php echo $langs->trans('gp_manager_pagetitle'); ?></div></td></tr></tbody></table>
-    <?php $head = GestionParcAdminPrepareHead(); dol_fiche_head($head, 'manager','GestionParc', 1,'progiseize@progiseize'); ?>
+    <h1 class="has-before"><?php echo $langs->transnoentities('gp_manager_pagetitle'); ?></h1>    
+    <?php $head = GestionParcAdminPrepareHead(); dol_fiche_head($head, 'manager','GestionParc', 1,'fa-boxes_fas_#fb2a52'); ?>
 
     <div class="tabBar">
         <div class="justify opacitymedium"><?php echo img_info().' '.$langs->trans("gp_manager_pagedescription"); ?></div>
@@ -210,35 +213,32 @@ endif;
             <input type="hidden" name="action" value="add_parctype">
             <input type="hidden" name="token" value="<?php echo $_SESSION['newtoken']; ?>">
 
-            <table class="noborder centpercent pgsz-option-table" style="border-top:none;">
+            <h3 class="dolpgs-table-title"><?php echo $langs->trans('gp_options_tab_manager'); ?></h3>
+            <table class="dolpgs-table">
                 <tbody>
-                    <tr class="titre" style="background:#fff">
-                        <td class="nobordernopadding valignmiddle col-title" style="" colspan="6">
-                            <div class="titre inline-block" style="padding:16px 0"><?php echo $langs->trans('gp_options_tab_manager'); ?></div>
-                        </td>
-                    </tr>
+                    
                     <?php // TITRES COLONNES TABLEAU ?>
-                    <tr class="liste_titre pgsz-optiontable-coltitle">
+                    <tr class="dolpgs-thead noborderside">
                         <th><?php echo $langs->trans('gp_manager_newparclabel'); ?></th>
                         <th><?php echo $langs->trans('gp_manager_newparcdescription'); ?></th>
                         <th><?php echo $form->textwithpicto($langs->trans('gp_manager_newparctags'),$langs->trans('gp_manager_newparctags_help')); ?></th>
                         <th class="right"><?php echo $form->textwithpicto($langs->trans('gp_manager_newparcposition'),$langs->trans('gp_manager_newparcposition_help')); ?></th>
                         <th class="center"><?php echo $langs->trans('gp_manager_newparcNb'); ?></th>
                         <th class="center"><?php echo $langs->trans('Statut'); ?></th>
-                        <th width="120" class="center"></th>
+                        <th class="right"></th>
                     </tr>
                     <?php // CREATION D'UN NOUVEAU PARC  ?>
-                    <tr class="oddeven pgsz-optiontable-tr">
+                    <tr class="dolpgs-tbody">
                         <td class="bold pgsz-optiontable-fieldname"><input class="quatrevingtpercent" type="text" name="gpnewtype-label" <?php if($action == 'edit'): echo 'disabled="disabled"'; endif;?> value="<?php echo GETPOST('gpnewtype-label'); ?>"></td>
                         <td><input class="quatrevingtpercent" type="text" name="gpnewtype-description" <?php if($action == 'edit'): echo 'disabled="disabled"'; endif;?> value="<?php echo GETPOST('gpnewtype-description'); ?>"></td>
                         <td><?php echo $form->multiselectarray('gpnewtype-soctags', $soc_tags, GETPOST('gpnewtype-soctags'), '', 0, '', 0, '100%'); ?></td>
                         <td class="right"><input class="" type="text" name="gpnewtype-position" style="text-align: right;" size="5" <?php if($action == 'edit'): echo 'disabled="disabled"'; endif;?> value="<?php echo (GETPOST('gpnewtype-position'))?GETPOST('gpnewtype-position'):'100'; ?>"></td>
                         <td class="center"><span class="opacitymedium">0</span></td>
                         <td class="center"></td>
-                        <td width="120" class="center"><input type="submit" class="button pgsz-button-submit" value="<?php echo $langs->trans('Add'); ?>" <?php if($action == 'edit'): echo 'disabled="disabled"'; endif;?>></td>
+                        <td class="right"><input type="submit" class="dolpgs-btn btn-secondary" value="<?php echo $langs->trans('Add'); ?>" <?php if($action == 'edit'): echo 'disabled="disabled"'; endif;?>></td>
                     </tr>
                     <?php foreach($list_parctypes as $parctype_id => $parctype_infos): $gestionparc->fetch_parcType($parctype_id); ?>
-                    <tr class="oddeven pgsz-optiontable-tr">
+                    <tr class="dolpgs-tbody">
                     <?php if($action == 'edit' && GETPOST('rowid','int') == $gestionparc->rowid): ?>
                         <td>
                             <input type="hidden" name="action" value="edit_parctype">
@@ -252,9 +252,9 @@ endif;
                         <td class="right"><input class="" type="text" name="gpedittype-position" size="5" value="<?php echo (GETPOST('gpedittype-position'))?GETPOST('gpedittype-position'):$gestionparc->position; ?>"></td>
                         <td class="center">0</td>
                         <td class="center"></td>
-                        <td width="120" class="center">
-                            <input type="submit" class="button buttongen button-save" value="<?php echo $langs->trans('Save'); ?>">                                
-                            <input type="button" class="button buttongen button-save" value="<?php echo $langs->trans('Cancel'); ?>" onClick="window.location='<?php echo $_SERVER['PHP_SELF']; ?>'">
+                        <td class="right">
+                            <input type="button" class="dolpgs-btn btn-danger btn-sm" value="<?php echo $langs->trans('Cancel'); ?>" onClick="window.location='<?php echo $_SERVER['PHP_SELF']; ?>'">
+                            <input type="submit" class="dolpgs-btn btn-primary btn-sm" value="<?php echo $langs->trans('Save'); ?>"> 
                         </td>
                     <?php else: ?>
                         <td class="bold pgsz-optiontable-fieldname"><?php echo $langs->trans($gestionparc->label); ?></td>
@@ -268,7 +268,7 @@ endif;
                             <?php if($gestionparc->enabled): echo '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?rowid='.$gestionparc->rowid.'&action=disable_parc&token='.newToken().'">'.img_picto($langs->trans("Activated"), 'switch_on').'</a>';
                             else: echo '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?rowid='.$gestionparc->rowid.'&action=enable_parc&token='.newToken().'">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>'; endif; ?>
                         </td>
-                        <td width="120" class="center">
+                        <td class="right">
                             <?php if($action != "edit"): ?>
                                 <?php echo '<a class="reposition editfielda paddingrightonly" href="'.$_SERVER['PHP_SELF'].'?rowid='.$gestionparc->rowid.'&action=edit&token='.newToken().'">'.img_edit().'</a> &nbsp; '; ?>
                                 <?php echo '<a class="reposition" href="'.$_SERVER['PHP_SELF'].'?rowid='.$gestionparc->rowid.'&action=delete&token='.newToken().'">'.img_delete().'</a>'; ?>
