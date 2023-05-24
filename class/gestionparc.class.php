@@ -269,7 +269,11 @@ class GestionParc {
 					array_push($fields,$gpf);
 					$i++;
 				endwhile;
-				usort($fields, fn($a, $b) => intval($a->position) <=> intval($b->position));
+				//usort($fields, fn($a, $b) => intval($a->position) <=> intval($b->position)); // PHP 7.4+
+				usort($fields, function($a, $b){ 
+					return intval($a->position) <=> intval($b->position);
+					}
+				);
 			endif;
 		endif;
 
