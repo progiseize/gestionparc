@@ -25,7 +25,7 @@ if (!$user->rights->gestionparc->configurer): accessforbidden(); endif;
 /*******************************************************************
 * FONCTIONS
 ********************************************************************/
-function copyparc($typeOld,$typeNew){
+/*function copyparc($typeOld,$typeNew){
 
     global $db;
 
@@ -70,13 +70,7 @@ function copyparc($typeOld,$typeNew){
     var_dump($result->num_rows);
     var_dump($success);
     var_dump($errors);
-}
-
-//copyparc('extincteur','extincteurs');
-//copyparc('ria','ria');
-//copyparc('bloc','blocs');
-//copyparc('alarme','alarmes');lgs
-//copyparc('desenfumage','desenfumage');
+}*/
 
 /*******************************************************************
 * ACTIONS
@@ -137,35 +131,33 @@ endif;
 * VIEW
 ****************************************************/
 
-llxHeader('',$langs->trans('gp_options_setup_pagetitle'),''); ?>
+$array_js = array();
+$array_css = array('/gestionparc/assets/css/dolpgs.css');
 
-<div id="pgsz-option" class="pgsz-theme-<?php echo $conf->theme; ?>">
+llxHeader('',$langs->transnoentities('Setup').' :: '.$langs->transnoentities('Module300320Name'),'','','','',$array_js,$array_css,'','gestionparc setup'); ?>
 
-    <table class="centpercent notopnoleftnoright table-fiche-title"><tbody><tr class="titre"><td class="nobordernopadding widthpictotitle valignmiddle col-picto"><span class="fas fa-tools valignmiddle widthpictotitle pictotitle" style=""></span></td><td class="nobordernopadding valignmiddle col-title"><div class="titre inline-block"><?php echo $langs->trans('gp_options_setup_pagetitle'); ?></div></td></tr></tbody></table>
-    <?php $head = GestionParcAdminPrepareHead(); dol_fiche_head($head, 'setup','GestionParc', 1,'progiseize@progiseize'); ?>
+<div class="dolpgs-main-wrapper">
+
+    <h1 class="has-before"><?php echo $langs->transnoentities('gp_options_setup_pagetitle'); ?></h1>
+    <?php $head = GestionParcAdminPrepareHead(); dol_fiche_head($head, 'setup','GestionParc', 1,'fa-boxes_fas_#fb2a52'); ?>
 
     <div class="tabBar">
         <div class="justify opacitymedium"><?php echo img_info().' '.$langs->trans("gp_setup_desc"); ?></div>
 
+        <h3 class="dolpgs-table-title"><?php echo $langs->trans('gp_setup_title'); ?></h3>
         <form enctype="multipart/form-data" action="<?php print $_SERVER["PHP_SELF"]; ?>" method="post" id="">
             <input type="hidden" name="action" value="set_options">
             <input type="hidden" name="token" value="<?php echo $_SESSION['newtoken']; ?>">
 
-            <table class="noborder centpercent pgsz-option-table" style="border-top:none;">
+            <table class="dolpgs-table">
                 <tbody>
-                    <?php //  ?>
-                    <tr class="titre" style="background:#fff">
-                        <td class="nobordernopadding valignmiddle col-title" style="" colspan="3">
-                            <div class="titre inline-block" style="padding:16px 0"><?php echo $langs->trans('gp_setup_title'); ?></div>
-                        </td>
-                    </tr>
-                    <tr class="liste_titre pgsz-optiontable-coltitle" >
+                    <tr class="dolpgs-thead noborderside" >
                         <th><?php echo $langs->trans('Parameter'); ?></th>
                         <th><?php echo $langs->trans('Description'); ?></th>
                         <th class="right"><?php echo $langs->trans('Value'); ?></th>
                     </tr>
                     <tr></tr>
-                    <tr class="oddeven pgsz-optiontable-tr">
+                    <tr class="dolpgs-tbody">
                         <td class="bold pgsz-optiontable-fieldname" valign="top"><?php echo $langs->trans('gp_setup_verif'); ?></td>               
                         <td class="pgsz-optiontable-fielddesc "><?php echo $langs->transnoentities('gp_setup_verif_desc'); ?></td>
                         <td class="right pgsz-optiontable-field ">
@@ -173,7 +165,7 @@ llxHeader('',$langs->trans('gp_options_setup_pagetitle'),''); ?>
                         </td>
                     </tr>
 
-                    <tr class="oddeven pgsz-optiontable-tr">
+                    <tr class="dolpgs-tbody">
                         <td class="bold pgsz-optiontable-fieldname" valign="top"><?php echo $langs->trans('gp_setup_verif_usetime'); ?></td>               
                         <td class="pgsz-optiontable-fielddesc "><?php echo $langs->transnoentities('gp_setup_verif_usetime_desc'); ?></td>
                         <td class="right pgsz-optiontable-field ">
@@ -181,21 +173,17 @@ llxHeader('',$langs->trans('gp_options_setup_pagetitle'),''); ?>
                         </td>
                     </tr>
 
-                    <tr class="oddeven pgsz-optiontable-tr">
+                    <tr class="dolpgs-tbody">
                         <td class="bold pgsz-optiontable-fieldname" valign="top"><?php echo $langs->trans('gp_setup_verif_redirect'); ?></td>               
                         <td class="pgsz-optiontable-fielddesc "><?php echo $langs->transnoentities('gp_setup_verif_redirect_desc'); ?></td>
                         <td class="right pgsz-optiontable-field ">
                             <input type="checkbox" name="gp-verifredirect" <?php if($conf->global->MAIN_MODULE_GESTIONPARC_VERIFREDIRECT): ?>checked="checked"<?php endif; ?> />
                         </td>
-                    </tr>
-                    
-
-
+                    </tr>  
                 </tbody>
             </table>
-            <div class="right pgsz-buttons" style="padding:16px 0;">
-                <input type="button" class="button pgsz-button-cancel" value="<?php print $langs->trans('Cancel'); ?>" onclick="javascript:history.go(-1)">
-                <input type="submit" class="button pgsz-button-submit" name="" value="<?php print $langs->trans('Save'); ?>">
+            <div class="right">
+                <input type="submit" class="dolpgs-btn btn-primary" name="" value="<?php print $langs->trans('Save'); ?>">
             </div>
 
         </form>

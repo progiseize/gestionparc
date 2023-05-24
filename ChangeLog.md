@@ -7,6 +7,14 @@
 
 
 ***
+### 1.3.6 (23/05/2023) 
+* MAJ - Corrections Descripteur module
+* FIX - Corrections tabs si aucun parc créé ou activé
+* FIX - Correction assignation catégorie de tiers
+* FIX - Correction creation table SQL llx_gestionparc_fields
+* FIX - Correction compatibilité PHP < 7.4
+* MAJ - Mise à jour CSS
+
 ### 1.3.5 (01/03/2023) 
 * MAJ - CSV séparateur par défault ';'
 * MAJ - CSV : Si produit ou service, ajoute une colonne avec le label du produit/service

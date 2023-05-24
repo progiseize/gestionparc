@@ -53,7 +53,7 @@ class modGestionParc extends DolibarrModules
         // It is used to group modules by family in module setup page
         $this->family = "Progiseize";
         // Module position in the family
-        $this->module_position = 180;
+        $this->module_position = '018';
         // Gives the possibility to the module, to provide his own family info and position of this family (Overwrite $this->family and $this->module_position. Avoid this)
         //$this->familyinfo = array('myownfamily' => array('position' => '001', 'label' => $langs->trans("MyOwnFamily")));
 
@@ -67,7 +67,7 @@ class modGestionParc extends DolibarrModules
         $this->editor_url = 'https://progiseize.fr';
         
         // Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-        $this->version = '1.3.5';
+        $this->version = '1.3.6';
         $this->url_last_version = "https://progiseize.fr/modules_info/".get_class($this)."_lastversion.txt";
 
         // Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
@@ -75,7 +75,10 @@ class modGestionParc extends DolibarrModules
         // Name of image file used for this module.
         // If file is in theme/yourtheme/img directory under name object_pictovalue.png, use this->picto='pictovalue'
         // If file is in module/img directory under name object_pictovalue.png, use this->picto='pictovalue@module'
-        $this->picto='project';
+        $version = explode('.',DOL_VERSION);
+        if($version[0] > 16): $this->picto='fa-boxes_fas_#263c5c';
+        else: $this->picto='project';
+        endif;
 
         // Defined all module parts (triggers, login, substitutions, menus, css, etc...)
         // for default path (eg: /mymodule/core/xxxxx) (0=disable, 1=enable)
@@ -96,7 +99,22 @@ class modGestionParc extends DolibarrModules
         //                          'dir' => array('output' => 'othermodulename'),      // To force the default directories names
         //                          'workflow' => array('WORKFLOW_MODULE1_YOURACTIONTYPE_MODULE2'=>array('enabled'=>'! empty($conf->module1->enabled) && ! empty($conf->module2->enabled)', 'picto'=>'yourpicto@mymodule')) // Set here all workflow context managed by module
         //                        );
-        $this->module_parts = array('models' => 1, 'hooks' => array('all'));
+        $this->module_parts = array(
+            'triggers' => 0,
+            'login' => 0,
+            'substitutions' => 0,
+            'menus' => 0,
+            'theme' => 0,
+            'tpl' => 0,
+            'barcode' => 0, 
+            'models' => 1,
+            'css' => array(),
+            'js' => array(),
+            'hooks' => array('all'),
+            'dir' => array(),
+            'workflow' => array(),
+
+        );
 
         // Data directories to create when module is enabled.
         // Example: this->dirs = array("/mymodule/temp");
@@ -201,7 +219,7 @@ class modGestionParc extends DolibarrModules
         $this->rights = array();        // Permission array used by this module
         $r=1;
 
-        $this->rights[$r][0] = $this->numero + $r;   // Permission id (must not be already used)
+        $this->rights[$r][0] = $this->numero.''.$r;   // Permission id (must not be already used)
         $this->rights[$r][1] = 'Configuration du module';    // Permission label
         $this->rights[$r][3] = 0;                    // Permission by default for new user (0/1)
         $this->rights[$r][4] = 'configurer';             // In php code, permission will be checked by test
@@ -226,7 +244,10 @@ class modGestionParc extends DolibarrModules
             'titre'=> $langs->trans('Module300320Name'),
             'mainmenu'=>'progiseize',
             'leftmenu'=> $this->rights_class,
-            'url'=>'/gestionparc/admin/manager.php', 'langs'=>'gestionparc@gestionparc', 'position'=> 400, 'enabled'=>'1', 'perms'=>'1','target'=>'', 'user'=>2);
+            'url'=>'/gestionparc/admin/manager.php', 'langs'=>'gestionparc@gestionparc', 'position'=> 400,
+            'enabled'=>'1', 'perms'=>'1','target'=>'', 'user'=>2,
+            'prefix' => '<span class="fas fa-boxes" style="color: #6c6aa8;margin-right:3px;"></span> '
+        );
         $r++;
 
         $this->menu[$r]=array(

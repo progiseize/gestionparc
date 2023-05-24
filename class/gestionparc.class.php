@@ -220,7 +220,7 @@ class GestionParc {
 	/*****************************************************************/
 	// RECUPERER LA LISTE DES TYPES DE PARC
 	/*****************************************************************/
-	public function list_parcType(){
+	public function list_parcType($enabled = 0,$isforsoc = 0,$soc_tags = array()){
 
 		global $conf, $user, $langs;
 
@@ -228,6 +228,21 @@ class GestionParc {
 
 		$sql = "SELECT rowid, label, parc_key FROM ".MAIN_DB_PREFIX.$this->table_element;
 		$sql .= " WHERE entity = '".$conf->entity."'";
+		
+		if($isforsoc):
+			if(!empty($soc_tags)):
+				$sql .= " AND (tags IS NULL";
+				foreach($soc_tags as $st):
+					$sql .= " OR JSON_CONTAINS(tags, '\"".$st."\"')";
+				endforeach;
+				
+				$sql .= ")";
+			else:
+				$sql .= " AND tags IS NULL";
+			endif;
+		endif;
+
+		if($enabled): $sql .= " AND enabled = '1'"; endif;
 		$sql .= " ORDER BY position";
 		$result = $this->db->query($sql);
 
@@ -236,7 +251,11 @@ class GestionParc {
 			if($nb_results): $i = 0;
 				while($i < $nb_results):
 					$obj = $this->db->fetch_object($result);
-					$types[$obj->rowid] = array('label' => $obj->label,'key' => $obj->parc_key);
+
+					$types[$obj->rowid] = array(
+						'label' => $obj->label,
+						'key' => $obj->parc_key,
+					);
 					$i++;
 				endwhile;
 			endif;
@@ -1186,6 +1205,14 @@ class GestionParcVerif {
 	public function openVerif($socid){
 
 		global $conf, $langs,$user;
+
+		$sql_check = "SELECT rowid FROM ".MAIN_DB_PREFIX.$this->table_element;
+		$sql_check.= " WHERE socid = '".$this->db->escape($socid)."'";
+		$sql_check.= " AND is_close = '0'";
+		$result_check = $this->db->query($sql_check);
+
+		if(!$result_check): return false; endif;
+		if($result_check->num_rows > 0): return false; endif;
 
 		//
 		$gestionparc = new GestionParc($this->db);

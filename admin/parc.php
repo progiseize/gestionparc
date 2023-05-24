@@ -197,8 +197,7 @@ switch ($action):
                 case 'dblist':
                     if(empty(GETPOST($fieldname.'_param_dblist_table'))): $error++; setEventMessages($langs->trans('ErrorFieldRequired',$langs->transnoentities('gp_field_dblist')), null, 'errors'); endif;
                     if(empty(GETPOST($fieldname.'_param_dblist_keyval'))): $error++; setEventMessages($langs->trans('ErrorFieldRequired',$langs->transnoentities('gp_field_dblist_keyval')), null, 'errors'); endif;
-                    
-
+                
                     if(!$error):
 
                         // ON CONSTRUIT LE TABLEAU DES PARAMETRES
@@ -261,7 +260,7 @@ switch ($action):
             if(!$error):
                 if($action == 'add_parcfield' && $gpf->add_parcField($user)): setEventMessages($langs->trans('gp_addparcfield_success'), null, 'mesgs');
                 elseif($action == 'edit_parcfield' && $gpf->update_parcField($user)): setEventMessages($langs->trans('gp_updateparcfield_success'), null, 'mesgs');
-                else: setEventMessages($langs->trans('gp_error'), null, 'errors'); $error++;
+                else: setEventMessages($langs->trans('gp_error'), null, 'errors'); $error++; var_dump($gpf->db->lasterror);
                 endif;
             endif;
         else:
@@ -278,7 +277,10 @@ endswitch;
 //ON RECHARGE LE PARC
 $gestionparc->fetch_parcType($rowid);
 
-llxHeader('',$langs->trans('gp_manager_pagetitle'),'','','','',array("/gestionparc/assets/js/gestionparc.js"),array("/gestionparc/assets/css/gestionparc.css"));
+$array_js = array('/gestionparc/assets/js/gestionparc.js');
+$array_css = array('/gestionparc/assets/css/gestionparc.css','/gestionparc/assets/css/dolpgs.css');
+
+llxHeader('',$gestionparc->label.' :: '.$langs->transnoentities('Module300320Name'),'','','','',$array_js,$array_css,'','gestionparc parc-manager');
 
 // ACTIONS NECESSITANT LE HEADER
 if ($action == 'delete'):
@@ -287,18 +289,24 @@ endif;
 
 ?>
     
-<div id="pgsz-option" class="pgsz-theme-<?php echo $conf->theme; ?>">
-    <table class="centpercent notopnoleftnoright table-fiche-title"><tbody><tr class="titre"><td class="nobordernopadding widthpictotitle valignmiddle col-picto"><span class="fas fa-tools valignmiddle widthpictotitle pictotitle" style=""></span></td><td class="nobordernopadding valignmiddle col-title"><div class="titre inline-block"><?php echo $langs->trans('gp_manager_pagetitle'); ?></div></td></tr></tbody></table>
-    <?php $head = GestionParcAdminPrepareHead(); dol_fiche_head($head, 'parc'.$rowid,'GestionParc', 1,'progiseize@progiseize'); ?>
+<div class="dolpgs-main-wrapper">
+
+    <h1 class="has-before"><?php echo $langs->transnoentities('Module300320Name').' : '.$gestionparc->label; ?></h1>
+    <?php $head = GestionParcAdminPrepareHead(); dol_fiche_head($head, 'parc'.$rowid,'GestionParc', 1,'fa-boxes_fas_#fb2a52'); ?>
 
     <div class="tabBar">
-        <div class="justify opacitymedium"><?php print img_info().' '.$gestionparc->description; ?></div>
-        <table class="noborder centpercent pgsz-option-table" style="border-top:none;">
+        <?php if(!empty($gestionparc->description)): ?>
+            <div class="justify opacitymedium"><?php print img_info().' '.$gestionparc->description; ?></div>
+        <?php endif; ?>
+
+        <table class="dolpgs-table">
             <tbody>                
 
                 <tr class="titre" style="background:#fff">
                     <td class="nobordernopadding valignmiddle col-title" style="" colspan="4">
-                        <div class="titre inline-block" style="padding:16px 0"><?php echo $langs->trans('gp_parc_titlepage',$langs->trans($gestionparc->label)); ?></div>
+                        <div class="titre inline-block">
+                             <h3 class="dolpgs-table-title"><?php echo $langs->trans('gp_parc_titlepage',$langs->trans($gestionparc->label)); ?></h3>
+                        </div>
                     </td>
                     <td colspan="4" class="right">
                         <form enctype="multipart/form-data" action="<?php print $_SERVER["PHP_SELF"]; ?>?id=<?php echo $rowid; ?>" method="POST" id="gpform-addfieldtype">
@@ -316,12 +324,12 @@ endif;
                                 <?php endforeach; ?>
                             </select>
                             <!-- <input type="submit" name="" value="Ajouter"> -->
-                            <button type="submit" class="pgsz-button-submit" style=""><i class="fas fa-plus"></i> </button>
+                            <button type="submit" class="dolpgs-btn btn-primary btn-sm" style=""><i class="fas fa-plus"></i> </button>
                         </form>
                     </td>
                 </tr>
 
-                <tr class="liste_titre pgsz-optiontable-coltitle">
+                <tr class="dolpgs-thead noborderside">
                     <th><?php echo $langs->trans('Field'); ?></th>
                     <th><?php echo $langs->trans('Type'); ?></th>
                     <th><?php echo $langs->trans('DefaultValue'); ?></th>
@@ -333,7 +341,7 @@ endif;
                 </tr>
 
                 <?php if(!empty($gestionparc->fields)): foreach ($gestionparc->fields as $field): ?>
-                    <tr class="oddeven pgsz-optiontable-tr">
+                    <tr class="dolpgs-tbody">
                         <td class="bold pgsz-optiontable-fieldname"><?php echo $langs->trans($field->label); if($field->required): echo ' <span class="required">*</span>'; endif; ?></td>
                         <td><?php echo $langs->trans('gp_fieldtype_'.$field->type); ?></td>
                         <td><?php echo $field->default_value; ?></td>
@@ -359,38 +367,33 @@ endif;
 
         <?php // AJOUTER UN NOUVEAU CHAMP ?>
         <?php if($action == 'prepare_parcfield' && !$error || $action == 'add_parcfield' && $error): $field_params = GestionParcGetFieldParams($field_type,'newfield'); ?>
-        <form enctype="multipart/form-data" action="<?php print $_SERVER["PHP_SELF"]; ?>?id=<?php echo $rowid; ?>" method="POST" id="">
+        <form enctype="multipart/form-data" action="<?php print $_SERVER["PHP_SELF"]; ?>?id=<?php echo $rowid; ?>" method="POST" style="margin-top: 42px;">
             <input type="hidden" name="action" value="add_parcfield">
             <input type="hidden" name="token" value="<?php echo $_SESSION['newtoken']; ?>">
             <input type="hidden" name="newfield_type" value="<?php echo $field_type; ?>">
             
-            <table class="noborder centpercent pgsz-option-table" style="border-top:none;">
+            <h3 class="dolpgs-table-title"><?php echo $langs->trans('gp_parc_addfieldtitle',$langs->transnoentities('gp_fieldtype_'.$field_type)); ?></h3>
+            <table class="dolpgs-table">
                 <tbody>
 
-                    <tr class="titre" style="background:#fff;">
-                        <td class="nobordernopadding valignmiddle col-title" style="" colspan="3">
-                            <div class="titre inline-block" style="padding:16px 0"><?php echo $langs->trans('gp_parc_addfieldtitle',$langs->transnoentities('gp_fieldtype_'.$field_type)); ?></div>
-                        </td>
-                    </tr>
-
-                    <tr class="liste_titre pgsz-optiontable-coltitle">
+                    <tr class="dolpgs-thead noborderside">
                         <th><?php echo $langs->trans('Parameter'); ?></th>
                         <th><?php echo $langs->trans('Description'); ?></th>
                         <th class="right"><?php echo $langs->trans('Value'); ?></th>
                     </tr>
 
-                    <tr class="oddeven pgsz-optiontable-tr">
+                    <tr class="dolpgs-tbody">
                         <td class="bold pgsz-optiontable-fieldname"><?php echo $langs->trans('Label'); ?> <span class="required">*</span></td>
                         <td class="pgsz-optiontable-fielddesc"><?php echo $langs->trans('LabelOrTranslationKey'); ?></td>
                         <td class="right pgsz-optiontable-field"><input type="text" name="newfield_label" placeholder="<?php echo $langs->trans('Label'); ?>" value="<?php echo GETPOST('newfield_label'); ?>"></td>
                     </tr>
-                    <tr class="oddeven pgsz-optiontable-tr">
+                    <tr class="dolpgs-tbody">
                         <td class="bold pgsz-optiontable-fieldname"><?php echo $langs->trans('Position'); ?></td>
                         <td class="pgsz-optiontable-fielddesc"><?php echo $langs->trans('gp_field_position_desc'); ?></td>
                         <td class="right pgsz-optiontable-field"><input type="number" min="1" max="999" name="newfield_position" placeholder="100" value="<?php echo (GETPOST('newfield_position','int'))?GETPOST('newfield_position','int'):'100'; ?>"></td>
                     </tr>
                     <?php if($field_type != 'autonumber'): ?>
-                        <tr class="oddeven pgsz-optiontable-tr">
+                        <tr class="dolpgs-tbody">
                             <td class="bold pgsz-optiontable-fieldname"><?php echo $langs->trans('Required'); ?></td>
                             <td class="pgsz-optiontable-fielddesc"><?php echo $langs->trans('gp_field_required_desc'); ?></td>
                             <td class="right pgsz-optiontable-field"><input type="checkbox" name="newfield_required" <?php if(GETPOST('newfield_required')): echo 'checked="checked"'; endif; ?>></td>
@@ -398,53 +401,45 @@ endif;
                     <?php endif; ?>
 
                     <?php foreach ($field_params as $fp): ?>
-                    <tr class="oddeven pgsz-optiontable-tr" valign="top">
+                    <tr class="dolpgs-tbody" valign="top">
                         <td class="bold pgsz-optiontable-fieldname"><?php echo $fp['label']; ?></td>
                         <td class="pgsz-optiontable-fielddesc"><?php echo $fp['description']; ?></td>
                         <td class="right pgsz-optiontable-field"><?php echo $fp['field']; ?></td>
                     </tr>
                     <?php endforeach; ?>
-
-                    <tr class="oddeven pgsz-optiontable-tr" valign="top">
-                        
-                        <td colspan="3" class="right pgsz-optiontable-field"><input type="submit" name="" class="pgsz-button-submit" value="<?php echo $langs->trans('Add'); ?>"></td>
-                    </tr>
-
                 </tbody>
             </table>
+            <div class="right">
+                <input type="submit" name="" class="dolpgs-btn btn-primary btn-sm" value="<?php echo $langs->trans('Add'); ?>">
+            </div>
         </form>
         <?php elseif($action == 'edit' && !$error || $action == 'edit_parcfield' && $error): $field_params = GestionParcGetFieldParams($field_to_update->type,'editfield',$field_to_update); ?>
-        <form enctype="multipart/form-data" action="<?php print $_SERVER["PHP_SELF"]; ?>?id=<?php echo $rowid; ?>" method="POST" id="">
+        <form enctype="multipart/form-data" action="<?php print $_SERVER["PHP_SELF"]; ?>?id=<?php echo $rowid; ?>" method="POST" style="margin-top: 42px;">
             <input type="hidden" name="action" value="edit_parcfield">
             <input type="hidden" name="token" value="<?php echo $_SESSION['newtoken']; ?>">
             <input type="hidden" name="field_id" value="<?php echo $field_to_update->rowid; ?>">
 
-            <table class="noborder centpercent pgsz-option-table" style="border-top:none;">
+            <h3 class="dolpgs-table-title"><?php echo $langs->trans('gp_parc_editfieldtitle',$langs->transnoentities($field_to_update->label)); ?></h3>
+            <table class="dolpgs-table">
                 <tbody>
-
-                    <tr class="titre" style="background:#fff;">
-                        <td class="nobordernopadding valignmiddle col-title" style="" colspan="3">
-                            <div class="titre inline-block" style="padding:16px 0"><?php echo $langs->trans('gp_parc_editfieldtitle',$langs->transnoentities($field_to_update->label)); ?></div>
-                        </td>
-                    </tr>
-                    <tr class="liste_titre pgsz-optiontable-coltitle">
+                    <tr class="dolpgs-thead noborderside">
                         <th><?php echo $langs->trans('Parameter'); ?></th>
                         <th><?php echo $langs->trans('Description'); ?></th>
                         <th class="right"><?php echo $langs->trans('Value'); ?></th>
                     </tr>
 
-                    <tr class="oddeven pgsz-optiontable-tr">
+                    <tr class="dolpgs-tbody">
                         <td class="bold pgsz-optiontable-fieldname"><?php echo $langs->trans('Label'); ?> <span class="required">*</span></td>
                         <td class="pgsz-optiontable-fielddesc"><?php echo $langs->trans('LabelOrTranslationKey'); ?></td>
                         <td class="right pgsz-optiontable-field"><input type="text" name="editfield_label" placeholder="<?php echo $langs->trans('Label'); ?>" value="<?php echo (GETPOSTISSET('editfield_label'))?GETPOST('editfield_label'):$field_to_update->label; ?>"></td>
                     </tr>
-                    <tr class="oddeven pgsz-optiontable-tr">
+                    <tr class="dolpgs-tbody">
                         <td class="bold pgsz-optiontable-fieldname"><?php echo $langs->trans('Position'); ?></td>
                         <td class="pgsz-optiontable-fielddesc"><?php echo $langs->trans('gp_field_position_desc'); ?></td>
                         <td class="right pgsz-optiontable-field"><input type="number" min="1" max="999" name="editfield_position" placeholder="100" value="<?php echo (GETPOST('editfield_position','int'))?GETPOST('editfield_position','int'):$field_to_update->position; ?>"></td>
                     </tr>
                     <?php if($field_to_update->type != 'autonumber'): ?>
-                    <tr class="oddeven pgsz-optiontable-tr">
+                    <tr class="dolpgs-tbody">
                         <td class="bold pgsz-optiontable-fieldname"><?php echo $langs->trans('Required'); ?></td>
                         <td class="pgsz-optiontable-fielddesc"><?php echo $langs->trans('gp_field_required_desc'); ?></td>
                         <td class="right pgsz-optiontable-field"><input type="checkbox" name="editfield_required" <?php if(GETPOST('editfield_required') || $field_to_update->required): echo 'checked="checked"'; endif; ?>></td>
@@ -452,18 +447,18 @@ endif;
                     <?php endif; ?>
 
                     <?php foreach ($field_params as $fp): ?>
-                    <tr class="oddeven pgsz-optiontable-tr" valign="top">
+                    <tr class="dolpgs-tbody" valign="top">
                         <td class="bold pgsz-optiontable-fieldname"><?php echo $fp['label']; ?></td>
                         <td class="pgsz-optiontable-fielddesc"><?php echo $fp['description']; ?></td>
                         <td class="right pgsz-optiontable-field"><?php echo $fp['field']; ?></td>
                     </tr>
                     <?php endforeach; ?>
-                    <tr class="oddeven pgsz-optiontable-tr" valign="top">
-                        <td colspan="3" class="right pgsz-optiontable-field"><input type="submit" name="" class="pgsz-button-submit" value="<?php echo $langs->trans('Update'); ?>"></td>
-                    </tr>
-
+                    
                 </tbody>
             </table>
+            <div class="right">
+                <input type="submit" name="" class="dolpgs-btn btn-primary btn-sm" value="<?php echo $langs->trans('Update'); ?>">
+            </div>
 
             <?php //var_dump($field_params); ?>
             </form>
