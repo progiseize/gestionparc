@@ -14,6 +14,7 @@
 * FIX - Correction creation table SQL llx_gestionparc_fields
 * FIX - Correction compatibilité PHP < 7.4
 * MAJ - Mise à jour CSS
+* FIX - DEFAULT VALUE for verif
 
 ### 1.3.5 (01/03/2023) 
 * MAJ - CSV séparateur par défault ';'
