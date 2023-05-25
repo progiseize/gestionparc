@@ -237,7 +237,7 @@ switch($action):
 
                 $result_insert = $db->query($sql_insert);
 
-                if($result):                    
+                if($result): 
                     $db->commit();
                     setEventMessages($langs->trans('RecordSaved'), null, 'mesgs');
                     foreach($gestionparc->fields as $parcfield): unset($_POST['gpfield_'.$parcfield->field_key]); endforeach;

@@ -80,7 +80,7 @@ class GestionParc {
 
 				// ON VERIFIE SI LE MODE VERIF EST ACTIF POUR CREER LA COLONNE
 				if($conf->global->MAIN_MODULE_GESTIONPARC_USEVERIF):
-					$fields['verif'] = array('type'=>'BOOLEAN','null' => 'NOT NULL');
+					$fields['verif'] = array('type'=>'BOOLEAN','null' => 'NOT NULL','extra'=> 'DEFAULT 0');
 				endif;
 
 
@@ -529,7 +529,7 @@ class GestionParc {
 
 		foreach($list_parcs as $parc_id => $parc):
 			switch ($action):
-				case 'add': if(!$this->db->DDLAddField(MAIN_DB_PREFIX.$this->table_element.'__'.$parc['key'],'verif',array('type'=>'BOOLEAN','null' => 'NOT NULL'))):$error++;endif;break;
+				case 'add': if(!$this->db->DDLAddField(MAIN_DB_PREFIX.$this->table_element.'__'.$parc['key'],'verif',array('type'=>'BOOLEAN','null' => 'NOT NULL','extra'=> 'DEFAULT 0'))):$error++;endif;break;
 				case 'remove': if(!$this->db->DDLDropField(MAIN_DB_PREFIX.$this->table_element.'__'.$parc['key'],'verif')):$error++;endif;break;
 			endswitch;
 		endforeach;
