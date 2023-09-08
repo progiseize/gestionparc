@@ -7,9 +7,10 @@
 
 
 ***
-### 1.3.7 (23/05/2023) 
+### 1.3.7 (08/09/2023) 
 * NEW - Add a repair page for repair retro-compatibility admin/repair.php
 * FIX - modification action add Tab Parc
+* FIX - Restriction for field name
 
 ### 1.3.6 (23/05/2023) 
 * MAJ - Corrections Descripteur module
