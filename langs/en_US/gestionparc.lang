@@ -154,3 +154,9 @@ gp_addparcfield_success = Le nouveau champ a été ajouté
 gp_updateparcfield_success = Champ modifié
 gp_confirmDeleteParcField = Êtes vous sûr de vouloir supprimer ce champ ? Les données enregistrées seront supprimées.
 gp_newparcfieldType = Choisir le type de champ à ajouter
+
+# REPAIR
+gp_repairTitle=Réparation - GestionParc
+gp_repairText=Cliquez sur ce bouton pour réparer les tables.
+gp_repairButton=Réparer
+gp_repairSuccessMsg=Réparation complète

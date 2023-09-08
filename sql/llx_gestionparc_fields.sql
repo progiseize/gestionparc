@@ -34,3 +34,5 @@ CREATE TABLE IF NOT EXISTS `llx_gestionparc_fields` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 ALTER TABLE llx_gestionparc_fields ADD only_verif BOOLEAN NOT NULL DEFAULT 0;
+ALTER TABLE llx_gestionparc_fields CHANGE position position int NOT NULL DEFAULT '100';
+ALTER TABLE llx_gestionparc_fields CHANGE enabled enabled int NOT NULL DEFAULT '0';

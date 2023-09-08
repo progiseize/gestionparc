@@ -32,7 +32,7 @@
   --colorfillgray2: #f6f6f6;
   --colorfull: #fb2a52;
 
-  --colordanger_bg: #ffe6ea;
+  --colordanger_bg: #fad4da;
   --colorwarning_bg: #ffeadb;
   --colorsuccess_bg: #e3ffea;
 
@@ -110,6 +110,14 @@
 .dolpgs-tag.tag-warning {border: 1px solid var(--colorwarning);color: var(--colorwarning);}
 .dolpgs-tag.tag-danger {border: 1px solid var(--colordanger);color: var(--colordanger);}
 .dolpgs-tag.tag-success {border: 1px solid var(--colorsuccess);color: var(--colorsuccess);}
+
+/** MSG WITH BACKGROUND **/
+.dolpgs-messagebox {padding: 16px;font-weight: 500;background: var(--colorfillgray);color: var(--colorgraylight3);}
+.dolpgs-messagebox.box-primary {background: #d8dee6;color: var(--colorprimary);}
+.dolpgs-messagebox.box-secondary {background: #e9e9f5;color: var(--colorsecondary);}
+.dolpgs-messagebox.box-warning {background: var(--colorwarning_bg);color: var(--colorwarning);}
+.dolpgs-messagebox.box-danger {background: var(--colordanger_bg);color: var(--colordanger);}
+.dolpgs-messagebox.box-success {background: var(--colorsuccess_bg);color: var(--colorsuccess);}
 
 /** FLEX WRAPPER **/
 .dolpgs-flex-wrapper {display: flex;flex-wrap: wrap;margin: 0 -16px}

@@ -29,3 +29,11 @@ CREATE TABLE IF NOT EXISTS `llx_gestionparc_verifs` (
   `files_list` JSON NOT NULL,
   PRIMARY KEY (`rowid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+ALTER TABLE llx_gestionparc_verifs CHANGE nb_verified nb_verified int NOT NULL DEFAULT '0';
+ALTER TABLE llx_gestionparc_verifs CHANGE nb_total nb_total int NOT NULL DEFAULT '0';
+ALTER TABLE llx_gestionparc_verifs CHANGE date_close date_close datetime NULL DEFAULT NULL;
+ALTER TABLE llx_gestionparc_verifs CHANGE commentaires commentaires text CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '';
+ALTER TABLE llx_gestionparc_verifs CHANGE fichinter_id fichinter_id int NOT NULL DEFAULT '0';
+ALTER TABLE llx_gestionparc_verifs CHANGE is_close is_close int NOT NULL DEFAULT '0';
+ALTER TABLE llx_gestionparc_verifs CHANGE files_list files_list JSON NULL DEFAULT NULL;

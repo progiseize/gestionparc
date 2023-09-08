@@ -21,8 +21,6 @@ class ActionsGestionParc
 	 *                                          =0 if OK but we want to process standard actions too,
 	 *                                          >0 if OK and we want to replace standard actions.
 	*/
-
-
 	public function completeTabsHead(&$parameters, &$object, &$action, $hookmanager){
 
 		global $langs, $conf, $user,$db;
@@ -31,7 +29,7 @@ class ActionsGestionParc
 		$langs->load('gestionparc@gestionparc');
 
 		// ON RECUPERE LE TYPE D'ELEMENT SUR LEQUEL ON EST
-		$element = $parameters['object']->element;
+		$element = isset($parameters['object']->element)?$parameters['object']->element:'';
 
 		// SI ON EST SUR UN TIERS
 		if($element == 'societe' && $parameters['mode'] == 'add'):

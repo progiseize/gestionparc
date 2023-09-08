@@ -9,7 +9,7 @@ if (! $res && file_exists("../../main.inc.php")): $res=@include '../../main.inc.
 if (! $res && file_exists("../../../main.inc.php")): $res=@include '../../../main.inc.php'; endif;
 
 // Protection if external user
-if ($user->societe_id > 0): accessforbidden(); endif;
+if ($user->socid > 0): accessforbidden(); endif;
 
 
 /************************************************
@@ -237,7 +237,7 @@ switch($action):
 
                 $result_insert = $db->query($sql_insert);
 
-                if($result): 
+                if($result_insert): 
                     $db->commit();
                     setEventMessages($langs->trans('RecordSaved'), null, 'mesgs');
                     foreach($gestionparc->fields as $parcfield): unset($_POST['gpfield_'.$parcfield->field_key]); endforeach;

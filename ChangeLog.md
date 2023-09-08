@@ -7,6 +7,10 @@
 
 
 ***
+### 1.3.7 (23/05/2023) 
+* NEW - Add a repair page for repair retro-compatibility admin/repair.php
+* FIX - modification action add Tab Parc
+
 ### 1.3.6 (23/05/2023) 
 * MAJ - Corrections Descripteur module
 * FIX - Corrections tabs si aucun parc créé ou activé

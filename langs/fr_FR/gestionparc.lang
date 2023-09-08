@@ -178,3 +178,8 @@ gp_mergeParcSuccess = %s élément(s) de parcs ont été déplacés vers le nouv
 gp_mergeVerifSuccess = %s vérification(s) ont été déplacés vers le nouveau tiers.
 gp_mergeError = Une erreur est survenue lors de la fusion des parcs
 
+# REPAIR
+gp_repairTitle=Réparation - GestionParc
+gp_repairText=Cliquez sur ce bouton pour réparer les tables.
+gp_repairButton=Réparer
+gp_repairSuccessMsg=Réparation complète
