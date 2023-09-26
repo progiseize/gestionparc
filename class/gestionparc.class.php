@@ -1370,7 +1370,13 @@ class GestionParcVerif {
 
 		require_once DOL_DOCUMENT_ROOT.'/fichinter/class/fichinter.class.php';
         require_once DOL_DOCUMENT_ROOT.'/core/lib/date.lib.php';
-        require_once DOL_DOCUMENT_ROOT.'/core/modules/export/export_csv.modules.php';
+
+        // Version Dolibarr
+		$dolibarr_version = explode('.', DOL_VERSION);
+		
+		if(intval($dolibarr_version[0]) <= 17): require_once DOL_DOCUMENT_ROOT.'/core/modules/export/export_csv.modules.php';
+		else: require_once DOL_DOCUMENT_ROOT.'/core/modules/export/export_csvutf8.modules.php';
+		endif;
 
         global $conf, $langs, $user;
 
