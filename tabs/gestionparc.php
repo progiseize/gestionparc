@@ -11,14 +11,19 @@ if (! $res && file_exists("../../../main.inc.php")): $res=@include '../../../mai
 // Protection if external user
 if ($user->socid > 0): accessforbidden(); endif;
 
+// Version Dolibarr
+$dolibarr_version = explode('.', DOL_VERSION);
 
 /************************************************
 *  FICHIERS NECESSAIRES 
 ************************************************/
-require_once(DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php');
-require_once(DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php');
-require_once DOL_DOCUMENT_ROOT.'/core/modules/export/export_csv.modules.php';
+require_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
+require_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/fichinter/class/fichinter.class.php';
+
+if(intval($dolibarr_version[0]) <= 17): require_once DOL_DOCUMENT_ROOT.'/core/modules/export/export_csv.modules.php';
+else: require_once DOL_DOCUMENT_ROOT.'/core/modules/export/export_csvutf8.modules.php';
+endif;
 
 dol_include_once('./gestionparc/class/gestionparc.class.php');
 

@@ -7,6 +7,9 @@
 
 
 ***
+### 1.3.8 (26/09/2023) 
+* FIX - Fix for V18 Module Export
+
 ### 1.3.7 (08/09/2023) 
 * NEW - Add a repair page for repair retro-compatibility admin/repair.php
 * FIX - modification action add Tab Parc
