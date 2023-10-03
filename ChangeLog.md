@@ -5,10 +5,10 @@
 [comment]: <> (Modele pdf)
 [comment]: <> (Type de champ date)
 
-
 ***
-### 1.3.8 (26/09/2023) 
+### 1.3.8 (03/10/2023) 
 * FIX - Fix for V18 Module Export
+* FIX - get all products without categories
 
 ### 1.3.7 (08/09/2023) 
 * NEW - Add a repair page for repair retro-compatibility admin/repair.php

@@ -21,10 +21,6 @@ require_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/fichinter/class/fichinter.class.php';
 
-if(intval($dolibarr_version[0]) <= 17): require_once DOL_DOCUMENT_ROOT.'/core/modules/export/export_csv.modules.php';
-else: require_once DOL_DOCUMENT_ROOT.'/core/modules/export/export_csvutf8.modules.php';
-endif;
-
 dol_include_once('./gestionparc/class/gestionparc.class.php');
 
 $langs->load('interventions');
@@ -88,39 +84,34 @@ switch($action):
         require_once DOL_DOCUMENT_ROOT.'/fichinter/class/fichinter.class.php';
         require_once DOL_DOCUMENT_ROOT.'/core/lib/date.lib.php';
 
-        $verification->nb_verified;
-        $verification->nb_total;
-
-        $nb_total_verifs = GETPOST('nb_verif','int');
-        $verifs_ok = GETPOST('nbverif_ok','int');
-        $verifs_error = GETPOST('nbverif_error','int');
-
         if(GETPOST('token') != $_SESSION['token']): $error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings'); endif;
         if(empty(GETPOST('socid'))): $error++; setEventMessages($langs->trans('gp_error_needSocId'), null, 'warnings'); endif;
 
-        if($verification->nb_verified != $verification->nb_total):
-            if(empty(GETPOST('intercom'))): 
-                $error++; $action = 'initclose_verif';
-                setEventMessages($langs->trans('gp_verif_error_needIntercom'), null, 'errors');
-            endif;
-        endif;
-
-        $t2s = convertTime2Seconds(GETPOST('durationhour'),GETPOST('durationmin'));
-        if($t2s <= 0):
-            $error++; $action = 'initclose_verif';
-            setEventMessages($langs->trans('gp_verif_error_needDuration'), null, 'errors');
-        endif;
-
-        if(!$error):
-            if($id_intervention = $verification->closeVerif($verification->rowid,$socid,GETPOST('intercom','restricthtml'),$t2s)):
-
-                $ficheinter->fetch($id_intervention); $last_intervention = $id_intervention;
-                $is_mode_verif = false;
-                setEventMessages($langs->trans('gp_verif_success_onclose',$ficheinter->ref), null, 'mesgs');
-                if($conf->global->MAIN_MODULE_GESTIONPARC_VERIFREDIRECT): 
-                    header('Location: '.dol_buildpath('fichinter/card.php?id='.$id_intervention,1));
+        if(isset($verification->rowid)):
+            if($verification->nb_verified != $verification->nb_total):
+                if(empty(GETPOST('intercom'))): 
+                    $error++; $action = 'initclose_verif';
+                    setEventMessages($langs->trans('gp_verif_error_needIntercom'), null, 'errors');
                 endif;
-            else: setEventMessages($langs->trans('gp_verif_error_onclose'), null, 'errors');
+            endif;
+
+            $t2s = convertTime2Seconds(GETPOST('durationhour'),GETPOST('durationmin'));
+            if($t2s <= 0):
+                $error++; $action = 'initclose_verif';
+                setEventMessages($langs->trans('gp_verif_error_needDuration'), null, 'errors');
+            endif;
+
+            if(!$error):
+                if($id_intervention = $verification->closeVerif($verification->rowid,$socid,GETPOST('intercom','restricthtml'),$t2s)):
+
+                    $ficheinter->fetch($id_intervention); $last_intervention = $id_intervention;
+                    $is_mode_verif = false;
+                    setEventMessages($langs->trans('gp_verif_success_onclose',$ficheinter->ref), null, 'mesgs');
+                    if($conf->global->MAIN_MODULE_GESTIONPARC_VERIFREDIRECT): 
+                        header('Location: '.dol_buildpath('fichinter/card.php?id='.$id_intervention,1));
+                    endif;
+                else: setEventMessages($langs->trans('gp_verif_error_onclose'), null, 'errors');
+                endif;
             endif;
         endif;
     break;
