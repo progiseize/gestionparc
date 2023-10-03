@@ -22,7 +22,7 @@ $langs->load("gestionparc@gestionparc");
 /*******************************************************************
 * CHECKS
 ********************************************************************/
-if ($user->societe_id > 0): accessforbidden(); endif;
+if ($user->socid > 0): accessforbidden(); endif;
 if (!$user->rights->gestionparc->configurer): accessforbidden(); endif;
 
 $rowid = GETPOST('id','int'); if(empty($rowid)): header('Location: '.$dolibarr_main_url_root.'/custom/gestionparc/admin/manager'); endif;
