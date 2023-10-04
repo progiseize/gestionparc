@@ -19,7 +19,7 @@ dol_include_once('./gestionparc/lib/gestionparc.lib.php');
 $langs->load("gestionparc@gestionparc");
 
 // Protection if external user
-if ($user->socid > 0): accessforbidden(); endif;
+if ($user->societe_id > 0): accessforbidden(); endif;
 if (!$user->rights->gestionparc->configurer): accessforbidden(); endif;
 
 /*******************************************************************

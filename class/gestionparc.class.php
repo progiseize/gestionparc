@@ -1368,21 +1368,17 @@ class GestionParcVerif {
 
 	public function closeVerif($rowid,$socid,$description,$duree){
 
-		global $conf, $langs, $user;
-
 		require_once DOL_DOCUMENT_ROOT.'/fichinter/class/fichinter.class.php';
         require_once DOL_DOCUMENT_ROOT.'/core/lib/date.lib.php';
 
         // Version Dolibarr
 		$dolibarr_version = explode('.', DOL_VERSION);
 		
-		if(intval($dolibarr_version[0]) <= 17): 
-			require_once DOL_DOCUMENT_ROOT.'/core/modules/export/export_csv.modules.php'; 
-			$export_class_name = 'ExportCsv';
-		else: 
-			require_once DOL_DOCUMENT_ROOT.'/core/modules/export/export_csvutf8.modules.php';
-			$export_class_name = 'ExportCsvUtf8';
+		if(intval($dolibarr_version[0]) <= 17): require_once DOL_DOCUMENT_ROOT.'/core/modules/export/export_csv.modules.php';
+		else: require_once DOL_DOCUMENT_ROOT.'/core/modules/export/export_csvutf8.modules.php';
 		endif;
+
+        global $conf, $langs, $user;
 
         $error = 0;
 
@@ -1404,9 +1400,6 @@ class GestionParcVerif {
 		// CONTENU 
         $lineverif_desc = ''; $i = 0;
 
-        /*var_dump($intervention);
-        var_dump($gestionparc);*/
-
         foreach($list_parctypes as $parctype_id => $parctype_infos): $i++;
 
         	$list_parcFields = $gestionparc->list_parcFields($parctype_id);
@@ -1416,7 +1409,7 @@ class GestionParcVerif {
 
             if($nb_parclines > 0):
 
-            	$csv_parc = new $export_class_name($this->db);
+            	$csv_parc = new ExportCsv($this->db);
             	$csv_parc->separator = ';';
 
             	// ON DONNE UN NOM AU FICHIER
@@ -1449,7 +1442,6 @@ class GestionParcVerif {
 	            // CSV LABELS
 	            $csv_labels = array('verif');
 	            $csv_labels_type = array('Text');
-
 	            foreach($pos as $key_field => $key_pos):
 	            	
 	            	if($enabled[$key_field]): 
@@ -1467,10 +1459,9 @@ class GestionParcVerif {
 
 	            	endif;
 	            endforeach;
-	            
 	            $csv_parc->write_title($csv_labels,$csv_labels,$langs,$csv_labels_type);
-	            
-	            $lineverif_desc .= '<br/>';
+
+            	$lineverif_desc .= '<br/>';
 	            $lineverif_desc .= '<b><u>'.$parctype_infos['label'].'</u></b><br/>';
 
 	            // POUR CHAQUE ELEMENT ON AJOUTE + 1 SI VERIF
@@ -1488,7 +1479,7 @@ class GestionParcVerif {
 	            	foreach($pos as $key_field => $key_pos):
 	            		if($enabled[$key_field]): 
 	            			if(!empty($parcline->{$key_field})): array_push($csv_line,$parcline->{$key_field});
-	            			else: array_push($csv_line,' '); endif;
+	            			else: array_push($csv_line,''); endif;
 	            			array_push($csv_line_type,'Text');
 
 	            			if($types[$key_field] == 'prodserv'):
@@ -1526,6 +1517,8 @@ class GestionParcVerif {
             endif;
         endforeach;
 
+        //var_dump($verif_files,json_encode($verif_files));
+
         // ON AJOUTE LA LIGNE
         $now = dol_now();
         $intervention->addline($user,$intervention->id,$lineverif_desc,$now,$duree);        
@@ -1541,11 +1534,11 @@ class GestionParcVerif {
         $intervention->updateExtraField('gestionparc_isverif');
 
         // ON GENERE LES DOCUMENT 
-        if(!empty($docs_list)):
+        /*if(!empty($docs_list)):
         	foreach($docs_list as $parc_id => $parc_infos):
         		$intervention->generateDocument($this->model_pdf,$langs,0,0,0,$parc_infos); // New Doc futur dev
         	endforeach;
-        endif;
+        endif;*/
 
         // ON CLOS LE MODE VERIF
         $sql_close = "UPDATE ".MAIN_DB_PREFIX.$this->table_element;

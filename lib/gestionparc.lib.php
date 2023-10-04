@@ -302,16 +302,18 @@ function GestionParcGetListProdServ($tab_cats,$showref = false){
 
     $tab_prodserv = array();
 
-    $sql = "SELECT rowid, label, ref FROM ".MAIN_DB_PREFIX."product as a";    
+    $sql = "SELECT rowid, label, ref FROM ".MAIN_DB_PREFIX."product as a";
+    $sql .=" INNER JOIN ".MAIN_DB_PREFIX."categorie_product as b";
+    $sql .=" ON a.rowid = b.fk_product";
 
     $nbcats = 0;
     if(!empty($tab_cats)):
-        $sql .=" LEFT JOIN ".MAIN_DB_PREFIX."categorie_product as b ON a.rowid = b.fk_product";
-        $sql .= " WHERE";    
-        foreach($tab_cats as $cat_id): $nbcats++;
-            if($nbcats > 1): $sql .= " OR"; endif;
-            $sql .=" b.fk_categorie = '".$cat_id."'";
-        endforeach;
+
+    $sql .= " WHERE";    
+    foreach($tab_cats as $cat_id): $nbcats++;
+        if($nbcats > 1): $sql .= " OR"; endif;
+        $sql .=" b.fk_categorie = '".$cat_id."'";
+    endforeach;
     endif;
     
     $sql .=" ORDER BY label";
