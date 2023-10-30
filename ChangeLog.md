@@ -1,11 +1,13 @@
 # GestionParc
 
 [comment]: <> (TODO)
-[comment]: <> (Option champ visible uniquement en mode vérif)
 [comment]: <> (Modele pdf)
 [comment]: <> (Type de champ date)
 
 ***
+### 1.3.9
+* NEW - Option champ visible uniquement en mode vérif 
+
 ### 1.3.8 (03/10/2023) 
 * FIX - Fix for V18 Module Export
 * FIX - get all products without categories

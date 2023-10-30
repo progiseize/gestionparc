@@ -685,6 +685,8 @@ class GestionParcField {
 	public $date_creation;
 	public $date_modification;
 
+	public $only_verif = 0;
+
 	public $forbidden_words = array(
 		'ACCESSIBLE','ADD','ALL','ALTER','ANALYZE','AND','AS','ASC','ASENSITIVE','AUTO_INCREMENT',
 		'BDB','BEFORE','BERKELEYDB','BETWEEN','BIGINT','BINARY','BLOB','BOTH','BY',
@@ -732,7 +734,7 @@ class GestionParcField {
 			$this->author = $user->id;
 
 			$sql = "INSERT INTO ".MAIN_DB_PREFIX.$this->table_element;
-			$sql.= " (parc_id,label,field_key,type,params,required,default_value,enabled,position,author)";
+			$sql.= " (parc_id,label,field_key,type,params,required,default_value,enabled,position,author,only_verif)";
 			$sql.= " VALUES (";
 			$sql.= " ".$this->parc_id;
 			$sql.= ", '".$this->db->escape($this->label)."'";
@@ -744,6 +746,7 @@ class GestionParcField {
 			$sql.= ", ".$this->statut;
 			$sql.= ", ".intval($this->position);
 			$sql.= ", ".$this->author;
+			$sql.= ", '".$this->db->escape($this->only_verif)."'";
 			$sql.= ")";
 
 			$result = $this->db->query($sql);
@@ -795,6 +798,7 @@ class GestionParcField {
 			$this->date_creation = $item->date_creation;
 			$this->date_modification = $item->tms;
 			$this->author = $item->author;
+			$this->only_verif = intval($item->only_verif);
 
 			return $this->rowid;
 		endif;
@@ -843,6 +847,7 @@ class GestionParcField {
 			$sql .= ",default_value  = '".$this->db->escape($this->default_value)."'";
 			$sql .= ",position  = '".intval($this->position)."'";
 			$sql .= ",author_maj  = '".$this->author_maj."'";
+			$sql .= ",only_verif  = '".$this->only_verif."'";
 			$sql .= " WHERE rowid = ".$this->rowid;
 
 			$result = $this->db->query($sql);
@@ -1223,7 +1228,7 @@ class GestionParcVerif {
 	public $fichinter_id;
 	public $is_close;
 	public $files_list;
-	public $db;
+	public $db;	
 
 	public function __construct($db){$this->db = $db;}
 

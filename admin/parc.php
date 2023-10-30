@@ -189,6 +189,9 @@ switch ($action):
             $gpf->required = (GETPOSTISSET($fieldname.'_required'))?1:0;
             $gpf->default_value = GETPOST($fieldname.'_default_value','alpha');
             $gpf->position = $newfield_position;
+            if(GETPOSTISSET($fieldname.'_onlyverif') && GETPOST($fieldname.'_onlyverif','aZ09') == 'on'): $gpf->only_verif = 1;
+            else: $gpf->only_verif = 0;
+            endif;
             
             switch ($field_type):
 
@@ -308,7 +311,7 @@ endif;
                              <h3 class="dolpgs-table-title"><?php echo $langs->trans('gp_parc_titlepage',$langs->trans($gestionparc->label)); ?></h3>
                         </div>
                     </td>
-                    <td colspan="4" class="right">
+                    <td colspan="5" class="right">
                         <form enctype="multipart/form-data" action="<?php print $_SERVER["PHP_SELF"]; ?>?id=<?php echo $rowid; ?>" method="POST" id="gpform-addfieldtype">
                             <input type="hidden" name="action" value="prepare_parcfield">
                             <input type="hidden" name="token" value="<?php echo $_SESSION['newtoken']; ?>">
@@ -334,7 +337,8 @@ endif;
                     <th><?php echo $langs->trans('Type'); ?></th>
                     <th><?php echo $langs->trans('DefaultValue'); ?></th>
                     <th class="right"><?php echo $form->textwithpicto($langs->trans('Preview'),$langs->trans('gp_parc_col_fieldpreview_help')); ?></th>
-                    <th class="right"><?php echo $langs->trans('Required'); ?></th>
+                    <th class="right"><?php echo $langs->trans('Required'); ?></th>                    
+                    <th class="right"><?php echo $langs->trans('gp_parcfield_on_onlyverif'); ?></th>
                     <th class="right"><?php echo $langs->trans('Position'); ?></th>
                     <th class="center"><?php echo $langs->trans('Statut'); ?></th>
                     <th width="120" class="center"></th>
@@ -347,13 +351,12 @@ endif;
                         <td><?php echo $field->default_value; ?></td>
                         <td class="right pgsz-optiontable-field"><?php echo $field->construct_field($gestionparc); ?></td>
                         <td class="right"><?php echo ($field->required)?$langs->trans('Yes'):$langs->trans('No'); ?></td>
-                        <td class="right"><?php echo $field->position; ?></td>
-                        
+                        <td class="right"><?php echo $field->only_verif?$langs->trans('Yes'):$langs->trans('No'); ?></td>
+                        <td class="right"><?php echo $field->position; ?></td> 
                         <td class="center">
                             <?php if($field->enabled): echo '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?id='.$gestionparc->rowid.'&field_id='.$field->rowid.'&action=disable_field&token='.newToken().'">'.img_picto($langs->trans("Activated"), 'switch_on').'</a>';
                             else: echo '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?id='.$gestionparc->rowid.'&field_id='.$field->rowid.'&action=enable_field&token='.newToken().'">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>'; endif; ?>
                         </td>
-
                         <td width="120" class="center">
                             <?php echo '<a class="reposition editfielda paddingrightonly" href="'.$_SERVER['PHP_SELF'].'?id='.$gestionparc->rowid.'&field_id='.$field->rowid.'&action=edit&token='.newToken().'">'.img_edit().'</a> &nbsp; '; ?>
                             <?php echo '<a class="reposition" href="'.$_SERVER['PHP_SELF'].'?id='.$gestionparc->rowid.'&field_id='.$field->rowid.'&action=delete&token='.newToken().'">'.img_delete().'</a>'; ?>
@@ -407,6 +410,13 @@ endif;
                         <td class="right pgsz-optiontable-field"><?php echo $fp['field']; ?></td>
                     </tr>
                     <?php endforeach; ?>
+
+                    <tr class="dolpgs-tbody">
+                        <td class="bold pgsz-optiontable-fieldname"><?php echo $langs->trans('gp_field_onlyverif'); ?></td>
+                        <td class="pgsz-optiontable-fielddesc"><?php echo $langs->trans('gp_field_onlyverif_desc'); ?></td>
+                        <td class="right pgsz-optiontable-field"><input type="checkbox" name="newfield_onlyverif" <?php if(GETPOST('newfield_onlyverif')): echo 'checked="checked"'; endif; ?>></td>
+                    </tr>
+
                 </tbody>
             </table>
             <div class="right">
@@ -453,6 +463,12 @@ endif;
                         <td class="right pgsz-optiontable-field"><?php echo $fp['field']; ?></td>
                     </tr>
                     <?php endforeach; ?>
+
+                    <tr class="dolpgs-tbody">
+                        <td class="bold pgsz-optiontable-fieldname"><?php echo $langs->trans('gp_field_onlyverif'); ?></td>
+                        <td class="pgsz-optiontable-fielddesc"><?php echo $langs->trans('gp_field_onlyverif_desc'); ?></td>
+                        <td class="right pgsz-optiontable-field"><input type="checkbox" name="editfield_onlyverif" <?php if(GETPOST('editfield_onlyverif') || $field_to_update->only_verif): echo 'checked="checked"'; endif; ?>></td>
+                    </tr>
                     
                 </tbody>
             </table>

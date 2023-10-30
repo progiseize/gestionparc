@@ -197,8 +197,13 @@ switch($action):
 
                 if($parcfield->enabled):
 
+                    // 
+                    if($parcfield->only_verif && $parcfield->required):
+                        if($is_mode_verif  && empty(GETPOST('gpfield_'.$parcfield->field_key))):
+                            $error++; setEventMessages($langs->trans('ErrorFieldRequired',$parcfield->label), null, 'warnings');
+                        endif;
                     // ON VERIFIE SI LES CHAMPS OBLIGATOIRES SONT REMPLIS
-                    if($parcfield->required && empty(GETPOST('gpfield_'.$parcfield->field_key))):
+                    elseif($parcfield->required && empty(GETPOST('gpfield_'.$parcfield->field_key))):
                         $error++; setEventMessages($langs->trans('ErrorFieldRequired',$parcfield->label), null, 'warnings');
                     endif;
 
@@ -358,8 +363,13 @@ switch($action):
 
                 if($parcfield->enabled):
 
+                    // 
+                    if($parcfield->only_verif && $parcfield->required):
+                        if($is_mode_verif  && empty(GETPOST('gpfield_'.$parcfield->field_key))):
+                            $error++; setEventMessages($langs->trans('ErrorFieldRequired',$parcfield->label), null, 'warnings');
+                        endif;
                     // ON VERIFIE SI LES CHAMPS OBLIGATOIRES SONT REMPLIS
-                    if($parcfield->required && empty(GETPOST('gpfield_'.$parcfield->field_key))):
+                    elseif($parcfield->required && empty(GETPOST('gpfield_'.$parcfield->field_key))):
                         $error++; setEventMessages($langs->trans('ErrorFieldRequired',$parcfield->label), null, 'warnings');
                     endif;
                 endif;
@@ -593,9 +603,12 @@ echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"),0,'com
                         <?php if($is_mode_verif): ?>
                             <th><?php echo $langs->trans('gp_verif_label'); ?></th>
                         <?php endif; ?>
-                        <?php foreach($parc->fields as $parcfield_key => $parcfield): if($parcfield->enabled): ?>
-                            <th><?php echo $parcfield->label; if($parcfield->required): echo ' <span class="required">*</span>'; endif; ?></th>
-                        <?php endif; endforeach; ?>
+                        <?php foreach($parc->fields as $parcfield_key => $parcfield): ?>
+                            <?php if($parcfield->enabled): ?>
+                                <?php if($parcfield->only_verif && !$is_mode_verif): continue; endif; ?>
+                                <th><?php echo $parcfield->label; if($parcfield->required): echo ' <span class="required">*</span>'; endif; ?></th>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
                         <th class="right">
                             <?php if($action != 'edit'): ?>
                                 <button class="dolpgs-btn btn-primary btn-sm gestionparc-add" onclick="event.preventDefault();"><i class="fas fa-plus"></i></button>
@@ -608,7 +621,8 @@ echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"),0,'com
                     <tr class="dolpgs-tbody gestionparc-newline" <?php if($action == "add" && $error && GETPOST('parcid') == $parc->rowid): echo 'style="display: table-row;"'; endif; ?>>
                         <?php if($is_mode_verif): ?><td></td><?php endif; ?>
                         <?php foreach($parc->fields as $parcfield_key => $parcfield): if($parcfield->enabled): ?>
-                        <td><?php echo $parcfield->construct_field($parc,$societe->id); ?></td>
+                            <?php if($parcfield->only_verif && !$is_mode_verif): continue; endif; ?>
+                            <td><?php echo $parcfield->construct_field($parc,$societe->id); ?></td>
                         <?php endif; endforeach; ?>
                         <td class="right">
                             <input type="hidden" name="action" value="add">
@@ -631,6 +645,8 @@ echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"),0,'com
                         <?php endif; ?>
 
                         <?php foreach($parc->fields as $parcfield_key => $parcfield): if($parcfield->enabled): ?>
+
+                            <?php if($parcfield->only_verif && !$is_mode_verif): continue; endif; ?>
                             <td class="pgsz-optiontable-fielddesc"><?php 
 
                             // SI ON EST EN MODE EDITION

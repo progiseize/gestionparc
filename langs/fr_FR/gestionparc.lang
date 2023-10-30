@@ -136,6 +136,8 @@ gp_field_dblist_keyval = Paire Valeur:Clé
 gp_field_dblist_keyval_desc = Remplir comme ceci value:key où value est la valeur à afficher et key le clé primaire
 gp_field_dblist_filter = Filtre
 gp_field_dblist_filter_desc = Remplir comme ceci fieldname=value où fieldname est le nom du champ à tester
+gp_field_onlyverif = Mode vérification
+gp_field_onlyverif_desc = Ce champ sera visible uniquement en mode vérification. S'il est obligatoire, cela ne s'appliquera que dans ce mode.
 
 # RETOURS / ERREURS
 gp_error = Une erreur est survenue
@@ -172,6 +174,7 @@ gp_addparcfield_success = Le nouveau champ a été ajouté
 gp_updateparcfield_success = Champ modifié
 gp_confirmDeleteParcField = Êtes vous sûr de vouloir supprimer ce champ ? Les données enregistrées seront supprimées.
 gp_newparcfieldType = Choisir le type de champ à ajouter
+gp_parcfield_on_onlyverif= Uniquement vérification
 
 # FUSION TIERS
 gp_mergeParcSuccess = %s élément(s) de parcs ont été déplacés vers le nouveau tiers.

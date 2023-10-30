@@ -101,8 +101,6 @@ class ActionsGestionParc
 			endif;
 
 		endif;
-
-		
 	}
 
 
