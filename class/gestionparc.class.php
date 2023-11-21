@@ -519,14 +519,18 @@ class GestionParc {
 		$sql .= " WHERE date_creation IN (SELECT max(date_creation) FROM ".MAIN_DB_PREFIX.$this->table_element.'__'.$parc_key.")";
 		$result = $this->db->query($sql);
 
-		$obj = $this->db->fetch_object($result);
-		$societe = new Societe($this->db);
-		$societe->fetch($obj->socid);
+		if($result->num_rows > 0):
 
-		$infos = array(
-			'name' => $societe->name,
-			'url' => dol_buildpath('gestionparc/tabs/gestionparc.php?socid='.$obj->socid,1)
-		);
+			$obj = $this->db->fetch_object($result);
+			$societe = new Societe($this->db);
+			$societe->fetch($obj->socid);
+
+			$infos = array(
+				'name' => $societe->name,
+				'url' => dol_buildpath('gestionparc/tabs/gestionparc.php?socid='.$obj->socid,1)
+			);
+		else: $infos = array('name' => '', 'url' => '');
+		endif;
 
 		return $infos;
 	}

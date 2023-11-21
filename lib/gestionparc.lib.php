@@ -125,9 +125,8 @@ function GestionParcGetFieldParams($field_type,$mode,$editobj = ''){
 
     switch ($field_type):
 
-        case 'dblist':
-
-        
+        //
+        case 'dblist': 
             switch ($mode):
                 case 'editfield':
                     $slct_table = GestionParcConstructOption($db->DDLListTables($conf->db->name),'vv',$editobj->params->dblist_table);
@@ -140,7 +139,6 @@ function GestionParcGetFieldParams($field_type,$mode,$editobj = ''){
                     $filter = '';
                     break;
             endswitch;
-
             $params = array(
                 array(
                     'label' => $langs->trans('gp_field_dblist').' <span class="required">*</span>','description' => $langs->transnoentities('gp_field_dblist_desc'),
@@ -151,10 +149,7 @@ function GestionParcGetFieldParams($field_type,$mode,$editobj = ''){
                 array(
                     'label' => $langs->trans('gp_field_dblist_filter').'','description' => $langs->transnoentities('gp_field_dblist_filter_desc'),
                     'field' => '<input type="text" name="'.$mode.'_param_dblist_filter" id="'.$mode.'_param_dblist_filter" value="'.$filter.'">'),
-                
             );
-
-
         break;
 
         // TYPE 'YEARLIST'
