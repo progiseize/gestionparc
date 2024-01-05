@@ -5,8 +5,10 @@
 
 
 $res=0;
-if (! $res && file_exists("../main.inc.php")): $res=@include '../main.inc.php'; endif;
-if (! $res && file_exists("../../main.inc.php")): $res=@include '../../main.inc.php'; endif;
+if (! $res && file_exists("../main.inc.php")) : $res=@include '../main.inc.php'; 
+endif;
+if (! $res && file_exists("../../main.inc.php")) : $res=@include '../../main.inc.php'; 
+endif;
 
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formfile.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formactions.class.php';
@@ -19,7 +21,8 @@ $langs->load("companies");
 $langs->load("other");
 
 // Protection if external user
-if ($user->societe_id > 0): accessforbidden(); endif;
+if ($user->societe_id > 0) : accessforbidden(); 
+endif;
 
 /*******************************************************************
 * VARIABLES
@@ -35,7 +38,7 @@ $action = GETPOST('action');
 * VIEW
 ****************************************************/
 
-llxHeader('',$langs->trans('gp_manager_pagetitle'),''); ?>
+llxHeader('', $langs->trans('gp_manager_pagetitle'), ''); ?>
 
 <!-- CONTENEUR GENERAL -->
 <div id="pg-wrapper">

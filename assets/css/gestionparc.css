@@ -24,25 +24,25 @@
 #gpform-addfieldtype .select2-container--default .select2-selection--single .select2-selection__arrow b {margin-top: 2px;margin-left: -8px;}
 #gpform-addfieldtype button {padding: 12px;margin-left: 6px;cursor: pointer;}
 
-@media screen and (max-width: 882px){	
+@media screen and (max-width: 882px){    
 
-	.gestionparc-table tbody tr.dolpgs-thead {display: none;}
-	.dolpgs-table.gestionparc-table tbody tr.dolpgs-tbody {padding: 0 !important;margin-bottom: 24px;}
-	.dolpgs-table.gestionparc-table tbody tr.dolpgs-tbody:last-child td {border-bottom: 1px solid #ccc !important;}
-	.dolpgs-table.gestionparc-table tbody tr.dolpgs-tbody:last-child td:last-child {border-bottom: none !important;}
+    .gestionparc-table tbody tr.dolpgs-thead {display: none;}
+    .dolpgs-table.gestionparc-table tbody tr.dolpgs-tbody {padding: 0 !important;margin-bottom: 24px;}
+    .dolpgs-table.gestionparc-table tbody tr.dolpgs-tbody:last-child td {border-bottom: 1px solid #ccc !important;}
+    .dolpgs-table.gestionparc-table tbody tr.dolpgs-tbody:last-child td:last-child {border-bottom: none !important;}
 
-	.gestionparc-table tbody tr.gestionparc-line {
-		display: flex; flex-direction: column;width: 99%; box-sizing: border-box;
-	}
-	.gestionparc-table tbody tr.gestionparc-line td .gp-infos-label {display: inline;font-weight: 500;color: rgb(38,60,92);}
-	.gestionparc-table tbody tr.gestionparc-line td:last-child {width: 100%;box-sizing: border-box;background: rgb(38,60,92);flex-basis: 100%;border-bottom: none !important;}
-	.gestionparc-table tbody tr.gestionparc-line td a.parclink {color: #fff !important;}
-	.gestionparc-table tbody tr.gestionparc-line td a.parclink:hover {color: #6c6aa8 !important;}
+    .gestionparc-table tbody tr.gestionparc-line {
+        display: flex; flex-direction: column;width: 99%; box-sizing: border-box;
+    }
+    .gestionparc-table tbody tr.gestionparc-line td .gp-infos-label {display: inline;font-weight: 500;color: rgb(38,60,92);}
+    .gestionparc-table tbody tr.gestionparc-line td:last-child {width: 100%;box-sizing: border-box;background: rgb(38,60,92);flex-basis: 100%;border-bottom: none !important;}
+    .gestionparc-table tbody tr.gestionparc-line td a.parclink {color: #fff !important;}
+    .gestionparc-table tbody tr.gestionparc-line td a.parclink:hover {color: #6c6aa8 !important;}
 
-	/*.gestionparc-table tbody tr.titre {}
-	
-	.gestionparc-table tbody tr.gestionparc-line td {display: block;height: auto;flex: 0 0 100%;box-sizing: border-box;}
-	.gestionparc-table tbody tr.gestionparc-line td .gp-infos-label {display: inline;font-weight: 500;color: rgb(38,60,92);}
-	
-	/*.gestionparc-table tbody tr.gestionparc-newline {display: none;}*/
+    /*.gestionparc-table tbody tr.titre {}
+    
+    .gestionparc-table tbody tr.gestionparc-line td {display: block;height: auto;flex: 0 0 100%;box-sizing: border-box;}
+    .gestionparc-table tbody tr.gestionparc-line td .gp-infos-label {display: inline;font-weight: 500;color: rgb(38,60,92);}
+    
+    /*.gestionparc-table tbody tr.gestionparc-newline {display: none;}*/
 }

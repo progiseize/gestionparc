@@ -5,6 +5,9 @@
 [comment]: <> (Type de champ date)
 
 ***
+### 1.4.0
+* FIX - Code review with PHPCS 
+
 ### 1.3.9
 * NEW - Option champ visible uniquement en mode vérif 
 

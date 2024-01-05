@@ -4,9 +4,12 @@
 */
 
 $res=0;
-if (! $res && file_exists("../main.inc.php")): $res=@include '../main.inc.php'; endif;
-if (! $res && file_exists("../../main.inc.php")): $res=@include '../../main.inc.php'; endif;
-if (! $res && file_exists("../../../main.inc.php")): $res=@include '../../../main.inc.php'; endif;
+if (! $res && file_exists("../main.inc.php")) : $res=@include '../main.inc.php'; 
+endif;
+if (! $res && file_exists("../../main.inc.php")) : $res=@include '../../main.inc.php'; 
+endif;
+if (! $res && file_exists("../../../main.inc.php")) : $res=@include '../../../main.inc.php'; 
+endif;
 
 // ON CHARGE LES FICHIERS NECESSAIRES
 require_once DOL_DOCUMENT_ROOT.'/core/lib/admin.lib.php';
@@ -19,8 +22,10 @@ dol_include_once('./gestionparc/lib/gestionparc.lib.php');
 $langs->load("gestionparc@gestionparc");
 
 // Protection if external user
-if ($user->socid > 0): accessforbidden(); endif;
-if (!$user->rights->gestionparc->configurer): accessforbidden(); endif;
+if ($user->socid > 0) : accessforbidden(); 
+endif;
+if (!$user->rights->gestionparc->configurer) : accessforbidden(); 
+endif;
 
 /*******************************************************************
 * FONCTIONS
@@ -78,7 +83,7 @@ if (!$user->rights->gestionparc->configurer): accessforbidden(); endif;
 
 $action = GETPOST('action');
 
-if ($action == 'set_options'):
+if ($action == 'set_options') :
 
     $error = 0;
     $db->begin(); 
@@ -86,36 +91,40 @@ if ($action == 'set_options'):
     $gestionparc = new GestionParc($db);
 
     // ON VERIFIE LE TOKEN
-    if(GETPOST('token') == $_SESSION['token']):
+    if(GETPOST('token') == $_SESSION['token']) :
 
         // Si l'option en cochée
-        if(GETPOSTISSET('gp-use-verif')): 
-            dolibarr_set_const($db, "MAIN_MODULE_GESTIONPARC_USEVERIF",true,'chaine',0,'',$conf->entity);
-            dolibarr_set_const($db, "MAIN_MODULE_GESTIONPARC_VERIFUSETIME",GETPOST('gp-verifusetime'),'chaine',0,'',$conf->entity);
-            dolibarr_set_const($db, "MAIN_MODULE_GESTIONPARC_VERIFREDIRECT",GETPOST('gp-verifredirect'),'chaine',0,'',$conf->entity);
-            dolibarr_set_const($db, "MAIN_MODULE_GESTIONPARC_VERIFMODEL",'simple','chaine',0,'',$conf->entity);
+        if(GETPOSTISSET('gp-use-verif')) : 
+            dolibarr_set_const($db, "MAIN_MODULE_GESTIONPARC_USEVERIF", true, 'chaine', 0, '', $conf->entity);
+            dolibarr_set_const($db, "MAIN_MODULE_GESTIONPARC_VERIFUSETIME", GETPOST('gp-verifusetime'), 'chaine', 0, '', $conf->entity);
+            dolibarr_set_const($db, "MAIN_MODULE_GESTIONPARC_VERIFREDIRECT", GETPOST('gp-verifredirect'), 'chaine', 0, '', $conf->entity);
+            dolibarr_set_const($db, "MAIN_MODULE_GESTIONPARC_VERIFMODEL", 'simple', 'chaine', 0, '', $conf->entity);
 
             $extras_fichinter = $extrafields->fetch_name_optionals_label('fichinter');
-            if(!array_key_exists('gestionparc_isverif', $extras_fichinter)): 
-                $extrafields->addExtraField('gestionparc_isverif','gp_extrafieldFichInter_isverif','int','100','','fichinter',0,0,'null','',0,'','0','','',$conf->entity,'gestionparc@gestionparc');
+            if(!array_key_exists('gestionparc_isverif', $extras_fichinter)) : 
+                $extrafields->addExtraField('gestionparc_isverif', 'gp_extrafieldFichInter_isverif', 'int', '100', '', 'fichinter', 0, 0, 'null', '', 0, '', '0', '', '', $conf->entity, 'gestionparc@gestionparc');
             endif;
 
-            if(!$gestionparc->setVerifMode('add')): $error++; endif;
+            if(!$gestionparc->setVerifMode('add')) : $error++; 
+            endif;
 
-            if(!$conf->ficheinter->enabled):
+            if(!$conf->ficheinter->enabled) :
                 $res_act = activateModule('modFicheinter');
                 setEventMessages($langs->trans('gp_modFicheInterEnabled'), null, 'mesgs');
             endif;
         else: 
-            dolibarr_set_const($db, "MAIN_MODULE_GESTIONPARC_USEVERIF",false,'chaine',0,'',$conf->entity);
-            if(!$gestionparc->setVerifMode('remove')): $error++; endif;
+            dolibarr_set_const($db, "MAIN_MODULE_GESTIONPARC_USEVERIF", false, 'chaine', 0, '', $conf->entity);
+            if(!$gestionparc->setVerifMode('remove')) : $error++; 
+            endif;
 
             $dir = DOL_DATA_ROOT.'/gestionparc';
-            if (!is_dir($dir)): if(!mkdir($dir,0755)): $error++; setEventMessages($langs->trans('gp_error_creafolder'), null, 'errors'); endif; endif;
+            if (!is_dir($dir)) : if(!mkdir($dir, 0755)) : $error++; setEventMessages($langs->trans('gp_error_creafolder'), null, 'errors'); 
+            endif; 
+            endif;
 
         endif;
 
-        if(!$error):$db->commit(); setEventMessages($langs->trans('gp_setup_saved'), null, 'mesgs');
+        if(!$error) :$db->commit(); setEventMessages($langs->trans('gp_setup_saved'), null, 'mesgs');
         else: $db->rollback(); setEventMessages($langs->trans('gp_error'), null, 'errors');
         endif;
 
@@ -134,12 +143,12 @@ endif;
 $array_js = array();
 $array_css = array('/gestionparc/assets/css/dolpgs.css');
 
-llxHeader('',$langs->transnoentities('Setup').' :: '.$langs->transnoentities('Module300320Name'),'','','','',$array_js,$array_css,'','gestionparc setup'); ?>
+llxHeader('', $langs->transnoentities('Setup').' :: '.$langs->transnoentities('Module300320Name'), '', '', '', '', $array_js, $array_css, '', 'gestionparc setup'); ?>
 
 <div class="dolpgs-main-wrapper">
 
     <h1 class="has-before"><?php echo $langs->transnoentities('gp_options_setup_pagetitle'); ?></h1>
-    <?php $head = GestionParcAdminPrepareHead(); dol_fiche_head($head, 'setup','GestionParc', 1,'fa-boxes_fas_#fb2a52'); ?>
+    <?php $head = GestionParcAdminPrepareHead(); dol_fiche_head($head, 'setup', 'GestionParc', 1, 'fa-boxes_fas_#fb2a52'); ?>
 
     <div class="tabBar">
         <div class="justify opacitymedium"><?php echo img_info().' '.$langs->trans("gp_setup_desc"); ?></div>
@@ -161,7 +170,8 @@ llxHeader('',$langs->transnoentities('Setup').' :: '.$langs->transnoentities('Mo
                         <td class="bold pgsz-optiontable-fieldname" valign="top"><?php echo $langs->trans('gp_setup_verif'); ?></td>               
                         <td class="pgsz-optiontable-fielddesc "><?php echo $langs->transnoentities('gp_setup_verif_desc'); ?></td>
                         <td class="right pgsz-optiontable-field ">
-                            <input type="checkbox" name="gp-use-verif" <?php if($conf->global->MAIN_MODULE_GESTIONPARC_USEVERIF): ?>checked="checked"<?php endif; ?> />
+                            <input type="checkbox" name="gp-use-verif" <?php if($conf->global->MAIN_MODULE_GESTIONPARC_USEVERIF) : ?>checked="checked"<?php 
+                           endif; ?> />
                         </td>
                     </tr>
 
@@ -177,7 +187,8 @@ llxHeader('',$langs->transnoentities('Setup').' :: '.$langs->transnoentities('Mo
                         <td class="bold pgsz-optiontable-fieldname" valign="top"><?php echo $langs->trans('gp_setup_verif_redirect'); ?></td>               
                         <td class="pgsz-optiontable-fielddesc "><?php echo $langs->transnoentities('gp_setup_verif_redirect_desc'); ?></td>
                         <td class="right pgsz-optiontable-field ">
-                            <input type="checkbox" name="gp-verifredirect" <?php if($conf->global->MAIN_MODULE_GESTIONPARC_VERIFREDIRECT): ?>checked="checked"<?php endif; ?> />
+                            <input type="checkbox" name="gp-verifredirect" <?php if($conf->global->MAIN_MODULE_GESTIONPARC_VERIFREDIRECT) : ?>checked="checked"<?php 
+                           endif; ?> />
                         </td>
                     </tr>  
                 </tbody>

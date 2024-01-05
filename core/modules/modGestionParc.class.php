@@ -24,7 +24,7 @@
  *  \ingroup    mymodule
  *  \brief      Description and activation file for module MyModule
  */
-include_once DOL_DOCUMENT_ROOT .'/core/modules/DolibarrModules.class.php';
+require_once DOL_DOCUMENT_ROOT .'/core/modules/DolibarrModules.class.php';
 
 
 /**
@@ -58,7 +58,7 @@ class modGestionParc extends DolibarrModules
         //$this->familyinfo = array('myownfamily' => array('position' => '001', 'label' => $langs->trans("MyOwnFamily")));
 
         // Module label (no space allowed), used if translation string 'ModuleXXXName' not found (where XXX is value of numeric property 'numero' of module)
-        $this->name = preg_replace('/^mod/i','',get_class($this));
+        $this->name = preg_replace('/^mod/i', '', get_class($this));
         //$this->name = 'Saisie Rapide Factures Fournisseurs';
         // Module description, used if translation string 'ModuleXXXDesc' not found (where XXX is value of numeric property 'numero' of module)
         $this->description = "gestionparc_desc";
@@ -67,7 +67,7 @@ class modGestionParc extends DolibarrModules
         $this->editor_url = 'https://progiseize.fr';
         
         // Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-        $this->version = '1.3.9';
+        $this->version = '1.4.0';
         $this->url_last_version ="https://progiseize.fr/modules_info/lastversion.php?module=".$this->numero;
 
         // Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
@@ -75,8 +75,8 @@ class modGestionParc extends DolibarrModules
         // Name of image file used for this module.
         // If file is in theme/yourtheme/img directory under name object_pictovalue.png, use this->picto='pictovalue'
         // If file is in module/img directory under name object_pictovalue.png, use this->picto='pictovalue@module'
-        $version = explode('.',DOL_VERSION);
-        if($version[0] > 16): $this->picto='fa-boxes_fas_#6c6aa8';
+        $version = explode('.', DOL_VERSION);
+        if($version[0] > 16) : $this->picto='fa-boxes_fas_#6c6aa8';
         else: $this->picto='project';
         endif;
 
@@ -174,8 +174,7 @@ class modGestionParc extends DolibarrModules
             'thirdparty:+gestionparc:gp_clientparc:gestionparc@gestionparc:$object->client:/gestionparc/tabs/gestionparc.php?socid=__ID__'
         );
 
-        if (! isset($conf->gestionparc) || ! isset($conf->gestionparc->enabled))
-        {
+        if (! isset($conf->gestionparc) || ! isset($conf->gestionparc->enabled)) {
             $conf->gestionparc=new stdClass();
             $conf->gestionparc->enabled=0;
         }
@@ -336,8 +335,8 @@ class modGestionParc extends DolibarrModules
      *      The init function add constants, boxes, permissions and menus (defined in constructor) into Dolibarr database.
      *      It also creates data directories
      *
-     *      @param      string  $options    Options when enabling module ('', 'noboxes')
-     *      @return     int                 1 if OK, 0 if KO
+     * @param  string $options Options when enabling module ('', 'noboxes')
+     * @return int                 1 if OK, 0 if KO
      */
     public function init($options='')
     {
@@ -356,8 +355,8 @@ class modGestionParc extends DolibarrModules
      * Remove from database constants, boxes and permissions from Dolibarr database.
      * Data directories are not deleted
      *
-     * @param      string   $options    Options when enabling module ('', 'noboxes')
-     * @return     int              1 if OK, 0 if KO
+     * @param  string $options Options when enabling module ('', 'noboxes')
+     * @return int              1 if OK, 0 if KO
      */
     public function remove($options = '')
     {
