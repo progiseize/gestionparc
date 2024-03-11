@@ -52,6 +52,8 @@ gp_verif_error_needDuration = Vous devez saisir une duree d'intervention
 gp_verif_error_onclose = Erreur lors de la clôture de la vérification.
 gp_verif_success_onclose = Intervention "%s" validée
 gp_verifline_success = Item vérifié
+gp_verifall = Marquer tous les éléments de ce parc comme vérifiés
+gp_confirmVerifAll = Merci de confirmer votre action
 
 # FIELDS
 gp_error_autonumber_exist = Ce numéro est déjà attribué

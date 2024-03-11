@@ -322,8 +322,8 @@ function GestionParcGetListProdServ($tab_cats,$showref = false)
     $sql .=" ORDER BY label";
     $results_prodserv = $db->query($sql);
 
-    if($results_prodserv) : $count_prods = $db->num_rows($result_prods); $i = 0;
-        while ($i < $count_prods): $prodserv = $db->fetch_object($result_prods);
+    if($results_prodserv) : $count_prods = $db->num_rows($results_prodserv); $i = 0;
+        while ($i < $count_prods): $prodserv = $db->fetch_object($results_prodserv);
             if($prodserv) : 
                 $labeltoshow = $prodserv->label;
                 if($showref) : $labeltoshow.= ' ('.$prodserv->ref.')'; 
