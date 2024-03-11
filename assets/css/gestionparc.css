@@ -16,6 +16,9 @@
 .gp-parc-empty {display: none;}
 .gp-parc-empty.gp-parc-visible {display: block;}
 
+.gestionparc-verifall {margin-bottom: 16px;background: #f5f5f5;padding: 8px;}
+.gestionparc-verifall .veriftxt {vertical-align: middle;display: inline-block;margin-top: -16px;margin-left: 6px;}
+
 #gpform-addfieldtype {}
 #gpform-addfieldtype .select2.select2-container {border: 1px solid #ccc;padding: 4px;min-width: 320px;}
 #gpform-addfieldtype .select2-container--default .select2-selection--single {border: none !important;}

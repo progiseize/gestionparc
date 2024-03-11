@@ -489,10 +489,6 @@ class GestionParc
         $result = $this->db->query($sql);
         $obj = $this->db->fetch_object($result);
         return $obj->nb_items;
-
-        
-
-
     }
 
     /*****************************************************************/
@@ -1426,6 +1422,38 @@ class GestionParcVerif
             $this->db->commit(); return true;
            else: $this->db->rollback(); return false;
            endif;
+    }
+
+    /*****************************************************************/
+    // MODIFIER LE STATUT VERIF DE TOUTES LES LIGNES D'UN PARC
+    /*****************************************************************/
+    public function setParcCheck($socid,$parc_key,$val,$maj_verifid = false)
+    {
+
+        global $conf, $langs;
+
+        $this->db->begin();
+
+        $sql_update = "UPDATE ".MAIN_DB_PREFIX.$this->parent_table_element."__".$parc_key;
+        $sql_update .= " SET verif = '".$val."'";
+        $sql_update .= " WHERE socid = '".$socid."'";
+        $resUpdate = $this->db->query($sql_update);
+
+        if(!$resUpdate): $this->db->rollback(); return false; endif;
+
+        if($maj_verifid):
+
+            $nb_verifrows = $this->db->affected_rows($resUpdate);
+            
+            $sql_bis = "UPDATE ".MAIN_DB_PREFIX.$this->table_element;
+            $sql_bis.= " SET nb_verified = nb_verified + ".$nb_verifrows;
+            $sql_bis.= " WHERE rowid = '".$maj_verifid."'";
+            $res_bis = $this->db->query($sql_bis);
+
+            $this->nb_verified += $nb_verifrows;
+        endif;
+        $this->db->commit(); 
+        return true;
     }
 
     /*****************************************************************/

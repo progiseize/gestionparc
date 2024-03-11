@@ -5,6 +5,10 @@
 [comment]: <> (Type de champ date)
 
 ***
+### 1.4.1
+* FIX - Var name $results_prodserv (GestionParcGetListProdServ())
+* NEW - Possibilité de vérifier tous les éléments d'un parc pour les admins seulement  
+
 ### 1.4.0
 * FIX - Code review with PHPCS 
 
@@ -46,20 +50,20 @@
 * NEW - Affichage mises à jour pages modules
 
 ### 1.3 (23/05/2022)
-NEW - Activation / Désactivation des parcs
-NEW - Nouvelle interface à onglets
-MAJ - Champ désactivé par défaut lors de la création
-MAJ - Fichiers CSV - En attente du modèle en cours de dev
+* NEW - Activation / Désactivation des parcs
+* NEW - Nouvelle interface à onglets
+* MAJ - Champ désactivé par défaut lors de la création
+* MAJ - Fichiers CSV - En attente du modèle en cours de dev
 
 ### 1.2 (04/05/2022)
-NEW - fusion des parcs et des interventions lors de la fusion de tiers
-NEW - Option pour saisie des heures par l'utilisateur ou en automatique.
+* NEW - fusion des parcs et des interventions lors de la fusion de tiers
+* NEW - Option pour saisie des heures par l'utilisateur ou en automatique.
 
 ### 1.1 (16/03/2022)
-MAJ - Le bouton vérification n'est plus visible si l'ensemble des parcs sont vides
-NEW - Il est possible d'annuler une vérification
-NEW - Possibilité de masquer le contenu des parcs
-NEW - Option pour redirection vers les fiches d'interventions générées
+* MAJ - Le bouton vérification n'est plus visible si l'ensemble des parcs sont vides
+* NEW - Il est possible d'annuler une vérification
+* NEW - Possibilité de masquer le contenu des parcs
+* NEW - Option pour redirection vers les fiches d'interventions générées
 
 ### 1.0 (16/03/2022)
 * Module permettant de créer des parcs clients et créer des interventions sur ces parcs.
