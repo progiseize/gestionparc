@@ -24,7 +24,7 @@ $langs->load("gestionparc@gestionparc");
 // Protection if external user
 if ($user->socid > 0) : accessforbidden(); 
 endif;
-if (!$user->rights->gestionparc->configurer) : accessforbidden(); 
+if (!$user->hasRight('gestionparc','parc','setup')) : accessforbidden(); 
 endif;
 
 /*******************************************************************
@@ -118,8 +118,9 @@ if ($action == 'set_options') :
             endif;
 
             $dir = DOL_DATA_ROOT.'/gestionparc';
-            if (!is_dir($dir)) : if(!mkdir($dir, 0755)) : $error++; setEventMessages($langs->trans('gp_error_creafolder'), null, 'errors'); 
-            endif; 
+            if (!is_dir($dir)) : 
+                if(!mkdir($dir, 0755)) : $error++; setEventMessages($langs->trans('gp_error_creafolder'), null, 'errors'); 
+                endif; 
             endif;
 
         endif;

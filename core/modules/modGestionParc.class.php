@@ -67,7 +67,7 @@ class modGestionParc extends DolibarrModules
         $this->editor_url = 'https://progiseize.fr';
         
         // Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-        $this->version = '1.4.1';
+        $this->version = '1.4.2';
         $this->url_last_version ="https://progiseize.fr/modules_info/lastversion.php?module=".$this->numero;
 
         // Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
@@ -171,7 +171,7 @@ class modGestionParc extends DolibarrModules
         // 'thirdparty'       to add a tab in third party view
         // 'user'             to add a tab in user view
         $this->tabs = array(
-            'thirdparty:+gestionparc:gp_clientparc:gestionparc@gestionparc:$object->client:/gestionparc/tabs/gestionparc.php?socid=__ID__'
+            'thirdparty:+gestionparc:gp_clientparc:gestionparc@gestionparc:$object->client && $user->hasRight("gestionparc","parc","read"):/gestionparc/tabs/gestionparc.php?socid=__ID__'
         );
 
         if (! isset($conf->gestionparc) || ! isset($conf->gestionparc->enabled)) {
@@ -216,12 +216,20 @@ class modGestionParc extends DolibarrModules
 
         // Permissions
         $this->rights = array();        // Permission array used by this module
-        $r=1;
+        $r=0;
 
-        $this->rights[$r][0] = $this->numero.''.$r;   // Permission id (must not be already used)
-        $this->rights[$r][1] = 'Configuration du module';    // Permission label
-        $this->rights[$r][3] = 0;                    // Permission by default for new user (0/1)
-        $this->rights[$r][4] = 'configurer';             // In php code, permission will be checked by test
+        $this->rights[$r][0] = $this->numero . sprintf("%02d", $r + 1);
+        $this->rights[$r][1] = 'Configuration des parcs';   // Permission label
+        $this->rights[$r][3] = 0;                   // Permission by default for new user (0/1)
+        $this->rights[$r][4] = 'parc';        // In php code, permission will be checked by test
+        $this->rights[$r][5] = 'setup';              // In php code, permission will be checked by test if ($user->rights->module->thirdt->delete)
+        $r++;
+
+        $this->rights[$r][0] = $this->numero . sprintf("%02d", $r + 1);
+        $this->rights[$r][1] = 'Lire les parcs';   // Permission label
+        $this->rights[$r][3] = 0;                   // Permission by default for new user (0/1)
+        $this->rights[$r][4] = 'parc';        // In php code, permission will be checked by test
+        $this->rights[$r][5] = 'read';              // In php code, permission will be checked by test if ($user->rights->module->thirdt->delete)
         $r++;
 
         // Add here list of permission defined by an id, a label, a boolean and two constant strings.
@@ -237,29 +245,29 @@ class modGestionParc extends DolibarrModules
         $this->menu = array();          // List of menus to add
         $r=0;
 
-        $this->menu[$r]=array( 
-            'fk_menu'=>'fk_mainmenu=progiseize',
+        /*$this->menu[$r]=array( 
+            'fk_menu'=>'fk_mainmenu=companies',
             'type'=>'left',
             'titre'=> $langs->trans('Module300320Name'),
-            'mainmenu'=>'progiseize',
+            'mainmenu'=>'companies',
             'leftmenu'=> $this->rights_class,
             'url'=>'/gestionparc/admin/manager.php', 'langs'=>'gestionparc@gestionparc', 'position'=> 400,
             'enabled'=>'1', 'perms'=>'1','target'=>'', 'user'=>2,
             'prefix' => '<span class="fas fa-boxes" style="color: #6c6aa8;margin-right:3px;"></span> '
         );
-        $r++;
+        $r++;*/
 
         $this->menu[$r]=array(
-            'fk_menu'=>'fk_mainmenu=progiseize,fk_leftmenu='.$this->rights_class,
+            'fk_menu'=>'fk_mainmenu=companies,fk_leftmenu=thirdparties',
             'type'=>'left',
             'titre'=>'Gestion Parc Client',
-            'mainmenu'=>'',
-            'leftmenu'=>'',
+            'mainmenu'=>'companies',
+            'leftmenu'=>'tty',
             'url'=>'/gestionparc/admin/manager.php',
             'langs'=>'gestionparc@gestionparc',
             'position'=> 410,
-            'enabled'=> '$conf->gestionparc->enabled',
-            'perms'=> '$user->rights->gestionparc->configurer',
+            'enabled'=> '$conf->gestionparc->enabled && $user->hasRight("gestionparc","parc","setup")',
+            'perms'=> '$user->hasRight("gestionparc","parc","setup")',
             'target'=>'',
             'user'=>2
         );

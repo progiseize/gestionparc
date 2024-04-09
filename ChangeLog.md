@@ -5,6 +5,9 @@
 [comment]: <> (Type de champ date)
 
 ***
+### 1.4.2
+* NEW - Nouveau droit lecture (différenciation droits gestion & lecture)
+
 ### 1.4.1
 * FIX - Var name $results_prodserv (GestionParcGetListProdServ())
 * NEW - Possibilité de vérifier tous les éléments d'un parc pour les admins seulement  

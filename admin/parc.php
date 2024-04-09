@@ -27,7 +27,7 @@ $langs->load("gestionparc@gestionparc");
 ********************************************************************/
 if ($user->socid > 0) : accessforbidden(); 
 endif;
-if (!$user->rights->gestionparc->configurer) : accessforbidden(); 
+if (!$user->hasRight('gestionparc','parc','setup')) : accessforbidden(); 
 endif;
 
 $rowid = GETPOST('id', 'int'); if(empty($rowid)) : header('Location: '.$dolibarr_main_url_root.'/custom/gestionparc/admin/manager'); 

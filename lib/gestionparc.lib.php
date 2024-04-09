@@ -6,10 +6,11 @@ dol_include_once('./gestionparc/class/gestionparc.class.php');
 function GestionParcAdminPrepareHead()
 {
 
-    global $langs, $db, $conf;
+    global $langs, $db, $conf, $user;
+
+    if (!$user->hasRight('gestionparc','parc','setup')) : return array(); endif;
 
     $langs->load("gestionparc@gestionparc");
-    $head = '';
 
     $gestionparc = new GestionParc($db);
     $list_parctypes = $gestionparc->list_parcType();
@@ -44,16 +45,13 @@ function GestionParcAdminPrepareHead()
 
     endif;
     
-    complete_head_from_modules($conf, $langs, $object, $head, $h, 'gestionparc');
+    complete_head_from_modules($conf, $langs, '', $head, $h, 'gestionparc');
 
     return $head;
 }
 
 function GestionParcTabs($list_parctypes)
 {
-
-    /*var_dump($list_parctypes);
-    var_dump($_SERVER);*/
 
     $i = 0;
     $tabs = array();
