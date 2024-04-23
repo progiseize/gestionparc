@@ -10,12 +10,6 @@ dol_include_once('./gestionparc/lib/gestionparc.lib.php');
 
 class GestionParc
 {
-
-    /********************************************************
-     * ****** TODO 
-     * - Créer les bases des données automatiquement
-     * - Ajouter une option catégorie tiers sur les types de parc
-     */
     
     public $table_element = 'gestionparc';
     public $table_element_fields = 'gestionparc_fields';
@@ -77,7 +71,7 @@ class GestionParc
 
         global $conf, $langs;
 
-        if($user->rights->gestionparc->configurer) :
+        if($user->hasRight('gestionparc','parc','setup')) :
 
             $this->parc_key = $this->constructParcKey($this->label);
 
@@ -139,7 +133,7 @@ class GestionParc
 
         global $conf, $langs;
 
-        if($user->rights->gestionparc->configurer) :
+        if($user->hasRight('gestionparc','parc','setup')) :
 
             $this->fetch_parcType($parc_id);
 
@@ -168,7 +162,7 @@ class GestionParc
 
         global $conf, $langs;
 
-        if($user->rights->gestionparc->configurer) :
+        if($user->hasRight('gestionparc','parc','setup')) :
 
             $this->db->begin();
 
@@ -355,7 +349,7 @@ class GestionParc
 
         global $user;
 
-        if($user->rights->gestionparc->configurer) :
+        if($user->hasRight('gestionparc','parc','setup')) :
 
             $sql = "UPDATE ".MAIN_DB_PREFIX.$this->table_element." SET enabled = ".$status." WHERE rowid = ".$parc_id;
             $result = $this->db->query($sql);
@@ -390,7 +384,7 @@ class GestionParc
     public function removeField($field_id,$user)
     {
 
-        if($user->rights->gestionparc->configurer) :
+        if($user->hasRight('gestionparc','parc','setup')) :
 
             $gpf = new GestionParcField($this->db);
             $gpf->rowid = $field_id;
@@ -487,6 +481,8 @@ class GestionParc
         endif;
 
         $result = $this->db->query($sql);
+        if(!$result): return -1; endif;
+
         $obj = $this->db->fetch_object($result);
         return $obj->nb_items;
     }
@@ -599,18 +595,22 @@ class GestionParc
 
         foreach($list_parcs as $parc_id => $parc):
             switch ($action):
-            case 'add': if(!$this->db->DDLAddField(MAIN_DB_PREFIX.$this->table_element.'__'.$parc['key'], 'verif', array('type'=>'BOOLEAN','null' => 'NOT NULL','extra'=> 'DEFAULT 0'))) :$error++;
-            endif;
-                break;
-            case 'remove': if(!$this->db->DDLDropField(MAIN_DB_PREFIX.$this->table_element.'__'.$parc['key'], 'verif')) :$error++;
-            endif;
-                break;
+                case 'add': 
+                    if(!$this->db->DDLAddField(MAIN_DB_PREFIX.$this->table_element.'__'.$parc['key'], 'verif', array('type'=>'BOOLEAN','null' => 'NOT NULL','extra'=> 'DEFAULT 0'))) :
+                        $error++;
+                    endif;
+                    break;
+                case 'remove': 
+                    if(!$this->db->DDLDropField(MAIN_DB_PREFIX.$this->table_element.'__'.$parc['key'], 'verif')) :
+                        $error++;
+                    endif;
+                    break;
             endswitch;
         endforeach;
 
         if(!$error) : $this->db->commit(); return true;
-           else: $this->db->rollback(); return false;
-           endif;
+        else: $this->db->rollback(); return false;
+        endif;
     }
 
     /*****************************************************************/
@@ -779,7 +779,7 @@ class GestionParcField
 
         global $conf, $langs;
 
-        if($user->rights->gestionparc->configurer) :
+        if($user->hasRight('gestionparc','parc','setup')) :
 
             $this->field_key = $this->constructFieldKey($this->label);
 
@@ -882,7 +882,7 @@ class GestionParcField
 
         global $conf, $langs;
 
-        if($user->rights->gestionparc->configurer) :
+        if($user->hasRight('gestionparc','parc','setup')) :
 
             $update_key = false;
             $this->author_maj = $user->id;
@@ -982,7 +982,7 @@ class GestionParcField
 
         global $conf, $user, $langs;
 
-        if($user->rights->gestionparc->configurer) :
+        if($user->hasRight('gestionparc','parc','setup')) :
 
             $this->fetch_parcField($rowid);
 
@@ -1015,7 +1015,7 @@ class GestionParcField
 
         global $conf, $user, $langs;
 
-        if($user->rights->gestionparc->configurer) :
+        if($user->hasRight('gestionparc','parc','setup')) :
 
             $sql = "UPDATE ".MAIN_DB_PREFIX.$this->table_element." SET enabled = ".$status." WHERE rowid = ".$this->rowid;
 
@@ -1500,62 +1500,62 @@ class GestionParcVerif
         // Version Dolibarr
         $dolibarr_version = explode('.', DOL_VERSION);
         
-        if(intval($dolibarr_version[0]) <= 17) : 
-            include_once DOL_DOCUMENT_ROOT.'/core/modules/export/export_csv.modules.php'; 
+        if(intval($dolibarr_version[0]) <= 17) :
+            include_once DOL_DOCUMENT_ROOT.'/core/modules/export/export_csv.modules.php';
             $export_class_name = 'ExportCsv';
-     else: 
-         include_once DOL_DOCUMENT_ROOT.'/core/modules/export/export_csvutf8.modules.php';
-         $export_class_name = 'ExportCsvUtf8';
-     endif;
+        else: 
+            include_once DOL_DOCUMENT_ROOT.'/core/modules/export/export_csvutf8.modules.php';
+            $export_class_name = 'ExportCsvUtf8';
+        endif;
 
         $error = 0;
 
-        $this->db->begin();        
+        $this->db->begin();
 
         $intervention = new Fichinter($this->db);
         $intervention->socid = $socid;
         $intervention->description = 'Vérification Parc Client '.date('d/m/Y');
-     if(!empty($description)) : $intervention->note_public = $description; 
-     endif;
+        if(!empty($description)) : $intervention->note_public = $description; 
+        endif;
         $intervention->create($user);
 
         $gestionparc = new GestionParc($this->db);
-     $list_parctypes = $gestionparc->list_parcType();
+        $list_parctypes = $gestionparc->list_parcType();
 
-     $verif_files = array();
+        $verif_files = array();
 
-     $docs_list = array();
+        $docs_list = array();
 
-     // CONTENU 
+        // CONTENU 
         $lineverif_desc = ''; $i = 0;
 
         /*var_dump($intervention);
         var_dump($gestionparc);*/
 
-     foreach($list_parctypes as $parctype_id => $parctype_infos): $i++;
+        foreach($list_parctypes as $parctype_id => $parctype_infos): $i++;
 
             $list_parcFields = $gestionparc->list_parcFields($parctype_id);
-         $parc_lines = $gestionparc->getSocParcContent($socid, $parctype_infos['key']);
+            $parc_lines = $gestionparc->getSocParcContent($socid, $parctype_infos['key']);
 
-         $nb_parclines = count($parc_lines);
+            $nb_parclines = count($parc_lines);
 
-         if($nb_parclines > 0) :
+            if($nb_parclines > 0) :
 
                 $csv_parc = new $export_class_name($this->db);
                 $csv_parc->separator = ';';
 
                 // ON DONNE UN NOM AU FICHIER
-             $upload_dir = $conf->ficheinter->dir_output.'/'.dol_sanitizeFileName($intervention->ref);
-             $result_creadir = dol_mkdir($upload_dir);
-             $file_title = 'gestionparc-'.$parctype_infos['key'].'-SOC'.$socid.'-'.date('dmY').'.'.$csv_parc->extension;
-             $dir_file = $upload_dir.'/'.$file_title;
-             array_push($verif_files, $file_title);
+                $upload_dir = $conf->ficheinter->dir_output.'/'.dol_sanitizeFileName($intervention->ref);
+                $result_creadir = dol_mkdir($upload_dir);
+                $file_title = 'gestionparc-'.$parctype_infos['key'].'-SOC'.$socid.'-'.date('dmY').'.'.$csv_parc->extension;
+                $dir_file = $upload_dir.'/'.$file_title;
+                array_push($verif_files, $file_title);
 
-             // ON OUVRE LE FICHIER
-             $csv_parc->open_file($dir_file, $langs);
+                // ON OUVRE LE FICHIER
+                $csv_parc->open_file($dir_file, $langs);
 
-             // ON ECRIT LE HEADER DU FICHIER
-             $csv_parc->write_header($langs);
+                // ON ECRIT LE HEADER DU FICHIER
+                $csv_parc->write_header($langs);
 
                 $verified_lines = 0;
 
@@ -1563,95 +1563,116 @@ class GestionParcVerif
                 $labels = array();
                 $types = array();
                 $enabled = array();
-             foreach($list_parcFields as $parcfield):
-                 $pos[$parcfield->field_key] = $parcfield->position;
-                 $labels[$parcfield->field_key] = $parcfield->label;
-                 $types[$parcfield->field_key] = $parcfield->type;
-                 $enabled[$parcfield->field_key] = $parcfield->enabled;
-             endforeach;
+                foreach($list_parcFields as $parcfield):
+                    $pos[$parcfield->field_key] = $parcfield->position;
+                    $labels[$parcfield->field_key] = $parcfield->label;
+                    $types[$parcfield->field_key] = $parcfield->type;
+                    $enabled[$parcfield->field_key] = $parcfield->enabled;
+                endforeach;
                 asort($pos);
 
                 // CSV LABELS
                 $csv_labels = array('verif');
                 $csv_labels_type = array('Text');
 
-             foreach($pos as $key_field => $key_pos):
+                foreach($pos as $key_field => $key_pos):
+                        
+                    if($enabled[$key_field]) : 
+
+                        $column_name = $key_field;
+                        if($types[$key_field] == 'prodserv') : $column_name .='-ID'; 
+                        endif;
+
+                        array_push($csv_labels, $column_name);
+                        array_push($csv_labels_type, 'Text');
+
+                        if($types[$key_field] == 'prodserv') :
+                            array_push($csv_labels, $key_field.'-label');
+                            array_push($csv_labels_type, 'Text');
+                        endif;
+
+                    endif;
+                endforeach;
                     
-                 if($enabled[$key_field]) : 
-
-                     $column_name = $key_field;
-                     if($types[$key_field] == 'prodserv') : $column_name .='-ID'; 
-                     endif;
-
-                     array_push($csv_labels, $column_name);
-                     array_push($csv_labels_type, 'Text');
-
-                     if($types[$key_field] == 'prodserv') :
-                         array_push($csv_labels, $key_field.'-label');
-                         array_push($csv_labels_type, 'Text');
-                     endif;
-
-                 endif;
-             endforeach;
-                
                 $csv_parc->write_title($csv_labels, $csv_labels, $langs, $csv_labels_type);
                 
                 $lineverif_desc .= '<br/>';
                 $lineverif_desc .= '<b><u>'.$parctype_infos['label'].'</u></b><br/>';
 
+                $full_description = '';
+
                 // POUR CHAQUE ELEMENT ON AJOUTE + 1 SI VERIF
-             foreach($parc_lines as $parcline): 
+                foreach($parc_lines as $parcline): 
 
-                 $csv_line = array();
-                 $csv_line_type = array();
+                    $csv_line = array();
+                    $csv_line_type = array();
 
-                 if($parcline->verif) :
-                     $verified_lines++; array_push($csv_line, 'oui'); array_push($csv_line_type, 'Text');
-                     else: array_push($csv_line, 'non'); array_push($csv_line_type, 'Text');
-                     endif;
+                    $full_description .= '- ';
 
-                     //var_dump($pos,$labels,$types,$enabled);
-                     foreach($pos as $key_field => $key_pos):
-                         if($enabled[$key_field]) : 
-                             if(!empty($parcline->{$key_field})) : array_push($csv_line, $parcline->{$key_field});
-                         else: array_push($csv_line, ' '); 
-                         endif;
-                         array_push($csv_line_type, 'Text');
+                    if($parcline->verif) :
+                        $verified_lines++; 
+                        array_push($csv_line, 'oui');
+                        array_push($csv_line_type, 'Text');
+                    else: 
+                        array_push($csv_line, 'non'); 
+                        array_push($csv_line_type, 'Text');
+                    endif;
 
-                         if($types[$key_field] == 'prodserv') :
+                    //var_dump($pos,$labels,$types,$enabled);
+                    foreach($pos as $key_field => $key_pos):
+                        if($enabled[$key_field]) : 
+                            if(!empty($parcline->{$key_field})) : array_push($csv_line, $parcline->{$key_field});
+                            else: array_push($csv_line, ' '); 
+                            endif;
+                            array_push($csv_line_type, 'Text');
 
-                             $p = new Product($this->db);
-                             $p->fetch($parcline->{$key_field});
+                            $full_description .= '<b>'.$labels[$key_field].':</b> '.$parcline->{$key_field}.' ';
 
-                             array_push($csv_line, $p->label);
-                             array_push($csv_line_type, 'Text');
-                         endif;
+                            if($types[$key_field] == 'prodserv') :
 
-                         endif;
-                     endforeach;
+                                $p = new Product($this->db);
+                                $p->fetch($parcline->{$key_field});
 
-                     $csv_parc->write_title($csv_line, $csv_line, $langs, $csv_line_type);
+                                array_push($csv_line, $p->label);
+                                array_push($csv_line_type, 'Text');
 
-                    
-             endforeach;
+                                $full_description .= '('.$p->label.') ';
+                            endif;
+
+                            $full_description .= '<b>/</b> ';
+
+                        endif;
+                    endforeach;
+
+                    if($parcline->verif) : $full_description .= '<b>Vérifié: </b>Oui';
+                    else: $full_description .= '<b>Vérifié: </b>Non';
+                    endif;
+                    $full_description .= '<br/>';
+
+                    $csv_parc->write_title($csv_line, $csv_line, $langs, $csv_line_type);                        
+                endforeach;
 
                 $csv_parc->write_footer($langs);
-             $csv_parc->close_file();
+                $csv_parc->close_file();
 
-                $lineverif_desc .= '<span style="font-size:0.85em"><b>Eléments vérifiés:</b> '.$verified_lines.'/'.$nb_parclines.'<br/></span>';
+                $lineverif_desc .= '<span style="font-size:0.85em"><b>Eléments vérifiés:</b> '.$verified_lines.'/'.$nb_parclines.'</span><br/>';
+                if(getDolGlobalInt('MAIN_MODULE_GESTIONPARC_VERIFDETAILS')):
+                    $lineverif_desc .= '<span style="font-size:0.85em">'.$full_description.'</span><br/>';
+                endif;
+                
 
                 //
                 $parc_infos = array(
-             'parc_key' => $parctype_infos['key'],
-             'parc_label' => $parctype_infos['label'],
-             'parc_fields' => $list_parcFields,
-             'parc_lines' => $parc_lines,
+                    'parc_key' => $parctype_infos['key'],
+                    'parc_label' => $parctype_infos['label'],
+                    'parc_fields' => $list_parcFields,
+                    'parc_lines' => $parc_lines,
                 );
                 $docs_list[$parctype_id] = $parc_infos;
 
 
-         endif;
-     endforeach;
+            endif;
+        endforeach;
 
         // ON AJOUTE LA LIGNE
         $now = dol_now();
@@ -1668,11 +1689,11 @@ class GestionParcVerif
         $intervention->updateExtraField('gestionparc_isverif');
 
         // ON GENERE LES DOCUMENT 
-     if(!empty($docs_list)) :
-         foreach($docs_list as $parc_id => $parc_infos):
-             $intervention->generateDocument($this->model_pdf, $langs, 0, 0, 0, $parc_infos); // New Doc futur dev
-         endforeach;
-     endif;
+        if(!empty($docs_list)) :
+            foreach($docs_list as $parc_id => $parc_infos):
+                $intervention->generateDocument($this->model_pdf, $langs, 0, 0, 0, $parc_infos); // New Doc futur dev
+            endforeach;
+        endif;
 
         // ON CLOS LE MODE VERIF
         $sql_close = "UPDATE ".MAIN_DB_PREFIX.$this->table_element;
@@ -1684,9 +1705,9 @@ class GestionParcVerif
         $sql_close .= " WHERE rowid = '".$rowid."' AND socid = '".$socid."'";
 
         $result_close = $this->db->query($sql_close);
-     if($result_close && !$error) : $this->db->commit(); return $intervention->id;
-           else: $this->db->rollback(); return false;
-           endif;
+        if($result_close && !$error) : $this->db->commit(); return $intervention->id;
+        else: $this->db->rollback(); return false;
+        endif;
     }
 
     public function getLastVerif($socid)
@@ -1714,7 +1735,6 @@ class GestionParcVerif
         $result = $this->db->query($sql);
 
         $nb = $this->db->db->affected_rows;
-
 
         if($result) : $this->db->commit(); return $nb;
      else: $this->db->rollback(); return -1;

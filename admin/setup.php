@@ -80,7 +80,6 @@ endif;
 /*******************************************************************
 * ACTIONS
 ********************************************************************/
-
 $action = GETPOST('action');
 
 if ($action == 'set_options') :
@@ -93,14 +92,13 @@ if ($action == 'set_options') :
     // ON VERIFIE LE TOKEN
     if(GETPOST('token') == $_SESSION['token']) :
 
+        dolibarr_set_const($db, "MAIN_MODULE_GESTIONPARC_VERIFUSETIME", GETPOST('gp-verifusetime'), 'chaine', 0, '', $conf->entity);
+
         // Si l'option en cochée
         if(GETPOSTISSET('gp-use-verif')) : 
             dolibarr_set_const($db, "MAIN_MODULE_GESTIONPARC_USEVERIF", true, 'chaine', 0, '', $conf->entity);
-            dolibarr_set_const($db, "MAIN_MODULE_GESTIONPARC_VERIFUSETIME", GETPOST('gp-verifusetime'), 'chaine', 0, '', $conf->entity);
-            dolibarr_set_const($db, "MAIN_MODULE_GESTIONPARC_VERIFREDIRECT", GETPOST('gp-verifredirect'), 'chaine', 0, '', $conf->entity);
-            dolibarr_set_const($db, "MAIN_MODULE_GESTIONPARC_VERIFMODEL", 'simple', 'chaine', 0, '', $conf->entity);
-
             $extras_fichinter = $extrafields->fetch_name_optionals_label('fichinter');
+
             if(!array_key_exists('gestionparc_isverif', $extras_fichinter)) : 
                 $extrafields->addExtraField('gestionparc_isverif', 'gp_extrafieldFichInter_isverif', 'int', '100', '', 'fichinter', 0, 0, 'null', '', 0, '', '0', '', '', $conf->entity, 'gestionparc@gestionparc');
             endif;
@@ -124,6 +122,7 @@ if ($action == 'set_options') :
             endif;
 
         endif;
+
 
         if(!$error) :$db->commit(); setEventMessages($langs->trans('gp_setup_saved'), null, 'mesgs');
         else: $db->rollback(); setEventMessages($langs->trans('gp_error'), null, 'errors');
@@ -188,10 +187,16 @@ llxHeader('', $langs->transnoentities('Setup').' :: '.$langs->transnoentities('M
                         <td class="bold pgsz-optiontable-fieldname" valign="top"><?php echo $langs->trans('gp_setup_verif_redirect'); ?></td>               
                         <td class="pgsz-optiontable-fielddesc "><?php echo $langs->transnoentities('gp_setup_verif_redirect_desc'); ?></td>
                         <td class="right pgsz-optiontable-field ">
-                            <input type="checkbox" name="gp-verifredirect" <?php if($conf->global->MAIN_MODULE_GESTIONPARC_VERIFREDIRECT) : ?>checked="checked"<?php 
-                           endif; ?> />
+                            <?php echo ajax_constantonoff('MAIN_MODULE_GESTIONPARC_VERIFREDIRECT'); ?>
                         </td>
-                    </tr>  
+                    </tr>
+                    <tr class="dolpgs-tbody">
+                        <td class="bold pgsz-optiontable-fieldname" valign="top"><?php echo $langs->trans('gp_setup_verif_details'); ?></td>               
+                        <td class="pgsz-optiontable-fielddesc "><?php echo $langs->transnoentities('gp_setup_verif_details_desc'); ?></td>
+                        <td class="right pgsz-optiontable-field ">
+                            <?php echo ajax_constantonoff('MAIN_MODULE_GESTIONPARC_VERIFDETAILS'); ?>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
             <div class="right">
