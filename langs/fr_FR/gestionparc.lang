@@ -76,6 +76,8 @@ gp_setup_verif_redirect = Redirection vers intervention
 gp_setup_verif_redirect_desc = A la validation d'une vérification, vous serez redirigé automatiquement vers la fiche d'intervention créée
 gp_setup_verif_usetime = Durée interventions
 gp_setup_verif_usetime_desc = En heures. Si 0, le temps peut être défini par l'utilisateur
+gp_setup_verif_details=Détails interventions
+gp_setup_verif_details_desc=Afficher les détails sur les fiches d'interventions
 
 # PARC MANAGER
 gp_manager_pagetitle = Gestion des types de parc

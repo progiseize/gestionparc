@@ -25,7 +25,7 @@ $langs->load("gestionparc@gestionparc");
 // Protection if external user
 if ($user->socid > 0) : accessforbidden(); 
 endif;
-if (!$user->rights->gestionparc->configurer) : accessforbidden(); 
+if (!$user->hasRight('gestionparc','parc','setup')) : accessforbidden(); 
 endif;
 
 

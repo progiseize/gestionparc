@@ -15,6 +15,9 @@ endif;
 if ($user->socid > 0) : accessforbidden(); 
 endif;
 
+if (!$user->hasRight('gestionparc','parc','read')) : accessforbidden(); 
+endif;
+
 // Version Dolibarr
 $dolibarr_version = explode('.', DOL_VERSION);
 
