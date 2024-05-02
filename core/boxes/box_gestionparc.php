@@ -58,6 +58,8 @@ class box_gestionparc extends ModeleBoxes
 
         dol_include_once('./gestionparc/class/gestionparc.class.php');
 
+        $langs->load('gestionparc@gestionparc');
+
         $gestionparc = new GestionParc($db);
         $parc_types = $gestionparc->list_parcType();
 

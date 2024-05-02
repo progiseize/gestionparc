@@ -1,10 +1,12 @@
-# GestionParc
+## GestionParc
 
 [comment]: <> (TODO)
 [comment]: <> (Modele pdf)
 [comment]: <> (Type de champ date)
 
-***
+### 1.5.1
+* FIX - Load langs in loadBox 
+
 ### 1.5.0
 * NEW - Détails de la vérification sur les fiches d'intervention
 * MAJ - Mise à jour de la page setup
