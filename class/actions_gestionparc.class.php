@@ -10,8 +10,6 @@ dol_include_once('./gestionparc/class/gestionparc.class.php');
 class ActionsGestionParc
 {
 
- 
-    
     /**
      * Execute action completeTabsHead
      *
