@@ -19,10 +19,10 @@ require_once DOL_DOCUMENT_ROOT.'/core/boxes/modules_boxes.php';
 
 class box_gestionparc extends ModeleBoxes
 {
-    var $boxcode = "boxgestionparc";
-    var $boximg = "object_projectpub";
-    var $boxlabel= "gp_boxNb_title";
-    var $depends = array("gestionparc");
+    var $boxcode = 'boxgestionparc';
+    var $boximg = 'object_projectpub';
+    var $boxlabel = 'gp_boxNb_title';
+    var $depends = array('gestionparc');
 
     var $db;
     var $param;
@@ -58,6 +58,8 @@ class box_gestionparc extends ModeleBoxes
 
         dol_include_once('./gestionparc/class/gestionparc.class.php');
 
+        $langs->load('gestionparc@gestionparc');
+
         $gestionparc = new GestionParc($db);
         $parc_types = $gestionparc->list_parcType();
 
@@ -70,22 +72,16 @@ class box_gestionparc extends ModeleBoxes
         $this->info_box_contents[$i][3] = array('td' => 'class="bold right"','text' => $langs->trans('gp_boxNb_countItems'));
         $i++;
 
-        foreach($parc_types as $parc_key => $parc_infos):
-            
+        foreach($parc_types as $parc_key => $parc_infos):            
             $nb_items = $gestionparc->count_parcItems($parc_infos['key']);
             $nb_socs = $gestionparc->count_parcSoc($parc_infos['key']);
             $last_entry = $gestionparc->get_lastParc($parc_infos['key']);
-
             $this->info_box_contents[$i][0] = array('text' => $parc_infos['label']);
             $this->info_box_contents[$i][1] = array('td' => 'class="right"','text' => $nb_socs);
             $this->info_box_contents[$i][2] = array('td' => 'class="right"','text' => $last_entry['name'],'url'=> $last_entry['url']);
             $this->info_box_contents[$i][3] = array('td' => 'class="right"','text' => $nb_items);
-
             $i++;
-
         endforeach;
-    
-        
     }
 
     /**

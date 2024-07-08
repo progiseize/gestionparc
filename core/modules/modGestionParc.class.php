@@ -61,13 +61,13 @@ class modGestionParc extends DolibarrModules
         $this->name = preg_replace('/^mod/i', '', get_class($this));
         //$this->name = 'Saisie Rapide Factures Fournisseurs';
         // Module description, used if translation string 'ModuleXXXDesc' not found (where XXX is value of numeric property 'numero' of module)
-        $this->description = "gestionparc_desc";
-        $this->descriptionlong = "gestionparc_desclong";
+        $this->description = "Gardez une trace précise des équipements de vos clients et gérer efficacement leur maintenance.";
+        $this->descriptionlong = "Ce module offre une solution pratique pour organiser et suivre les informations liées aux équipements des clients et de générer des vérifications. Gardez une trace précise des équipements de vos clients et gérer efficacement leur maintenance.";
         $this->editor_name = 'Progiseize';
         $this->editor_url = 'https://progiseize.fr';
         
         // Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-        $this->version = '1.5.0';
+        $this->version = '1.5.1';
         //$this->url_last_version ="https://progiseize.fr/modules_info/lastversion.php?module=".$this->numero;
 
         // Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)

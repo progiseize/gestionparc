@@ -7,11 +7,11 @@ jQuery(document).ready(function(){
 	jQuery('.gp-eye-icon i').on('click',function(e){
 		var parentable = jQuery(this).closest('table');
 		if(jQuery(this).hasClass('fa-eye')){
-			console.log('eye');
+			//console.log('eye');
 			jQuery(this).removeClass('fa-eye').addClass('fa-eye-slash');
 			parentable.find('.gp-parc-hidden').removeClass('gp-parc-hidden');
 		} else {
-			console.log('eye-slash');
+			//console.log('eye-slash');
 			jQuery(this).removeClass('fa-eye-slash').addClass('fa-eye');
 			parentable.find('.liste_titre').addClass('gp-parc-hidden');
 			parentable.find('.gestionparc-newline').addClass('gp-parc-hidden').removeAttr('style');
