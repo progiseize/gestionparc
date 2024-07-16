@@ -4,6 +4,10 @@
 [comment]: <> (Modele pdf)
 [comment]: <> (Type de champ date)
 
+### 1.6.0
+* NEW - Advanced Exports in Excel format
+* FIX - Remove empty lines & console logs
+
 ### 1.5.1
 * FIX - Load langs in loadBox 
 

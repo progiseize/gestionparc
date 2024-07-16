@@ -67,7 +67,7 @@ class modGestionParc extends DolibarrModules
         $this->editor_url = 'https://progiseize.fr';
         
         // Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-        $this->version = '1.5.1';
+        $this->version = '1.6.0';
         //$this->url_last_version ="https://progiseize.fr/modules_info/lastversion.php?module=".$this->numero;
 
         // Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
@@ -136,14 +136,12 @@ class modGestionParc extends DolibarrModules
         // List of particular constants to add when module is enabled (key, 'chaine', value, desc, visible, 'current' or 'allentities', deleteonunactive)
         // Example: 
         $this->const=array(
-            0=>array('MAIN_MODULE_GESTIONPARC_USEVERIF','chaine',false,'',1),
-            1=>array('MAIN_MODULE_GESTIONPARC_VERIFMODEL','chaine','simple','',1),
-            2=>array('MAIN_MODULE_GESTIONPARC_VERIFUSETIME','chaine','0','',1),
-            3=>array('MAIN_MODULE_GESTIONPARC_VERIFREDIRECT','chaine',false,'',1),
+            0=>array('MAIN_MODULE_GESTIONPARC_USEVERIF','chaine',false,'',0),
+            1=>array('MAIN_MODULE_GESTIONPARC_VERIFMODEL','chaine','simple','',0),
+            2=>array('MAIN_MODULE_GESTIONPARC_VERIFUSETIME','chaine','0','',0),
+            3=>array('MAIN_MODULE_GESTIONPARC_VERIFREDIRECT','chaine',false,'',0),
             4=>array('EXPORT_CSV_FORCE_CHARSET','chaine','UTF-8','',1),
         );
-
-        
 
         // Array to add new pages in new tabs
         // Example: $this->tabs = array(

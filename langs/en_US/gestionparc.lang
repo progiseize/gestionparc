@@ -69,6 +69,8 @@ gp_setup_verifmodel = Détails parc sur les interventions
 gp_setup_verifmodel_desc = Détermine si les informations sur vos parcs sont renseignées sur les fiches d'interventions.
 gp_setup_verif_redirect = Redirection vers intervention
 gp_setup_verif_redirect_desc = A la validation d'une vérification, vous serez redirigé automatiquement vers la fiche d'intervention créée
+gp_setup_useAdvancedExport=Exports avancés
+gp_setup_useAdvancedExportDesc=Utiliser les exports avancés au format Excel
 
 # PARC MANAGER
 gp_manager_pagetitle = Gestion des types de parc

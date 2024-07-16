@@ -78,6 +78,8 @@ gp_setup_verif_usetime = Durée interventions
 gp_setup_verif_usetime_desc = En heures. Si 0, le temps peut être défini par l'utilisateur
 gp_setup_verif_details=Détails interventions
 gp_setup_verif_details_desc=Afficher les détails sur les fiches d'interventions
+gp_setup_useAdvancedExport=Exports avancés
+gp_setup_useAdvancedExportDesc=Utiliser les exports avancés au format Excel
 
 # PARC MANAGER
 gp_manager_pagetitle = Gestion des types de parc

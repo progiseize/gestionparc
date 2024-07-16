@@ -36,3 +36,4 @@ CREATE TABLE IF NOT EXISTS `llx_gestionparc_fields` (
 ALTER TABLE llx_gestionparc_fields ADD only_verif BOOLEAN NOT NULL DEFAULT 0;
 ALTER TABLE llx_gestionparc_fields CHANGE position position int NOT NULL DEFAULT '100';
 ALTER TABLE llx_gestionparc_fields CHANGE enabled enabled int NOT NULL DEFAULT '0';
+ALTER TABLE llx_gestionparc_fields ADD view_excel BOOLEAN NOT NULL DEFAULT 0;

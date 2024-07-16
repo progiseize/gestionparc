@@ -5,29 +5,23 @@
 
 
 $res=0;
-if (! $res && file_exists("../main.inc.php")) : $res=@include '../main.inc.php'; 
-endif;
-if (! $res && file_exists("../../main.inc.php")) : $res=@include '../../main.inc.php'; 
-endif;
-
-require_once DOL_DOCUMENT_ROOT.'/core/class/html.formfile.class.php';
-require_once DOL_DOCUMENT_ROOT.'/core/class/html.formactions.class.php';
-
-// ON RECUPERE LA VERSION DE DOLIBARR
-$version = explode('.', DOL_VERSION);
-
-// Load traductions files requiredby by page
-$langs->load("companies");
-$langs->load("other");
+if (! $res && file_exists("../main.inc.php")) : $res=@include '../main.inc.php'; endif;
+if (! $res && file_exists("../../main.inc.php")) : $res=@include '../../main.inc.php'; endif;
 
 // Protection if external user
-if ($user->socid > 0) : accessforbidden(); 
-endif;
+if ($user->socid > 0) : accessforbidden(); endif;
+
+require_once DOL_DOCUMENT_ROOT.'/core/class/html.formfile.class.php';
+dol_include_once('./gestionparc/class/gestionparc.class.php');
+
+// Load traductions files requiredby by page
+$langs->load("gestionparc@gestionparc");
 
 /*******************************************************************
 * VARIABLES
 ********************************************************************/
 $action = GETPOST('action');
+$gestionparc = new GestionParc($db);
 
 /*******************************************************************
 * ACTIONS

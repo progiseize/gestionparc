@@ -30,52 +30,7 @@ endif;
 /*******************************************************************
 * FONCTIONS
 ********************************************************************/
-/*function copyparc($typeOld,$typeNew){
 
-    global $db;
-
-    $sql_slct = "SELECT * FROM ".MAIN_DB_PREFIX."parc_client";
-    $sql_slct .= " WHERE type = '".$typeOld."'";
-    $sql_slct .= " ORDER BY rowid ASC";
-    $result = $db->query($sql_slct);
-
-    $success = 0;
-    $errors = 0;
-    $error_tab = 0;
-
-    $db->begin();
-
-    while ($obj = $db->fetch_object($result)): $error_obj = 0;
-
-        $sql_insrt = "INSERT INTO ".MAIN_DB_PREFIX."gestionparc__".$typeNew;
-        $sql_insrt.= " (socid,author,author_maj,date_creation,tms,numero,produit,marque,anneedemiseenservice,emplacement,observations)";
-        $sql_insrt.= " VALUES (";
-        $sql_insrt.= "'".$obj->tiers_id."',";
-        $sql_insrt.= "'".$obj->author."',";
-        $sql_insrt.= "'0',";
-        $sql_insrt.= "'".$obj->date_creation."',";
-        $sql_insrt.= "'".$obj->tms."',";
-        $sql_insrt.= "'".$obj->numero."',";
-        $sql_insrt.= "'".$obj->product_id."',";
-        $sql_insrt.= "'".$obj->marque."',";
-        $sql_insrt.= "'".$obj->yearmes."',";
-        $sql_insrt.= "'".$db->escape($obj->emplacement)."',";
-        $sql_insrt.= "'".$db->escape($obj->observations)."'";
-        $sql_insrt.= ")";
-
-        $result_insrt = $db->query($sql_insrt);
-        if($result_insrt): $db->commit(); $success++;
-        else: 
-            $errors++;  $db->rollback();
-            echo $sql_insrt.'<br/>';
-        endif;
-
-    endwhile;
-
-    var_dump($result->num_rows);
-    var_dump($success);
-    var_dump($errors);
-}*/
 
 /*******************************************************************
 * ACTIONS
@@ -195,6 +150,13 @@ llxHeader('', $langs->transnoentities('Setup').' :: '.$langs->transnoentities('M
                         <td class="pgsz-optiontable-fielddesc "><?php echo $langs->transnoentities('gp_setup_verif_details_desc'); ?></td>
                         <td class="right pgsz-optiontable-field ">
                             <?php echo ajax_constantonoff('MAIN_MODULE_GESTIONPARC_VERIFDETAILS'); ?>
+                        </td>
+                    </tr>
+                    <tr class="dolpgs-tbody">
+                        <td class="bold pgsz-optiontable-fieldname" valign="top"><?php echo $langs->trans('gp_setup_useAdvancedExport'); ?></td>               
+                        <td class="pgsz-optiontable-fielddesc "><?php echo $langs->transnoentities('gp_setup_useAdvancedExportDesc'); ?></td>
+                        <td class="right pgsz-optiontable-field ">
+                            <?php echo ajax_constantonoff('GESTIONPARC_ADVANCED_EXPORT'); ?>
                         </td>
                     </tr>
                 </tbody>

@@ -379,6 +379,20 @@ class GestionParc
     }
 
     /*****************************************************************/
+    // MODIFIER LA VUE EN EXPORT
+    /*****************************************************************/
+    public function setFieldViewExport($field_id, $yesorno)
+    {
+
+        $gpf = new GestionParcField($this->db);
+        $gpf->rowid = $field_id;
+
+        if($gpf->setViewExport($yesorno)) : return true;
+     else: return false; 
+     endif;
+    }
+
+    /*****************************************************************/
     // SUPPRIMER UN CHAMP
     /*****************************************************************/
     public function removeField($field_id,$user)
@@ -709,7 +723,6 @@ class GestionParc
 
         return $obj[0];
     }
-
 }
 
 class GestionParcField
@@ -735,6 +748,7 @@ class GestionParcField
     public $date_modification;
 
     public $only_verif = 0;
+    public $view_excel = 0;
 
     public $forbidden_words = array(
     'ACCESSIBLE','ADD','ALL','ALTER','ANALYZE','AND','AS','ASC','ASENSITIVE','AUTO_INCREMENT',
@@ -787,7 +801,7 @@ class GestionParcField
             $this->author = $user->id;
 
             $sql = "INSERT INTO ".MAIN_DB_PREFIX.$this->table_element;
-            $sql.= " (parc_id,label,field_key,type,params,required,default_value,enabled,position,author,only_verif)";
+            $sql.= " (parc_id,label,field_key,type,params,required,default_value,enabled,position,author,only_verif,view_excel)";
             $sql.= " VALUES (";
             $sql.= " ".$this->parc_id;
             $sql.= ", '".$this->db->escape($this->label)."'";
@@ -799,7 +813,8 @@ class GestionParcField
             $sql.= ", ".$this->statut;
             $sql.= ", ".intval($this->position);
             $sql.= ", ".$this->author;
-            $sql.= ", '".$this->db->escape($this->only_verif)."'";
+            $sql.= ", '".((int) $this->only_verif)."'";
+            $sql.= ", '".((int) $this->view_excel)."'";
             $sql.= ")";
 
             $result = $this->db->query($sql);
@@ -853,6 +868,7 @@ class GestionParcField
          $this->date_modification = $item->tms;
          $this->author = $item->author;
          $this->only_verif = intval($item->only_verif);
+         $this->view_excel = intval($item->view_excel);
 
          return $this->rowid;
      endif;
@@ -904,6 +920,7 @@ class GestionParcField
             $sql .= ",position  = '".intval($this->position)."'";
             $sql .= ",author_maj  = '".$this->author_maj."'";
             $sql .= ",only_verif  = '".$this->only_verif."'";
+            $sql .= ",view_excel  = '".$this->view_excel."'";
             $sql .= " WHERE rowid = ".$this->rowid;
 
             $result = $this->db->query($sql);
@@ -1030,6 +1047,25 @@ class GestionParcField
     }
 
     /*****************************************************************/
+    // ACTIVER / DESACTIVER UN ELEMENT FIELD
+    /*****************************************************************/
+    public function setViewExport($yesorno)
+    {
+
+        global $conf, $user, $langs;
+
+        if($user->hasRight('gestionparc','parc','setup')) :
+            $sql = "UPDATE ".MAIN_DB_PREFIX.$this->table_element." SET view_excel = ".$yesorno." WHERE rowid = ".$this->rowid;
+            $result = $this->db->query($sql);
+            if($result) : $this->db->commit(); return true;
+         else: $this->db->rollback(); return false;
+         endif;
+        
+     else: return false;
+     endif;
+    }
+
+    /*****************************************************************/
     // CONSTRUIRE LES CHAMPS
     /*****************************************************************/
     public function construct_field($gestionparc,$socid = '',$field_value = '',$additionnal_class = '')
@@ -1065,7 +1101,6 @@ class GestionParcField
       else:
 
           $nb_fields = $query_dblist->num_rows;
-
           if(!$nb_fields) : $output_field .= 'Aucun résultat';
        else:
 
@@ -1282,7 +1317,6 @@ class GestionParcField
 
      return $y;
     }
-
 }
 
 class GestionParcVerif
@@ -1291,7 +1325,7 @@ class GestionParcVerif
     public $table_element = 'gestionparc_verifs';
     public $parent_table_element = 'gestionparc';    
 
-    public $model_pdf = 'GestionParc';
+    public $model_pdf = 'soleil';
 
     public $rowid;
     public $socid;
@@ -1522,10 +1556,6 @@ class GestionParcVerif
         $gestionparc = new GestionParc($this->db);
         $list_parctypes = $gestionparc->list_parcType();
 
-        $verif_files = array();
-
-        $docs_list = array();
-
         // CONTENU 
         $lineverif_desc = ''; $i = 0;
 
@@ -1549,7 +1579,6 @@ class GestionParcVerif
                 $result_creadir = dol_mkdir($upload_dir);
                 $file_title = 'gestionparc-'.$parctype_infos['key'].'-SOC'.$socid.'-'.date('dmY').'.'.$csv_parc->extension;
                 $dir_file = $upload_dir.'/'.$file_title;
-                array_push($verif_files, $file_title);
 
                 // ON OUVRE LE FICHIER
                 $csv_parc->open_file($dir_file, $langs);
@@ -1659,17 +1688,6 @@ class GestionParcVerif
                 if(getDolGlobalInt('MAIN_MODULE_GESTIONPARC_VERIFDETAILS')):
                     $lineverif_desc .= '<span style="font-size:0.85em">'.$full_description.'</span><br/>';
                 endif;
-                
-
-                //
-                $parc_infos = array(
-                    'parc_key' => $parctype_infos['key'],
-                    'parc_label' => $parctype_infos['label'],
-                    'parc_fields' => $list_parcFields,
-                    'parc_lines' => $parc_lines,
-                );
-                $docs_list[$parctype_id] = $parc_infos;
-
 
             endif;
         endforeach;
@@ -1688,12 +1706,8 @@ class GestionParcVerif
         $intervention->array_options['options_gestionparc_isverif'] = $rowid;
         $intervention->updateExtraField('gestionparc_isverif');
 
-        // ON GENERE LES DOCUMENT 
-        if(!empty($docs_list)) :
-            foreach($docs_list as $parc_id => $parc_infos):
-                $intervention->generateDocument($this->model_pdf, $langs, 0, 0, 0, $parc_infos); // New Doc futur dev
-            endforeach;
-        endif;
+        // ON GENERE LE DOCUMENT 
+        $intervention->generateDocument($this->model_pdf, $langs);
 
         // ON CLOS LE MODE VERIF
         $sql_close = "UPDATE ".MAIN_DB_PREFIX.$this->table_element;
@@ -1701,13 +1715,233 @@ class GestionParcVerif
         $sql_close .= ", commentaires = '".$this->db->escape($description)."'";
         $sql_close .= ", fichinter_id = '".$intervention->id."'";
         $sql_close .= ", is_close = '1'";
-        //$sql_close .= ", files_list = '".json_encode($verif_files,JSON_UNESCAPED_UNICODE)."'";
         $sql_close .= " WHERE rowid = '".$rowid."' AND socid = '".$socid."'";
 
         $result_close = $this->db->query($sql_close);
         if($result_close && !$error) : $this->db->commit(); return $intervention->id;
         else: $this->db->rollback(); return false;
         endif;
+    }
+
+    public function advancedCloseVerif($socid,$description,$duree){
+
+        // TODO Ne pas créér d'onglets XLSX si pas de champ visible
+
+        global $conf, $langs, $user, $mysoc;
+        include_once DOL_DOCUMENT_ROOT.'/fichinter/class/fichinter.class.php';
+        include_once DOL_DOCUMENT_ROOT.'/core/lib/date.lib.php';
+        dol_include_once('gestionparc/class/gestionparcexport.class.php');
+
+        $this->db->begin();
+
+        //
+        $customer = new Societe($this->db);
+        $customer->fetch($socid);
+
+        $intervention = new Fichinter($this->db);
+        $intervention->socid = $socid;
+        $intervention->description = 'Vérification Parc Client '.date('d/m/Y');
+        if(!empty($description)) : $intervention->note_public = $description; endif;
+        $intervention->create($user);
+        $lineverif_desc = '';
+
+        //
+        $gestionparc = new GestionParc($this->db);
+        $list_parctypes = $gestionparc->list_parcType(1);
+
+        $sheetfile = new GestionParcExport($this->db);
+        $sheetfile->separator = ';';
+        $default_row_height = 16;
+
+        // ON DONNE UN NOM AU FICHIER
+        $upload_dir = $conf->ficheinter->dir_output.'/'.dol_sanitizeFileName($intervention->ref);
+        $result_creadir = dol_mkdir($upload_dir);
+        $file_title = 'rapport_verification.'.$sheetfile->extension;
+        $dir_file = $upload_dir.'/'.$file_title;
+
+        // ON OUVRE LE FICHIER
+        $sheetfile->open_file($dir_file, $langs);
+
+        // ON ECRIT LE HEADER DU FICHIER
+        $sheetfile->write_header($langs);
+
+        // ON RECUPERE LA FEUILLE ACTIVE
+        $sheet = $sheetfile->workbook->getActiveSheet();
+        $sheet->getDefaultRowDimension()->setRowHeight($default_row_height);
+        $sheetfile->workbook->getDefaultStyle()->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+
+        $letters_array = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
+
+        //
+        $tab = 0;
+        foreach($list_parctypes as $parctype_id => $parctype_infos): 
+
+            $list_parcFields = $gestionparc->list_parcFields($parctype_id);
+            $pos = array();
+            $labels = array();
+            $types = array();
+            $view_excel = array();
+            $verified_lines = 0;
+            $full_description = '';
+
+            foreach($list_parcFields as $parcfield):
+                if($parcfield->enabled):
+                    $pos[$parcfield->field_key] = $parcfield->position;
+                    $labels[$parcfield->field_key] = $parcfield->label;
+                    $types[$parcfield->field_key] = $parcfield->type;
+                    $view_excel[$parcfield->field_key] = $parcfield->view_excel;
+                endif;
+            endforeach;
+
+            // Si aucun champ à afficher, on passe au parc suivant
+            if(empty($pos)): continue; endif;
+            
+            // Tri et récupération du parc client
+            asort($pos);
+            $parc_lines = $gestionparc->getSocParcContent($socid, $parctype_infos['key']);
+            $nb_parclines = count($parc_lines);
+
+            // Si le parc client est vide, on passe au suivant
+            if($nb_parclines <= 0): continue; endif;
+
+            $lineverif_desc .= '<br/>';
+            $lineverif_desc .= '<b><u>'.$parctype_infos['label'].'</u></b><br/>';
+
+            // On verifie si on créé un onglet
+            $addtosheetfile = 0;
+            foreach($view_excel as $keyf => $view):
+                if($view): $addtosheetfile = 1; endif;
+            endforeach;
+
+            $row = 1;
+            if($addtosheetfile): 
+
+                $tab++;
+                if($tab == 1):
+                    $sheet->setTitle(strtoupper($parctype_infos['label']));
+                else:
+                    $sheetfile->workbook->createSheet();
+                    $sheetfile->workbook->setActiveSheetIndex($tab - 1);
+                    $sheet = $sheetfile->workbook->getActiveSheet();
+                    $sheet->getDefaultRowDimension()->setRowHeight($default_row_height);
+                    $sheet->setTitle(strtoupper($parctype_infos['label']));
+                endif;
+
+                // On dimensionne les colonnes
+                $sheet->getColumnDimension('A')->setWidth(15);
+                $sheet->getColumnDimension('B')->setWidth(45);
+                $sheet->getColumnDimension('C')->setWidth(20);
+                $sheet->getColumnDimension('D')->setWidth(40);
+                $sheet->getColumnDimension('E')->setWidth(40);
+            endif;
+
+            //
+            $split_parclines = array_chunk($parc_lines, 20);
+            $n = 0;
+            foreach($split_parclines as $parcset_key => $parcset): $n++;
+
+                if($addtosheetfile):
+
+                    if($n > 1): $row += 3; endif;
+
+                    // ********** CUSTOM HEADER
+                    $rowafterheader = $sheetfile->customHeader($row,$customer,$parctype_infos['label']);
+                    $row = $rowafterheader;
+                    $row++;
+
+                    // ********** PARC FIELDS TABLE  
+                    $letterkey = 0;
+                    foreach($pos as $key_field => $key_pos):
+                        if($view_excel[$key_field]):
+                            $sheet->setCellValue($letters_array[$letterkey].$row,$labels[$key_field]);
+                            $sheet->getStyle($letters_array[$letterkey].$row)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                            $sheet->getStyle($letters_array[$letterkey].$row)->getFont()->setBold(true);
+                            $letterkey++;
+                        endif;
+                    endforeach;
+                    $row++;
+
+                endif;
+
+                $letterkey = 0;
+                foreach($parcset as $parcline):
+
+                    $full_description .= '- ';
+                    foreach($pos as $key_field => $key_pos):
+                        if($types[$key_field] == 'prodserv') :
+                            require_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
+                            $p = new Product($this->db);
+                            $p->fetch($parcline->{$key_field});
+                            $fieldvalue = $p->label;
+                        else:
+                            $fieldvalue = $parcline->{$key_field};
+                        endif;
+
+                        if($view_excel[$key_field] && $addtosheetfile):
+                            $sheet->setCellValue($letters_array[$letterkey].$row,$fieldvalue);
+                            $sheet->getStyle($letters_array[$letterkey].$row)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                            $letterkey++;
+                        endif;
+                        $full_description .= '<b>'.$labels[$key_field].':</b> '.$fieldvalue.' <b>/</b> ';
+                    endforeach;
+
+                    if($addtosheetfile):
+                        $letterkey = 0;
+                        $row++;
+                    endif;
+
+                    if($parcline->verif): 
+                        $verified_lines++;
+                        $full_description .= '<b>Vérifié: </b>Oui';
+                    else:
+                        $full_description .= '<b>Vérifié: </b>Non';
+                    endif;
+                    $full_description .= '<br/>';
+
+                endforeach;
+            endforeach;
+
+            $lineverif_desc .= '<span style="font-size:0.85em"><b>Eléments vérifiés:</b> '.$verified_lines.'/'.$nb_parclines.'</span><br/>';
+            if(getDolGlobalInt('MAIN_MODULE_GESTIONPARC_VERIFDETAILS')):
+                $lineverif_desc .= '<span style="font-size:0.85em">'.$full_description.'</span><br/>';
+            endif;
+
+        endforeach;
+
+        //
+        $sheetfile->write_footer($langs);
+        $sheetfile->close_file();
+
+        // ON AJOUTE LA LIGNE
+        $now = dol_now();
+        $intervention->addline($user, $intervention->id, $lineverif_desc, $now, $duree);
+
+        // ON VALIDE L'INTERVENTION
+        $intervention->setValid($user);
+
+        // ON REPREND L'ENSEMBLE DES INFOS
+        $intervention->fetch($intervention->id);
+
+        // Extrafield Fichinter
+        $intervention->array_options['options_gestionparc_isverif'] = $this->rowid;
+        $intervention->updateExtraField('gestionparc_isverif');
+
+        // ON GENERE LE DOCUMENT 
+        $intervention->generateDocument($this->model_pdf, $langs);
+
+        // ON CLOS LE MODE VERIF
+        $sql_close = "UPDATE ".MAIN_DB_PREFIX.$this->table_element;
+        $sql_close .= " SET date_close = '".date('Y-m-d H:i:s')."'";
+        $sql_close .= ", commentaires = '".$this->db->escape($description)."'";
+        $sql_close .= ", fichinter_id = '".$intervention->id."'";
+        $sql_close .= ", is_close = '1'";
+        $sql_close .= " WHERE rowid = '".$this->rowid."' AND socid = '".$socid."'";
+
+        $result_close = $this->db->query($sql_close);
+        if($result_close) : $this->db->commit(); return $intervention->id;
+        else: $this->db->rollback(); return false;
+        endif;
+
     }
 
     public function getLastVerif($socid)
@@ -1741,5 +1975,4 @@ class GestionParcVerif
      endif;
 
     }
-
 }

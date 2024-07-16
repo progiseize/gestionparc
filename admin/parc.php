@@ -54,249 +54,280 @@ $gestionparc_fields = GestionParcGetFieldsType();
 ********************************************************************/
 
 $action = GETPOST('action');
-
 switch ($action):
 
-    // ACTIVER CHAMP
-case 'enable_field':
-
-    if(GETPOST('token') == $_SESSION['token']) :
-
-        $error = 0;
-
-        // IDENTIFIANT DU CHAMP
-        $field_id = GETPOST('field_id', 'int');
-        if(empty($field_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'warnings'); 
-        endif;
-
-        // ON MET A JOUR LE CHAMP
-        if(!$error) :
-            if($gestionparc->setFieldStatus($field_id, true)) : setEventMessages($langs->trans('gp_parcfield_activated'), null, 'mesgs');
-                else: setEventMessages($langs->trans('gp_error'), null, 'errors');
-                endif;
-        endif;
-        else:
-            setEventMessages("SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry", null, 'warnings');
-        endif;
-    break;
-
-    // DESACTIVER CHAMP
-case 'disable_field':
-
-    if(GETPOST('token') == $_SESSION['token']) :
-        $error = 0;
-
-        // IDENTIFIANT DU CHAMP
-        $field_id = GETPOST('field_id', 'int');
-        if(empty($field_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'warnings'); 
-        endif;
-
-        // ON MET A JOUR LE CHAMP
-        if(!$error) :
-            if($gestionparc->setFieldStatus($field_id, '0')) : setEventMessages($langs->trans('gp_parcfield_disactivated'), null, 'mesgs');
-                else: setEventMessages($langs->trans('gp_error'), null, 'errors');
-                endif;
-        endif;
-        else:
-            setEventMessages("SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry", null, 'warnings');
-        endif;
-    break;
-
-    // SUPPRIMER UN CHAMP
-case 'confirm_delete':
-        
-    if(GETPOST('token') == $_SESSION['token']) :
-
-        $error = 0;
-
-        // IDENTIFIANT DU CHAMP
-        $field_id = GETPOST('field_id', 'int');
-        if(empty($field_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'warnings'); 
-        endif;
-        if(!$error) :
-            if($gestionparc->removeField($field_id, $user)) : setEventMessages($langs->trans('gp_parcfield_delete_success'), null, 'mesgs');
-                else: setEventMessages($langs->trans('gp_error'), null, 'errors');
-                endif;
-        endif;
-
-        else:
-            setEventMessages("SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry", null, 'warnings');
-        endif;
-    break;
-
-    // PREPARER L'AJOUT D'UN CHAMP
-case 'prepare_parcfield':
-
-    // ON VERIFIE LE TOKEN
-    if(GETPOST('token') == $_SESSION['token']) :
-
-        $error = 0;
-
-        // IDENTIFIANT DU CHAMP
-        $field_type = GETPOST('gpnewfield_type', 'alpha');
-        if(empty($field_type)) : $error++; setEventMessages($langs->trans('gp_parcfield_new_needType'), null, 'errors'); 
-        endif;
-
-        else: $error++;setEventMessages("SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry", null, 'warnings');
-        endif;
-    break;
-
-    // PREPARER L'EDITION D'UN CHAMP
-case 'edit':
-
-    // ON VERIFIE LE TOKEN
-    if(GETPOST('token') == $_SESSION['token']) :
-
-        // IDENTIFIANT DU CHAMP
-        $field_id = GETPOST('field_id', 'int');
-        if(empty($field_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'errors'); 
-        endif;
-
-        $field_to_update = new GestionParcField($db);
-        $field_to_update->fetch_parcField($field_id);
-
-        else: $error++;setEventMessages("SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry", null, 'warnings');
-        endif;
-    break;
-
-    // AJOUTER / EDITER UN CHAMP
-case 'edit_parcfield':
-case 'add_parcfield':
-
-    if(GETPOST('token') == $_SESSION['token']) :
-
-        $error = 0;
-        $gpf = new GestionParcField($db);
-
-        if($action == 'add_parcfield') : 
-
-            $fieldname = 'newfield';
-            $field_type = GETPOST($fieldname.'_type', 'alpha');
-            if(empty($field_type)) :$error++; setEventMessages($langs->trans('gp_fieldtype_unknown'), null, 'errors'); 
+    // VIEW ON EXPORT
+    case 'enable_viewexport':
+        if(GETPOST('token') == $_SESSION['token']) :
+            $error = 0;
+            // IDENTIFIANT DU CHAMP
+            $field_id = GETPOST('field_id', 'int');
+            if(empty($field_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'warnings'); 
             endif;
-            $gpf->parc_id = $gestionparc->rowid;
-            $gpf->type = $field_type;
-
-            elseif($action == 'edit_parcfield') : 
-
-                $fieldname = 'editfield';
-
-                // IDENTIFIANT DU CHAMP
-                $field_id = GETPOST('field_id', 'int');
-                if(empty($field_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'errors'); 
-                endif;
-
-                //$field_to_update = new GestionParcField($db);
-                $gpf->fetch_parcField($field_id);
-                $field_to_update = $gpf;
-                $field_type = $gpf->type;
-                $gpf->old_label = $gpf->label;
-
-            endif;
-
-            // VERIFICATIONS COMMUNES            
-            if(empty(GETPOST($fieldname.'_label', 'alpha'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('Label')), null, 'errors'); 
-            endif; 
-            if(empty(GETPOST($fieldname.'_position', 'int'))) : $newfield_position = 100; else: $newfield_position = GETPOST($fieldname.'_position', 'int'); 
-            endif;
-
-            
-            $gpf->label = GETPOST($fieldname.'_label', 'alpha');            
-            $gpf->required = (GETPOSTISSET($fieldname.'_required'))?1:0;
-            $gpf->default_value = GETPOST($fieldname.'_default_value', 'alpha');
-            $gpf->position = $newfield_position;
-            if(GETPOSTISSET($fieldname.'_onlyverif') && GETPOST($fieldname.'_onlyverif', 'aZ09') == 'on') : $gpf->only_verif = 1;
-            else: $gpf->only_verif = 0;
-            endif;
-            
-            switch ($field_type):
-
-            case 'autonumber': $gpf->required = true; 
-                break;
-
-            case 'dblist':
-                if(empty(GETPOST($fieldname.'_param_dblist_table'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_dblist')), null, 'errors'); 
-                endif;
-                if(empty(GETPOST($fieldname.'_param_dblist_keyval'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_dblist_keyval')), null, 'errors'); 
-                endif;
-                
-                if(!$error) :
-
-                    // ON CONSTRUIT LE TABLEAU DES PARAMETRES
-                    $gpf->params = array(
-                        'dblist_table' => GETPOST($fieldname.'_param_dblist_table'),
-                        'dblist_keyval' => GETPOST($fieldname.'_param_dblist_keyval'),
-                        'dblist_filter' => GETPOST($fieldname.'_param_dblist_filter'),
-                    );
-
-                endif;
-
-                break;
-
-            case 'yearlist':
-
-                // VERIFICATIONS
-                if(empty(GETPOST($fieldname.'_param_yearstart'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_yearstart')), null, 'errors'); 
-                endif;
-                if(empty(GETPOST($fieldname.'_param_yearstop'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_yearstop')), null, 'errors'); 
-                endif;
-                if(empty(GETPOST($fieldname.'_param_yearsort'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_yearsort')), null, 'errors'); 
-                endif;
-
-                if(!$error) :
-
-                    // ON CONSTRUIT LE TABLEAU DES PARAMETRES
-                    $gpf->params = array(
-                        'yearstart' => GETPOST($fieldname.'_param_yearstart'),
-                        'yearstop' => GETPOST($fieldname.'_param_yearstop'),
-                        'yearsort' => GETPOST($fieldname.'_param_yearsort'),
-                        'yearcustom' => GETPOST($fieldname.'_param_yearcustom'),
-                    );
-
-                endif;
-                break;
-
-            case 'customlist':
-
-                // VERIFICATIONS
-                if(empty(GETPOST($fieldname.'_param_listvalues'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_listvalues')), null, 'errors'); 
-                endif;
-                if(empty(GETPOST($fieldname.'_param_listsort'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_listsort')), null, 'errors'); 
-                endif;
-
-                if(!$error) :
-
-                    // ON CONSTRUIT LE TABLEAU DES PARAMETRES
-                    $gpf->params = array(
-                        'listvalues' => GETPOST($fieldname.'_param_listvalues'),
-                        'listsort' => GETPOST($fieldname.'_param_listsort'),
-                        'listcustom' => GETPOST($fieldname.'_param_listcustom'),
-                    );
-                endif;
-                break;
-
-            case 'prodserv':
-                $gpf->params =  array(
-                    'prodservtags' => GETPOST($fieldname.'_param_prodservtags'),
-                    'prodservref' => GETPOST($fieldname.'_param_prodservref')
-                );
-                break;
-
-            endswitch;
-
+            // ON MET A JOUR LE CHAMP
             if(!$error) :
-                if($action == 'add_parcfield' && $gpf->add_parcField($user)) : setEventMessages($langs->trans('gp_addparcfield_success'), null, 'mesgs');
-                elseif($action == 'edit_parcfield' && $gpf->update_parcField($user)) : setEventMessages($langs->trans('gp_updateparcfield_success'), null, 'mesgs');
-                else: setEventMessages($langs->trans('gp_error'), null, 'errors'); $error++; var_dump($gpf->db->lasterror);
-                endif;
+                if($gestionparc->setFieldViewExport($field_id, true)) : setEventMessages($langs->trans('gp_parcfield_activated'), null, 'mesgs');
+                else: setEventMessages($langs->trans('gp_error'), null, 'errors'); endif;
+            endif;
+        else:
+            setEventMessages("SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry", null, 'warnings');
+        endif;
+        break;
+
+    // DONT VIEW ON EXPORT
+    case 'disable_viewexport':
+
+        if(GETPOST('token') == $_SESSION['token']) :
+            $error = 0;
+
+            // IDENTIFIANT DU CHAMP
+            $field_id = GETPOST('field_id', 'int');
+            if(empty($field_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'warnings'); 
+            endif;
+
+            // ON MET A JOUR LE CHAMP
+            if(!$error) :
+                if($gestionparc->setFieldViewExport($field_id, '0')) : setEventMessages($langs->trans('gp_parcfield_disactivated'), null, 'mesgs');
+                    else: setEventMessages($langs->trans('gp_error'), null, 'errors');
+                    endif;
             endif;
             else:
                 setEventMessages("SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry", null, 'warnings');
             endif;
-    break;
-    
-endswitch;
+        break;
 
+    // ACTIVER CHAMP
+    case 'enable_field':
+        if(GETPOST('token') == $_SESSION['token']) :
+            $error = 0;
+            // IDENTIFIANT DU CHAMP
+            $field_id = GETPOST('field_id', 'int');
+            if(empty($field_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'warnings'); 
+            endif;
+            // ON MET A JOUR LE CHAMP
+            if(!$error) :
+                if($gestionparc->setFieldStatus($field_id, true)) : setEventMessages($langs->trans('gp_parcfield_activated'), null, 'mesgs');
+                else: setEventMessages($langs->trans('gp_error'), null, 'errors'); endif;
+            endif;
+        else:
+            setEventMessages("SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry", null, 'warnings');
+        endif;
+        break;
+
+    // DESACTIVER CHAMP
+    case 'disable_field':
+
+        if(GETPOST('token') == $_SESSION['token']) :
+            $error = 0;
+
+            // IDENTIFIANT DU CHAMP
+            $field_id = GETPOST('field_id', 'int');
+            if(empty($field_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'warnings'); 
+            endif;
+
+            // ON MET A JOUR LE CHAMP
+            if(!$error) :
+                if($gestionparc->setFieldStatus($field_id, '0')) : setEventMessages($langs->trans('gp_parcfield_disactivated'), null, 'mesgs');
+                    else: setEventMessages($langs->trans('gp_error'), null, 'errors');
+                    endif;
+            endif;
+            else:
+                setEventMessages("SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry", null, 'warnings');
+            endif;
+        break;
+
+    // SUPPRIMER UN CHAMP
+    case 'confirm_delete':
+            
+        if(GETPOST('token') == $_SESSION['token']) :
+
+            $error = 0;
+
+            // IDENTIFIANT DU CHAMP
+            $field_id = GETPOST('field_id', 'int');
+            if(empty($field_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'warnings'); 
+            endif;
+            if(!$error) :
+                if($gestionparc->removeField($field_id, $user)) : setEventMessages($langs->trans('gp_parcfield_delete_success'), null, 'mesgs');
+                    else: setEventMessages($langs->trans('gp_error'), null, 'errors');
+                    endif;
+            endif;
+
+            else:
+                setEventMessages("SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry", null, 'warnings');
+            endif;
+        break;
+
+    // PREPARER L'AJOUT D'UN CHAMP
+    case 'prepare_parcfield':
+
+        // ON VERIFIE LE TOKEN
+        if(GETPOST('token') == $_SESSION['token']) :
+
+            $error = 0;
+
+            // IDENTIFIANT DU CHAMP
+            $field_type = GETPOST('gpnewfield_type', 'alpha');
+            if(empty($field_type)) : $error++; setEventMessages($langs->trans('gp_parcfield_new_needType'), null, 'errors'); 
+            endif;
+
+            else: $error++;setEventMessages("SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry", null, 'warnings');
+            endif;
+        break;
+
+    // PREPARER L'EDITION D'UN CHAMP
+    case 'edit':
+
+        // ON VERIFIE LE TOKEN
+        if(GETPOST('token') == $_SESSION['token']) :
+
+            // IDENTIFIANT DU CHAMP
+            $field_id = GETPOST('field_id', 'int');
+            if(empty($field_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'errors'); 
+            endif;
+
+            $field_to_update = new GestionParcField($db);
+            $field_to_update->fetch_parcField($field_id);
+
+            else: $error++;setEventMessages("SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry", null, 'warnings');
+            endif;
+        break;
+
+    // AJOUTER / EDITER UN CHAMP
+    case 'edit_parcfield':
+    case 'add_parcfield':
+        if(GETPOST('token') == $_SESSION['token']) :
+
+            $error = 0;
+            $gpf = new GestionParcField($db);
+
+            if($action == 'add_parcfield') : 
+
+                $fieldname = 'newfield';
+                $field_type = GETPOST($fieldname.'_type', 'alpha');
+                if(empty($field_type)) :$error++; setEventMessages($langs->trans('gp_fieldtype_unknown'), null, 'errors'); 
+                endif;
+                $gpf->parc_id = $gestionparc->rowid;
+                $gpf->type = $field_type;
+
+                elseif($action == 'edit_parcfield') : 
+
+                    $fieldname = 'editfield';
+
+                    // IDENTIFIANT DU CHAMP
+                    $field_id = GETPOST('field_id', 'int');
+                    if(empty($field_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'errors'); 
+                    endif;
+
+                    //$field_to_update = new GestionParcField($db);
+                    $gpf->fetch_parcField($field_id);
+                    $field_to_update = $gpf;
+                    $field_type = $gpf->type;
+                    $gpf->old_label = $gpf->label;
+
+                endif;
+
+                // VERIFICATIONS COMMUNES            
+                if(empty(GETPOST($fieldname.'_label', 'alpha'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('Label')), null, 'errors'); 
+                endif; 
+                if(empty(GETPOST($fieldname.'_position', 'int'))) : $newfield_position = 100; else: $newfield_position = GETPOST($fieldname.'_position', 'int'); 
+                endif;
+
+                
+                $gpf->label = GETPOST($fieldname.'_label', 'alpha');            
+                $gpf->required = (GETPOSTISSET($fieldname.'_required'))?1:0;
+                $gpf->default_value = GETPOST($fieldname.'_default_value', 'alpha');
+                $gpf->position = $newfield_position;
+                if(GETPOSTISSET($fieldname.'_onlyverif') && GETPOST($fieldname.'_onlyverif', 'aZ09') == 'on') : $gpf->only_verif = 1;
+                else: $gpf->only_verif = 0;
+                endif;
+                
+                switch ($field_type):
+
+                case 'autonumber': $gpf->required = true; 
+                    break;
+
+                case 'dblist':
+                    if(empty(GETPOST($fieldname.'_param_dblist_table'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_dblist')), null, 'errors'); 
+                    endif;
+                    if(empty(GETPOST($fieldname.'_param_dblist_keyval'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_dblist_keyval')), null, 'errors'); 
+                    endif;
+                    
+                    if(!$error) :
+
+                        // ON CONSTRUIT LE TABLEAU DES PARAMETRES
+                        $gpf->params = array(
+                            'dblist_table' => GETPOST($fieldname.'_param_dblist_table'),
+                            'dblist_keyval' => GETPOST($fieldname.'_param_dblist_keyval'),
+                            'dblist_filter' => GETPOST($fieldname.'_param_dblist_filter'),
+                        );
+
+                    endif;
+
+                    break;
+
+                case 'yearlist':
+
+                    // VERIFICATIONS
+                    if(empty(GETPOST($fieldname.'_param_yearstart'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_yearstart')), null, 'errors'); 
+                    endif;
+                    if(empty(GETPOST($fieldname.'_param_yearstop'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_yearstop')), null, 'errors'); 
+                    endif;
+                    if(empty(GETPOST($fieldname.'_param_yearsort'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_yearsort')), null, 'errors'); 
+                    endif;
+
+                    if(!$error) :
+
+                        // ON CONSTRUIT LE TABLEAU DES PARAMETRES
+                        $gpf->params = array(
+                            'yearstart' => GETPOST($fieldname.'_param_yearstart'),
+                            'yearstop' => GETPOST($fieldname.'_param_yearstop'),
+                            'yearsort' => GETPOST($fieldname.'_param_yearsort'),
+                            'yearcustom' => GETPOST($fieldname.'_param_yearcustom'),
+                        );
+
+                    endif;
+                    break;
+
+                case 'customlist':
+
+                    // VERIFICATIONS
+                    if(empty(GETPOST($fieldname.'_param_listvalues'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_listvalues')), null, 'errors'); 
+                    endif;
+                    if(empty(GETPOST($fieldname.'_param_listsort'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_listsort')), null, 'errors'); 
+                    endif;
+
+                    if(!$error) :
+
+                        // ON CONSTRUIT LE TABLEAU DES PARAMETRES
+                        $gpf->params = array(
+                            'listvalues' => GETPOST($fieldname.'_param_listvalues'),
+                            'listsort' => GETPOST($fieldname.'_param_listsort'),
+                            'listcustom' => GETPOST($fieldname.'_param_listcustom'),
+                        );
+                    endif;
+                    break;
+
+                case 'prodserv':
+                    $gpf->params =  array(
+                        'prodservtags' => GETPOST($fieldname.'_param_prodservtags'),
+                        'prodservref' => GETPOST($fieldname.'_param_prodservref')
+                    );
+                    break;
+
+                endswitch;
+
+                if(!$error) :
+                    if($action == 'add_parcfield' && $gpf->add_parcField($user)) : setEventMessages($langs->trans('gp_addparcfield_success'), null, 'mesgs');
+                    elseif($action == 'edit_parcfield' && $gpf->update_parcField($user)) : setEventMessages($langs->trans('gp_updateparcfield_success'), null, 'mesgs');
+                    else: setEventMessages($langs->trans('gp_error'), null, 'errors'); $error++; var_dump($gpf->db->lasterror);
+                    endif;
+                endif;
+                else:
+                    setEventMessages("SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry", null, 'warnings');
+                endif;
+        break;    
+endswitch;
 
 /***************************************************
 * VIEW
@@ -327,15 +358,14 @@ endif;
         <?php endif; ?>
 
         <table class="dolpgs-table">
-            <tbody>                
-
+            <tbody>
                 <tr class="titre" style="background:#fff">
                     <td class="nobordernopadding valignmiddle col-title" style="" colspan="4">
                         <div class="titre inline-block">
                              <h3 class="dolpgs-table-title"><?php echo $langs->trans('gp_parc_titlepage', $langs->trans($gestionparc->label)); ?></h3>
                         </div>
                     </td>
-                    <td colspan="5" class="right">
+                    <td colspan="100%" class="right">
                         <form enctype="multipart/form-data" action="<?php print $_SERVER["PHP_SELF"]; ?>?id=<?php echo $rowid; ?>" method="POST" id="gpform-addfieldtype">
                             <input type="hidden" name="action" value="prepare_parcfield">
                             <input type="hidden" name="token" value="<?php echo $_SESSION['newtoken']; ?>">
@@ -355,7 +385,6 @@ endif;
                         </form>
                     </td>
                 </tr>
-
                 <tr class="dolpgs-thead noborderside">
                     <th><?php echo $langs->trans('Field'); ?></th>
                     <th><?php echo $langs->trans('Type'); ?></th>
@@ -365,9 +394,11 @@ endif;
                     <th class="right"><?php echo $langs->trans('gp_parcfield_on_onlyverif'); ?></th>
                     <th class="right"><?php echo $langs->trans('Position'); ?></th>
                     <th class="center"><?php echo $langs->trans('Statut'); ?></th>
+                    <?php if(getDolGlobalInt('GESTIONPARC_ADVANCED_EXPORT')): ?>
+                        <th class="center"><?php echo $langs->trans('ViewExcel'); ?></th>
+                    <?php endif; ?>
                     <th width="120" class="center"></th>
                 </tr>
-
                 <?php if(!empty($gestionparc->fields)) : foreach ($gestionparc->fields as $field): ?>
                     <tr class="dolpgs-tbody">
                         <td class="bold pgsz-optiontable-fieldname"><?php echo $langs->trans($field->label); if($field->required) : echo ' <span class="required">*</span>'; 
@@ -383,15 +414,20 @@ endif;
                             else: echo '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?id='.$gestionparc->rowid.'&field_id='.$field->rowid.'&action=enable_field&token='.newToken().'">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>'; 
                             endif; ?>
                         </td>
+                        <?php if(getDolGlobalInt('GESTIONPARC_ADVANCED_EXPORT')): ?>
+                            <td class="center">
+                                <?php if($field->view_excel) : echo '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?id='.$gestionparc->rowid.'&field_id='.$field->rowid.'&action=disable_viewexport&token='.newToken().'">'.img_picto($langs->trans("Activated"), 'switch_on').'</a>';
+                                else: echo '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?id='.$gestionparc->rowid.'&field_id='.$field->rowid.'&action=enable_viewexport&token='.newToken().'">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>'; 
+                                endif; ?>
+                            </td>
+                        <?php endif; ?>
                         <td width="120" class="center">
                             <?php echo '<a class="reposition editfielda paddingrightonly" href="'.$_SERVER['PHP_SELF'].'?id='.$gestionparc->rowid.'&field_id='.$field->rowid.'&action=edit&token='.newToken().'">'.img_edit().'</a> &nbsp; '; ?>
                             <?php echo '<a class="reposition" href="'.$_SERVER['PHP_SELF'].'?id='.$gestionparc->rowid.'&field_id='.$field->rowid.'&action=delete&token='.newToken().'">'.img_delete().'</a>'; ?>
                         </td>
                     </tr>                
                 <?php endforeach; 
-                endif; ?>           
-
-
+                endif; ?>
             </tbody>
         </table>
 

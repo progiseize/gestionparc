@@ -115,16 +115,20 @@ switch($action):
             endif;
 
             if(!$error) :
-                if($id_intervention = $verification->closeVerif($verification->rowid, $socid, GETPOST('intercom', 'restricthtml'), $t2s)) :
-
+                if(getDolGlobalInt('GESTIONPARC_ADVANCED_EXPORT')):
+                    $id_intervention = $verification->advancedCloseVerif($socid, GETPOST('intercom', 'restricthtml'), $t2s);
+                else:
+                    $id_intervention = $verification->closeVerif($verification->rowid, $socid, GETPOST('intercom', 'restricthtml'), $t2s);
+                endif;
+                if($id_intervention):
                     $ficheinter->fetch($id_intervention); $last_intervention = $id_intervention;
                     $is_mode_verif = false;
                     setEventMessages($langs->trans('gp_verif_success_onclose', $ficheinter->ref), null, 'mesgs');
                     if($conf->global->MAIN_MODULE_GESTIONPARC_VERIFREDIRECT) : 
                         header('Location: '.dol_buildpath('fichinter/card.php?id='.$id_intervention, 1));
                     endif;
-                    else: setEventMessages($langs->trans('gp_verif_error_onclose'), null, 'errors');
-                    endif;
+                else: setEventMessages($langs->trans('gp_verif_error_onclose'), null, 'errors');
+                endif;
             endif;
         endif;
         break;
