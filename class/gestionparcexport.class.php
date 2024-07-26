@@ -31,19 +31,26 @@ use PhpOffice\PhpSpreadsheet\Style\Color;
 class GestionParcExport extends ExportExcel2007
 {
 
-	public function customHeader($row_start, $customer, $parclabel = ''){
+	public function customHeader($row_start, $nb_rows, $customer, $parclabel = ''){
 
-		global $mysoc, $user, $conf;
+		global $mysoc, $user, $conf, $langs;
 
 		$row = $row_start;
-
 		$sheet = $this->workbook->getActiveSheet();
+        $letters_array = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
 
-		$sheet->mergeCells('A'.$row.':E'.$row);
-        $sheet->setCellValue('A'.$row,'RAPPORT DE VERIFICATION '.date('Y'));
-        $sheet->getStyle('A'.$row.':E'.$row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle('A'.$row.':E'.$row)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM);
-        $sheet->getStyle('A'.$row.':E'.$row)->getFont()->setBold(true);
+        //var_dump($nb_rows);
+        $e_key = 4; // array_search('E', $letters_array);
+        $lastcol_letterkey = $e_key;
+        if($nb_rows > ($e_key + 1)):
+            $lastcol_letterkey = $nb_rows - 1;
+        endif;
+
+		$sheet->mergeCells('A'.$row.':'.$letters_array[$lastcol_letterkey].$row);
+        $sheet->setCellValue('A'.$row,$langs->transnoentities('gp_advexp_title').' '.date('Y'));
+        $sheet->getStyle('A'.$row.':'.$letters_array[$lastcol_letterkey].$row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('A'.$row.':'.$letters_array[$lastcol_letterkey].$row)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM);
+        $sheet->getStyle('A'.$row.':'.$letters_array[$lastcol_letterkey].$row)->getFont()->setBold(true);
         $row++;
         
         //
@@ -69,7 +76,17 @@ class GestionParcExport extends ExportExcel2007
         $sheet->mergeCells('A'.$lastrowforlogo.':B'.$lastrowforlogo.'');
         $sheet->getStyle('A'.$lastrowforlogo)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
         $lastrowforlogo++;
-        $sheet->setCellValue('A'.$lastrowforlogo,wordwrap($mysoc->phone,2,'.',TRUE));
+
+        $contact_array = array();
+        if(isset($mysoc->phone) && !empty($mysoc->phone)):
+            $contact_array[] = trim(wordwrap($mysoc->phone,2,'.',TRUE));
+        endif;
+        if(isset($mysoc->email) && !empty($mysoc->email)):
+            $contact_array[] = trim($mysoc->email);
+        endif;
+
+        $contact_text = implode(' - ', $contact_array);
+        $sheet->setCellValue('A'.$lastrowforlogo,$contact_text);
         $sheet->mergeCells('A'.$lastrowforlogo.':B'.$lastrowforlogo.'');
         $sheet->getStyle('A'.$lastrowforlogo)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
 
@@ -78,19 +95,26 @@ class GestionParcExport extends ExportExcel2007
         //
         $date_intervention = dol_stringtotime(date('Y-m-d'));
         $sheet->mergeCells('C'.$row.':D'.$row.'');
-        $sheet->setCellValue('C'.$row, 'Date de passage');
+        $sheet->setCellValue('C'.$row, $langs->transnoentities('gp_advexp_datevisit'));
         $sheet->setCellValue('E'.$row, \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($date_intervention));
         $sheet->getStyle('E'.$row)->getNumberFormat()->setFormatCode('dd/mm/yyyy');
-        $sheet->getStyle('C'.$row.':E'.$row)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $sheet->getStyle('C'.$row.':'.$letters_array[$lastcol_letterkey].$row)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
         $sheet->getStyle('C'.$row)->getFont()->setBold(true);
-        $sheet->getStyle('E'.$row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('E'.$row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+        if($lastcol_letterkey > $e_key):
+            $sheet->mergeCells('E'.$row.':'.$letters_array[$lastcol_letterkey].$row.'');
+        endif;
         $row++;
+        
         $sheet->mergeCells('C'.$row.':D'.$row.'');
-        $sheet->setCellValue('C'.$row, 'Nom du technicien');
+        $sheet->setCellValue('C'.$row, $langs->transnoentities('gp_advexp_user'));
         $sheet->setCellValue('E'.$row, $user->firstname.' '.$user->lastname);
-        $sheet->getStyle('C'.$row.':E'.$row)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $sheet->getStyle('C'.$row.':'.$letters_array[$lastcol_letterkey].$row)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
         $sheet->getStyle('C'.$row)->getFont()->setBold(true);
-        $sheet->getStyle('E'.$row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('E'.$row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+        if($lastcol_letterkey > $e_key):
+            $sheet->mergeCells('E'.$row.':'.$letters_array[$lastcol_letterkey].$row.'');
+        endif;
         $row++;
 
         $salesrepresentatives = $customer->getSalesRepresentatives($user);
@@ -102,45 +126,47 @@ class GestionParcExport extends ExportExcel2007
         		$salesrepresentatives_label .= $salesrep['firstname'].' '.$salesrep['lastname'];
         	endforeach;
         endif;
-
         $sheet->mergeCells('C'.$row.':D'.$row.'');
-        $sheet->setCellValue('C'.$row, 'Nom du commercial');
+        $sheet->setCellValue('C'.$row, $langs->transnoentities('gp_advexp_commercial'));
         $sheet->setCellValue('E'.$row, $salesrepresentatives_label);
-        $sheet->getStyle('C'.$row.':E'.$row)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $sheet->getStyle('C'.$row.':'.$letters_array[$lastcol_letterkey].$row)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
         $sheet->getStyle('C'.$row)->getFont()->setBold(true);
-        $sheet->getStyle('E'.$row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('E'.$row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+        if($lastcol_letterkey > $e_key):
+            $sheet->mergeCells('E'.$row.':'.$letters_array[$lastcol_letterkey].$row.'');
+        endif;
         $row++;
 
         $row++;
 
         //
-        $sheet->setCellValue('C'.$row, 'Client');
+        $sheet->setCellValue('C'.$row, $langs->transnoentities('Customer'));
         $sheet->setCellValue('D'.$row, $customer->nom);
-        $sheet->mergeCells('D'.$row.':E'.$row.'');
-        $sheet->getStyle('C'.$row.':E'.$row)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $sheet->mergeCells('D'.$row.':'.$letters_array[$lastcol_letterkey].$row.'');
+        $sheet->getStyle('C'.$row.':'.$letters_array[$lastcol_letterkey].$row)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
         $sheet->getStyle('C'.$row)->getFont()->setBold(true);
         $row++;
 
-        $sheet->setCellValue('C'.$row, 'Adresse');
+        $sheet->setCellValue('C'.$row, $langs->transnoentities('Address'));
         $sheet->setCellValue('D'.$row, $customer->address.', '.$customer->zip.' '.$customer->town);
-        $sheet->mergeCells('D'.$row.':E'.$row.'');
-        $sheet->getStyle('C'.$row.':E'.$row)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $sheet->mergeCells('D'.$row.':'.$letters_array[$lastcol_letterkey].$row.'');
+        $sheet->getStyle('C'.$row.':'.$letters_array[$lastcol_letterkey].$row)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
         $sheet->getStyle('C'.$row)->getFont()->setBold(true);
         $row++;
 
-        $sheet->setCellValue('C'.$row, 'TEL');
+        $sheet->setCellValue('C'.$row, $langs->transnoentities('PhoneNumber'));
         $sheet->setCellValue('D'.$row, wordwrap($customer->phone,2,'.',TRUE));
         $sheet->getStyle('C'.$row.':D'.$row)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
         $sheet->getStyle('C'.$row)->getFont()->setBold(true);
         $row++;
 
-        $sheet->setCellValue('C'.$row, 'CodeClient');
+        $sheet->setCellValue('C'.$row, $langs->transnoentities('CustomerCode'));
         $sheet->setCellValue('D'.$row, $customer->code_client);
         $sheet->getStyle('C'.$row.':D'.$row)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
         $sheet->getStyle('C'.$row)->getFont()->setBold(true);
         $row++;
 
-        $sheet->setCellValue('C'.$row, 'TypeOrgane');
+        $sheet->setCellValue('C'.$row, $langs->transnoentities('gp_advexp_parctype'));
         $sheet->setCellValue('D'.$row, $parclabel);
         $sheet->getStyle('C'.$row.':D'.$row)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
         $sheet->getStyle('C'.$row)->getFont()->setBold(true);
@@ -164,7 +190,6 @@ class GestionParcExport extends ExportExcel2007
 		$drawing->setOffsetX($imageWidth);
 		$drawing->setOffsetY(10);
 		$drawing->setWorksheet($sheet);
-
 	}
 
 }

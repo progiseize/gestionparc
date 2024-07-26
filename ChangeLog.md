@@ -4,6 +4,15 @@
 [comment]: <> (Modele pdf)
 [comment]: <> (Type de champ date)
 
+### 1.6.1
+* MAJ - Advanced Exports: Add email address
+* NEW - Advanced Exports: Align field with const GESTIONPARC_EXCEL_ALIGN_[FIELDKEY] and values left/center/right
+* NEW - Advanced Exports: Group the lines in packs of X lines
+* NEW - Advanced Exports: Add border to empty group lines with GESTIONPARC_ADVANCED_EXPORT_FILLEMPTY 
+* MAJ - Advanced Exports: Add borders to parcset and automerge cells after E
+* MAJ - Add missing FR translations
+* FIX - Fix error : Add key value Verif DB field
+
 ### 1.6.0
 * NEW - Advanced Exports in Excel format
 * FIX - Remove empty lines & console logs

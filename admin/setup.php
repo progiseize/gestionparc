@@ -31,7 +31,6 @@ endif;
 * FONCTIONS
 ********************************************************************/
 
-
 /*******************************************************************
 * ACTIONS
 ********************************************************************/
@@ -48,6 +47,7 @@ if ($action == 'set_options') :
     if(GETPOST('token') == $_SESSION['token']) :
 
         dolibarr_set_const($db, "MAIN_MODULE_GESTIONPARC_VERIFUSETIME", GETPOST('gp-verifusetime'), 'chaine', 0, '', $conf->entity);
+        dolibarr_set_const($db, "GESTIONPARC_ADVANCED_EXPORT_LINESPLIT", GETPOST('GESTIONPARC_ADVANCED_EXPORT_LINESPLIT','int'), 'chaine', 0, '', $conf->entity);
 
         // Si l'option en cochée
         if(GETPOSTISSET('gp-use-verif')) : 
@@ -159,6 +159,15 @@ llxHeader('', $langs->transnoentities('Setup').' :: '.$langs->transnoentities('M
                             <?php echo ajax_constantonoff('GESTIONPARC_ADVANCED_EXPORT'); ?>
                         </td>
                     </tr>
+                    <?php if(getDolGlobalInt('GESTIONPARC_ADVANCED_EXPORT')): ?>
+                    <tr class="dolpgs-tbody">
+                        <td class="bold pgsz-optiontable-fieldname" valign="top"><?php echo $langs->trans('gp_setup_AdvancedExportLineSet'); ?></td>               
+                        <td class="pgsz-optiontable-fielddesc "><?php echo $langs->transnoentities('gp_setup_AdvancedExportLineSetDesc'); ?></td>
+                        <td class="right pgsz-optiontable-field ">
+                            <input type="number" min="0" step="1" name="GESTIONPARC_ADVANCED_EXPORT_LINESPLIT" value="<?php echo getDolGlobalInt('GESTIONPARC_ADVANCED_EXPORT_LINESPLIT'); ?>">
+                        </td>
+                    </tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
             <div class="right">

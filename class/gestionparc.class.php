@@ -610,7 +610,7 @@ class GestionParc
         foreach($list_parcs as $parc_id => $parc):
             switch ($action):
                 case 'add': 
-                    if(!$this->db->DDLAddField(MAIN_DB_PREFIX.$this->table_element.'__'.$parc['key'], 'verif', array('type'=>'BOOLEAN','null' => 'NOT NULL','extra'=> 'DEFAULT 0'))) :
+                    if(!$this->db->DDLAddField(MAIN_DB_PREFIX.$this->table_element.'__'.$parc['key'], 'verif', array('type'=>'BOOLEAN','null' => 'NOT NULL','extra'=> 'DEFAULT 0', 'value' => ''))) :
                         $error++;
                     endif;
                     break;
@@ -1728,11 +1728,15 @@ class GestionParcVerif
         // TODO Ne pas créér d'onglets XLSX si pas de champ visible
 
         global $conf, $langs, $user, $mysoc;
+
         include_once DOL_DOCUMENT_ROOT.'/fichinter/class/fichinter.class.php';
         include_once DOL_DOCUMENT_ROOT.'/core/lib/date.lib.php';
         dol_include_once('gestionparc/class/gestionparcexport.class.php');
 
         $this->db->begin();
+
+        $langs->load('companies');
+        $langs->load('bills');
 
         //
         $customer = new Societe($this->db);
@@ -1771,6 +1775,7 @@ class GestionParcVerif
         $sheetfile->workbook->getDefaultStyle()->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
 
         $letters_array = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
+        $e_key = 4;
 
         //
         $tab = 0;
@@ -1836,8 +1841,15 @@ class GestionParcVerif
             endif;
 
             //
-            $split_parclines = array_chunk($parc_lines, 20);
+            $splitconfig = getDolGlobalInt('GESTIONPARC_ADVANCED_EXPORT_LINESPLIT');
+            if($splitconfig > 0):
+                $split_parclines = array_chunk($parc_lines, $splitconfig);
+            else:
+                $split_parclines = array();
+                $split_parclines[] = $parc_lines;
+            endif;
             $n = 0;
+
             foreach($split_parclines as $parcset_key => $parcset): $n++;
 
                 if($addtosheetfile):
@@ -1845,17 +1857,31 @@ class GestionParcVerif
                     if($n > 1): $row += 3; endif;
 
                     // ********** CUSTOM HEADER
-                    $rowafterheader = $sheetfile->customHeader($row,$customer,$parctype_infos['label']);
+                    $rowbeforeheader = $row;
+                    $rowafterheader = $sheetfile->customHeader($row,count($view_excel),$customer,$parctype_infos['label']);
                     $row = $rowafterheader;
                     $row++;
 
                     // ********** PARC FIELDS TABLE  
                     $letterkey = 0;
                     foreach($pos as $key_field => $key_pos):
+
                         if($view_excel[$key_field]):
+                            //var_dump('Add Column name : '.$key_field);
                             $sheet->setCellValue($letters_array[$letterkey].$row,$labels[$key_field]);
                             $sheet->getStyle($letters_array[$letterkey].$row)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
                             $sheet->getStyle($letters_array[$letterkey].$row)->getFont()->setBold(true);
+                            $alignkey = getDolGlobalString('GESTIONPARC_EXCEL_ALIGN_'.strtoupper($key_field));
+                            if($alignkey):
+                                $align = '';
+                                switch ($alignkey) {
+                                    case 'left': $align = \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT; break;
+                                    case 'center': $align = \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER; break;
+                                    case 'right': $align = \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT; break;                                    
+                                    default: $align = \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT; break;
+                                }
+                                $sheet->getStyle($letters_array[$letterkey].$row)->getAlignment()->setHorizontal($align);
+                            endif;
                             $letterkey++;
                         endif;
                     endforeach;
@@ -1864,7 +1890,10 @@ class GestionParcVerif
                 endif;
 
                 $letterkey = 0;
-                foreach($parcset as $parcline):
+                $parcsetline = 0;
+                foreach($parcset as $parcline): 
+
+                    $letterkey = 0;
 
                     $full_description .= '- ';
                     foreach($pos as $key_field => $key_pos):
@@ -1880,14 +1909,26 @@ class GestionParcVerif
                         if($view_excel[$key_field] && $addtosheetfile):
                             $sheet->setCellValue($letters_array[$letterkey].$row,$fieldvalue);
                             $sheet->getStyle($letters_array[$letterkey].$row)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                            $alignkey = getDolGlobalString('GESTIONPARC_EXCEL_ALIGN_'.strtoupper($key_field));
+                            if($alignkey):
+                                $align = '';
+                                switch ($alignkey) {
+                                    case 'left': $align = \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT; break;
+                                    case 'center': $align = \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER; break;
+                                    case 'right': $align = \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT; break;                                    
+                                    default: $align = \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT; break;
+                                }
+                                $sheet->getStyle($letters_array[$letterkey].$row)->getAlignment()->setHorizontal($align);
+                            endif;
+
                             $letterkey++;
                         endif;
                         $full_description .= '<b>'.$labels[$key_field].':</b> '.$fieldvalue.' <b>/</b> ';
                     endforeach;
 
                     if($addtosheetfile):
-                        $letterkey = 0;
                         $row++;
+                        $parcsetline++;
                     endif;
 
                     if($parcline->verif): 
@@ -1899,7 +1940,45 @@ class GestionParcVerif
                     $full_description .= '<br/>';
 
                 endforeach;
+
+                // BORDER FOR EMPTY GROUP LINES
+                if($addtosheetfile && getDolGlobalInt('GESTIONPARC_ADVANCED_EXPORT_FILLEMPTY')):
+                    if($splitconfig > 0 && $parcsetline < $splitconfig):
+                        $splitdiff = $splitconfig - $parcsetline;
+                        for ($i=0; $i < $splitdiff; $i++):                        
+                            $letterkey = 0;
+                            foreach($pos as $key_field => $key_pos):
+                                if($view_excel[$key_field] && $addtosheetfile):
+                                    $sheet->getStyle($letters_array[$letterkey].$row)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                                    $letterkey++;
+                                endif;
+                            endforeach;
+                            $row++;
+                        endfor;
+                    endif;
+                endif;
+
+                // PARCSET BORDER
+                $parcset_lastletterkey = $e_key;
+                $check_lastletterkey = count($view_excel) - 1;
+                if($check_lastletterkey > $parcset_lastletterkey):
+                    $parcset_lastletterkey = $check_lastletterkey;
+                endif;
+                $parcset_lastrow = $row - 1;
+                $sheet->getStyle('A'.$rowbeforeheader.':'.$letters_array[$parcset_lastletterkey].$parcset_lastrow)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM);
+
             endforeach;
+
+            if($letterkey > $e_key):
+
+                $colk = $e_key + 1;
+                while($colk <= $letterkey):
+                    $sheet->getColumnDimension($letters_array[$colk])->setAutoSize(true);
+                    $colk++;
+                endwhile;
+
+
+            endif;
 
             $lineverif_desc .= '<span style="font-size:0.85em"><b>Eléments vérifiés:</b> '.$verified_lines.'/'.$nb_parclines.'</span><br/>';
             if(getDolGlobalInt('MAIN_MODULE_GESTIONPARC_VERIFDETAILS')):

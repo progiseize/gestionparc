@@ -67,7 +67,7 @@ class modGestionParc extends DolibarrModules
         $this->editor_url = 'https://progiseize.fr';
         
         // Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-        $this->version = '1.6.0';
+        $this->version = '1.6.1';
         //$this->url_last_version ="https://progiseize.fr/modules_info/lastversion.php?module=".$this->numero;
 
         // Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
@@ -141,6 +141,8 @@ class modGestionParc extends DolibarrModules
             2=>array('MAIN_MODULE_GESTIONPARC_VERIFUSETIME','chaine','0','',0),
             3=>array('MAIN_MODULE_GESTIONPARC_VERIFREDIRECT','chaine',false,'',0),
             4=>array('EXPORT_CSV_FORCE_CHARSET','chaine','UTF-8','',1),
+            5=>array('GESTIONPARC_ADVANCED_EXPORT','chaine',0,'',0),
+            6=>array('GESTIONPARC_ADVANCED_EXPORT_LINESPLIT','chaine',20,'',0),
         );
 
         // Array to add new pages in new tabs

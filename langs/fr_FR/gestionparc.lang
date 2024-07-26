@@ -80,6 +80,8 @@ gp_setup_verif_details=Détails interventions
 gp_setup_verif_details_desc=Afficher les détails sur les fiches d'interventions
 gp_setup_useAdvancedExport=Exports avancés
 gp_setup_useAdvancedExportDesc=Utiliser les exports avancés au format Excel
+gp_setup_AdvancedExportLineSet=Groupes de lignes
+gp_setup_AdvancedExportLineSetDesc=Séparez les données de votre parc en groupes de x lignes (0 = toutes les lignes)
 
 # PARC MANAGER
 gp_manager_pagetitle = Gestion des types de parc
@@ -181,6 +183,7 @@ gp_updateparcfield_success = Champ modifié
 gp_confirmDeleteParcField = Êtes vous sûr de vouloir supprimer ce champ ? Les données enregistrées seront supprimées.
 gp_newparcfieldType = Choisir le type de champ à ajouter
 gp_parcfield_on_onlyverif= Uniquement vérification
+gp_parcfield_viewexcel=Export Excel
 
 # FUSION TIERS
 gp_mergeParcSuccess = %s élément(s) de parcs ont été déplacés vers le nouveau tiers.
@@ -192,3 +195,10 @@ gp_repairTitle=Réparation - GestionParc
 gp_repairText=Cliquez sur ce bouton pour réparer les tables.
 gp_repairButton=Réparer
 gp_repairSuccessMsg=Réparation complète
+
+# EXPORT
+gp_advexp_title=RAPPORT DE VERIFICATION
+gp_advexp_datevisit=Date de passage
+gp_advexp_user=Nom du technicien
+gp_advexp_commercial=Nom du commercial
+gp_advexp_parctype=Type d'organe

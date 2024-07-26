@@ -395,7 +395,7 @@ endif;
                     <th class="right"><?php echo $langs->trans('Position'); ?></th>
                     <th class="center"><?php echo $langs->trans('Statut'); ?></th>
                     <?php if(getDolGlobalInt('GESTIONPARC_ADVANCED_EXPORT')): ?>
-                        <th class="center"><?php echo $langs->trans('ViewExcel'); ?></th>
+                        <th class="center"><?php echo $langs->trans('gp_parcfield_viewexcel'); ?></th>
                     <?php endif; ?>
                     <th width="120" class="center"></th>
                 </tr>
