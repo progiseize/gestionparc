@@ -5,7 +5,8 @@
 [comment]: <> (Type de champ date)
 
 ### 1.6.2
-* MAJ - Add info for parc key if advanced exports is active
+* MAJ - Add info for parc key if advanced exports is active (Copy to Clipboard Icon)
+* FIX - Count excel fields by value 1
 
 ### 1.6.1
 * MAJ - Advanced Exports: Add email address

@@ -403,7 +403,9 @@ endif;
                     <tr class="dolpgs-tbody">
                         <td class="bold pgsz-optiontable-fieldname">
                             <?php if(getDolGlobalInt('GESTIONPARC_ADVANCED_EXPORT')): ?>
-                                <span class="paddingright"><?php echo img_info($langs->transnoentities('gp_parcfield_keyfield').' : '.strtoupper($field->field_key)); ?></span>
+                                <span class="paddingright">
+                                    <?php echo showValueWithClipboardCPButton(strtoupper($field->field_key), 0,'none'); ?>
+                                </span>
                             <?php endif; ?>
                             <?php echo $langs->trans($field->label); ?>                            
                             <?php if($field->required) : echo ' <span class="required">*</span>'; endif; ?>                           
