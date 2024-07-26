@@ -1797,6 +1797,7 @@ class GestionParcVerif
                     $view_excel[$parcfield->field_key] = $parcfield->view_excel;
                 endif;
             endforeach;
+            $nb_excel_fields = array_count_values($view_excel)[1];
 
             // Si aucun champ à afficher, on passe au parc suivant
             if(empty($pos)): continue; endif;
@@ -1858,7 +1859,7 @@ class GestionParcVerif
 
                     // ********** CUSTOM HEADER
                     $rowbeforeheader = $row;
-                    $rowafterheader = $sheetfile->customHeader($row,count($view_excel),$customer,$parctype_infos['label']);
+                    $rowafterheader = $sheetfile->customHeader($row,$nb_excel_fields,$customer,$parctype_infos['label']);
                     $row = $rowafterheader;
                     $row++;
 
@@ -1960,7 +1961,7 @@ class GestionParcVerif
 
                 // PARCSET BORDER
                 $parcset_lastletterkey = $e_key;
-                $check_lastletterkey = count($view_excel) - 1;
+                $check_lastletterkey = $nb_excel_fields - 1;
                 if($check_lastletterkey > $parcset_lastletterkey):
                     $parcset_lastletterkey = $check_lastletterkey;
                 endif;
@@ -1970,14 +1971,11 @@ class GestionParcVerif
             endforeach;
 
             if($letterkey > $e_key):
-
                 $colk = $e_key + 1;
                 while($colk <= $letterkey):
                     $sheet->getColumnDimension($letters_array[$colk])->setAutoSize(true);
                     $colk++;
                 endwhile;
-
-
             endif;
 
             $lineverif_desc .= '<span style="font-size:0.85em"><b>Eléments vérifiés:</b> '.$verified_lines.'/'.$nb_parclines.'</span><br/>';
