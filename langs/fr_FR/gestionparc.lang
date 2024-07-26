@@ -184,6 +184,7 @@ gp_confirmDeleteParcField = Êtes vous sûr de vouloir supprimer ce champ ? Les 
 gp_newparcfieldType = Choisir le type de champ à ajouter
 gp_parcfield_on_onlyverif= Uniquement vérification
 gp_parcfield_viewexcel=Export Excel
+gp_parcfield_keyfield=Clé du champ
 
 # FUSION TIERS
 gp_mergeParcSuccess = %s élément(s) de parcs ont été déplacés vers le nouveau tiers.

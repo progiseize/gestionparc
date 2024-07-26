@@ -399,10 +399,15 @@ endif;
                     <?php endif; ?>
                     <th width="120" class="center"></th>
                 </tr>
-                <?php if(!empty($gestionparc->fields)) : foreach ($gestionparc->fields as $field): ?>
+                <?php if(!empty($gestionparc->fields)) : foreach ($gestionparc->fields as $field):?>
                     <tr class="dolpgs-tbody">
-                        <td class="bold pgsz-optiontable-fieldname"><?php echo $langs->trans($field->label); if($field->required) : echo ' <span class="required">*</span>'; 
-                       endif; ?></td>
+                        <td class="bold pgsz-optiontable-fieldname">
+                            <?php if(getDolGlobalInt('GESTIONPARC_ADVANCED_EXPORT')): ?>
+                                <span class="paddingright"><?php echo img_info($langs->transnoentities('gp_parcfield_keyfield').' : '.strtoupper($field->field_key)); ?></span>
+                            <?php endif; ?>
+                            <?php echo $langs->trans($field->label); ?>                            
+                            <?php if($field->required) : echo ' <span class="required">*</span>'; endif; ?>                           
+                       </td>
                         <td><?php echo $langs->trans('gp_fieldtype_'.$field->type); ?></td>
                         <td><?php echo $field->default_value; ?></td>
                         <td class="right pgsz-optiontable-field"><?php echo $field->construct_field($gestionparc); ?></td>

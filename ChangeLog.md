@@ -4,6 +4,9 @@
 [comment]: <> (Modele pdf)
 [comment]: <> (Type de champ date)
 
+### 1.6.2
+* MAJ - Add info for parc key if advanced exports is active
+
 ### 1.6.1
 * MAJ - Advanced Exports: Add email address
 * NEW - Advanced Exports: Align field with const GESTIONPARC_EXCEL_ALIGN_[FIELDKEY] and values left/center/right
