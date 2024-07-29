@@ -205,79 +205,71 @@ switch ($action):
 
                 $fieldname = 'newfield';
                 $field_type = GETPOST($fieldname.'_type', 'alpha');
-                if(empty($field_type)) :$error++; setEventMessages($langs->trans('gp_fieldtype_unknown'), null, 'errors'); 
-                endif;
+                if(empty($field_type)) :$error++; setEventMessages($langs->trans('gp_fieldtype_unknown'), null, 'errors'); endif;
                 $gpf->parc_id = $gestionparc->rowid;
                 $gpf->type = $field_type;
 
-                elseif($action == 'edit_parcfield') : 
+            elseif($action == 'edit_parcfield') : 
 
-                    $fieldname = 'editfield';
+                $fieldname = 'editfield';
 
-                    // IDENTIFIANT DU CHAMP
-                    $field_id = GETPOST('field_id', 'int');
-                    if(empty($field_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'errors'); 
-                    endif;
-
-                    //$field_to_update = new GestionParcField($db);
-                    $gpf->fetch_parcField($field_id);
-                    $field_to_update = $gpf;
-                    $field_type = $gpf->type;
-                    $gpf->old_label = $gpf->label;
-
+                // IDENTIFIANT DU CHAMP
+                $field_id = GETPOST('field_id', 'int');
+                if(empty($field_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'errors'); 
                 endif;
 
-                // VERIFICATIONS COMMUNES            
-                if(empty(GETPOST($fieldname.'_label', 'alpha'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('Label')), null, 'errors'); 
-                endif; 
-                if(empty(GETPOST($fieldname.'_position', 'int'))) : $newfield_position = 100; else: $newfield_position = GETPOST($fieldname.'_position', 'int'); 
-                endif;
+                //$field_to_update = new GestionParcField($db);
+                $gpf->fetch_parcField($field_id);
+                $field_to_update = $gpf;
+                $field_type = $gpf->type;
+                $gpf->old_label = $gpf->label;
 
-                
-                $gpf->label = GETPOST($fieldname.'_label', 'alpha');            
-                $gpf->required = (GETPOSTISSET($fieldname.'_required'))?1:0;
-                $gpf->default_value = GETPOST($fieldname.'_default_value', 'alpha');
-                $gpf->position = $newfield_position;
-                if(GETPOSTISSET($fieldname.'_onlyverif') && GETPOST($fieldname.'_onlyverif', 'aZ09') == 'on') : $gpf->only_verif = 1;
-                else: $gpf->only_verif = 0;
-                endif;
-                
-                switch ($field_type):
+            endif;
 
-                case 'autonumber': $gpf->required = true; 
-                    break;
+            // VERIFICATIONS COMMUNES            
+            if(empty(GETPOST($fieldname.'_label', 'alpha'))) : 
+                $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('Label')), null, 'errors'); 
+            endif; 
+            if(empty(GETPOST($fieldname.'_position', 'int'))) : $newfield_position = 100;
+            else: $newfield_position = GETPOST($fieldname.'_position', 'int'); 
+            endif;
+            $gpf->label = GETPOST($fieldname.'_label', 'alpha');            
+            $gpf->required = (GETPOSTISSET($fieldname.'_required'))?1:0;
+            $gpf->default_value = GETPOST($fieldname.'_default_value', 'alpha');
+            $gpf->position = $newfield_position;            
+            if(GETPOSTISSET($fieldname.'_onlyverif') && GETPOST($fieldname.'_onlyverif', 'aZ09') == 'on') : $gpf->only_verif = 1;
+            else: $gpf->only_verif = 0;
+            endif;
+
+            switch ($field_type):
+
+                case 'autonumber': 
+                    $gpf->required = true; 
+                break;
 
                 case 'dblist':
                     if(empty(GETPOST($fieldname.'_param_dblist_table'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_dblist')), null, 'errors'); 
                     endif;
                     if(empty(GETPOST($fieldname.'_param_dblist_keyval'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_dblist_keyval')), null, 'errors'); 
-                    endif;
-                    
+                    endif;                    
                     if(!$error) :
-
                         // ON CONSTRUIT LE TABLEAU DES PARAMETRES
                         $gpf->params = array(
                             'dblist_table' => GETPOST($fieldname.'_param_dblist_table'),
                             'dblist_keyval' => GETPOST($fieldname.'_param_dblist_keyval'),
                             'dblist_filter' => GETPOST($fieldname.'_param_dblist_filter'),
                         );
-
                     endif;
-
-                    break;
+                break;
 
                 case 'yearlist':
 
                     // VERIFICATIONS
-                    if(empty(GETPOST($fieldname.'_param_yearstart'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_yearstart')), null, 'errors'); 
-                    endif;
-                    if(empty(GETPOST($fieldname.'_param_yearstop'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_yearstop')), null, 'errors'); 
-                    endif;
-                    if(empty(GETPOST($fieldname.'_param_yearsort'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_yearsort')), null, 'errors'); 
-                    endif;
+                    if(empty(GETPOST($fieldname.'_param_yearstart'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_yearstart')), null, 'errors'); endif;
+                    if(empty(GETPOST($fieldname.'_param_yearstop'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_yearstop')), null, 'errors'); endif;
+                    if(empty(GETPOST($fieldname.'_param_yearsort'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_yearsort')), null, 'errors'); endif;
 
                     if(!$error) :
-
                         // ON CONSTRUIT LE TABLEAU DES PARAMETRES
                         $gpf->params = array(
                             'yearstart' => GETPOST($fieldname.'_param_yearstart'),
@@ -285,20 +277,28 @@ switch ($action):
                             'yearsort' => GETPOST($fieldname.'_param_yearsort'),
                             'yearcustom' => GETPOST($fieldname.'_param_yearcustom'),
                         );
-
                     endif;
-                    break;
+                break;
+
+                case 'date':
+
+                    //
+                    if(empty(GETPOST($fieldname.'_param_datesort'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_datesort')), null, 'errors'); endif;
+                    if(!$error) :
+                        // ON CONSTRUIT LE TABLEAU DES PARAMETRES
+                        $gpf->params = array(
+                            'datesort' => GETPOST($fieldname.'_param_datesort'),
+                        );
+                    endif;
+                break;
 
                 case 'customlist':
 
                     // VERIFICATIONS
-                    if(empty(GETPOST($fieldname.'_param_listvalues'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_listvalues')), null, 'errors'); 
-                    endif;
-                    if(empty(GETPOST($fieldname.'_param_listsort'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_listsort')), null, 'errors'); 
-                    endif;
+                    if(empty(GETPOST($fieldname.'_param_listvalues'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_listvalues')), null, 'errors'); endif;
+                    if(empty(GETPOST($fieldname.'_param_listsort'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_listsort')), null, 'errors'); endif;
 
                     if(!$error) :
-
                         // ON CONSTRUIT LE TABLEAU DES PARAMETRES
                         $gpf->params = array(
                             'listvalues' => GETPOST($fieldname.'_param_listvalues'),
@@ -306,26 +306,26 @@ switch ($action):
                             'listcustom' => GETPOST($fieldname.'_param_listcustom'),
                         );
                     endif;
-                    break;
+                break;
 
                 case 'prodserv':
                     $gpf->params =  array(
                         'prodservtags' => GETPOST($fieldname.'_param_prodservtags'),
                         'prodservref' => GETPOST($fieldname.'_param_prodservref')
                     );
-                    break;
+                break;
 
-                endswitch;
+            endswitch;
 
-                if(!$error) :
-                    if($action == 'add_parcfield' && $gpf->add_parcField($user)) : setEventMessages($langs->trans('gp_addparcfield_success'), null, 'mesgs');
-                    elseif($action == 'edit_parcfield' && $gpf->update_parcField($user)) : setEventMessages($langs->trans('gp_updateparcfield_success'), null, 'mesgs');
-                    else: setEventMessages($langs->trans('gp_error'), null, 'errors'); $error++; var_dump($gpf->db->lasterror);
-                    endif;
+            if(!$error) :
+                if($action == 'add_parcfield' && $gpf->add_parcField($user)) : setEventMessages($langs->trans('gp_addparcfield_success'), null, 'mesgs');
+                elseif($action == 'edit_parcfield' && $gpf->update_parcField($user)) : setEventMessages($langs->trans('gp_updateparcfield_success'), null, 'mesgs');
+                else: setEventMessages($langs->trans('gp_error'), null, 'errors'); $error++; var_dump($gpf->db->lasterror);
                 endif;
-                else:
-                    setEventMessages("SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry", null, 'warnings');
-                endif;
+            endif;
+            else:
+                setEventMessages("SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry", null, 'warnings');
+            endif;
         break;    
 endswitch;
 

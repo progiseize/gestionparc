@@ -71,7 +71,6 @@ endif;
 /*******************************************************************
 * ACTIONS
 ********************************************************************/
-
 switch($action):
 
     // INIT CLOSE VERIF
@@ -722,10 +721,8 @@ echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"), 0, 'c
 
                     <?php // AJOUTER LIGNES ?>
                     <?php if($action != 'edit') : ?>
-                    <tr class="dolpgs-tbody gestionparc-newline" <?php if($action == "add" && $error && GETPOST('parcid') == $parc->rowid) : echo 'style="display: table-row;"'; 
-                   endif; ?>>
-                        <?php if($is_mode_verif) : ?><td></td><?php 
-                        endif; ?>
+                    <tr class="dolpgs-tbody gestionparc-newline" <?php if($action == "add" && $error && GETPOST('parcid') == $parc->rowid) : echo 'style="display: table-row;"'; endif; ?>>
+                        <?php if($is_mode_verif) : ?><td></td><?php endif; ?>
                         <?php foreach($parc->fields as $parcfield_key => $parcfield): if($parcfield->enabled) : ?>
                                 <?php if($parcfield->only_verif && !$is_mode_verif) : continue; 
                                 endif; ?>
@@ -740,8 +737,7 @@ echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"), 0, 'c
                     <?php endif; ?>
 
                     <?php foreach($parc_lines as $lineid => $linecontent): ?>
-                    <tr class="dolpgs-tbody gestionparc-line <?php if($is_mode_verif && $linecontent->verif) : echo 'parcline-ok'; 
-                   endif; ?>">
+                    <tr class="dolpgs-tbody gestionparc-line <?php if($is_mode_verif && $linecontent->verif) : echo 'parcline-ok'; endif; ?>">
 
                         <?php if($is_mode_verif) : ?>
                             <td>
@@ -755,8 +751,7 @@ echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"), 0, 'c
 
                         <?php foreach($parc->fields as $parcfield_key => $parcfield): if($parcfield->enabled) : ?>
 
-                                <?php if($parcfield->only_verif && !$is_mode_verif) : continue; 
-                                endif; ?>
+                            <?php if($parcfield->only_verif && !$is_mode_verif) : continue; endif; ?>
                             <td class="pgsz-optiontable-fielddesc"><?php 
 
                             // SI ON EST EN MODE EDITION
@@ -770,7 +765,7 @@ echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"), 0, 'c
                                 else: echo $parcfield->construct_field($parc, $societe->id, $linecontent->{$parcfield->field_key});
                                 endif;
 
-                                // MODE AFFICHAGE
+                            // MODE AFFICHAGE
                             else:
 
                                 echo '<span class="gp-infos-label">'.$parcfield->label.' : </span>';
@@ -793,8 +788,9 @@ echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"), 0, 'c
                                         if($l_content) : echo $l_content; 
                                         endif;
                                     endif;
-                                     
-                                    // ON AFFICHE LA VALEUR DU CHAMP
+                                elseif($parcfield->type == 'date'):
+                                    echo dol_print_date($linecontent->{$parcfield->field_key},'%d/%m/%Y');
+                                // ON AFFICHE LA VALEUR DU CHAMP
                                 else: echo $linecontent->{$parcfield->field_key};
                                 endif; 
 

@@ -2,7 +2,10 @@
 
 [comment]: <> (TODO)
 [comment]: <> (Modele pdf)
-[comment]: <> (Type de champ date)
+[comment]: <> (Harmoniser les constantes du module)
+
+### 1.7.0
+* NEW - Input type date
 
 ### 1.6.2
 * MAJ - Add info for parc key if advanced exports is active (Copy to Clipboard Icon)

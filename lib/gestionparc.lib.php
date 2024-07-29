@@ -75,10 +75,11 @@ function GestionParcGetFieldsType()
 
     $gp_fields = array();
     
-    $gp_fields['customdata']['yearlist'] = $langs->trans('gp_fieldtype_yearlist');
-    $gp_fields['customdata']['customlist'] = $langs->trans('gp_fieldtype_customlist');
-    $gp_fields['customdata']['textfield'] = $langs->trans('gp_fieldtype_textfield');
     $gp_fields['customdata']['autonumber'] = $langs->trans('gp_fieldtype_autonumber');
+    $gp_fields['customdata']['date'] = $langs->trans('Date');
+    $gp_fields['customdata']['customlist'] = $langs->trans('gp_fieldtype_customlist');
+    $gp_fields['customdata']['yearlist'] = $langs->trans('gp_fieldtype_yearlist');
+    $gp_fields['customdata']['textfield'] = $langs->trans('gp_fieldtype_textfield');
 
     $gp_fields['doldata']['prodserv'] = $langs->trans('gp_fieldtype_prodserv');
     //$gp_fields['doldata']['dblist'] = $langs->trans('gp_fieldtype_dblist');
@@ -132,166 +133,201 @@ function GestionParcGetFieldParams($field_type,$mode,$editobj = '')
     switch ($field_type):
 
         //
-    case 'dblist': 
-        switch ($mode):
-        case 'editfield':
-            $slct_table = GestionParcConstructOption($db->DDLListTables($conf->db->name), 'vv', $editobj->params->dblist_table);
-            $tablist_keyval = (GETPOSTISSET($mode.'_param_dblist_keyval'))?GETPOST($mode.'_param_dblist_keyval'):$editobj->params->dblist_keyval;
-            $filter = (GETPOSTISSET($mode.'_param_dblist_filter'))?GETPOST($mode.'_param_dblist_filter'):$editobj->params->dblist_filter;
-            break;                
-        case 'newfield':
-            $slct_table = GestionParcConstructOption($db->DDLListTables($conf->db->name), 'vv');
-            $tablist_keyval = '';
-            $filter = '';
-            break;
-        endswitch;
-        $params = array(
-            array(
-                'label' => $langs->trans('gp_field_dblist').' <span class="required">*</span>','description' => $langs->transnoentities('gp_field_dblist_desc'),
-                'field' => '<select class="gp-slct-simple" name="'.$mode.'_param_dblist_table" id="'.$mode.'_param_dblist_table" style="min-width:220px">'.$slct_table.'</select>'),
-            array(
-                'label' => $langs->trans('gp_field_dblist_keyval').' <span class="required">*</span>','description' => $langs->transnoentities('gp_field_dblist_keyval_desc'),
-                'field' => '<input type="text" name="'.$mode.'_param_dblist_keyval" id="'.$mode.'_param_dblist_keyval" value="'.$tablist_keyval.'">'),
-            array(
-                'label' => $langs->trans('gp_field_dblist_filter').'','description' => $langs->transnoentities('gp_field_dblist_filter_desc'),
-                'field' => '<input type="text" name="'.$mode.'_param_dblist_filter" id="'.$mode.'_param_dblist_filter" value="'.$filter.'">'),
-        );
+        case 'dblist': 
+            switch ($mode):
+            case 'editfield':
+                $slct_table = GestionParcConstructOption($db->DDLListTables($conf->db->name), 'vv', $editobj->params->dblist_table);
+                $tablist_keyval = (GETPOSTISSET($mode.'_param_dblist_keyval'))?GETPOST($mode.'_param_dblist_keyval'):$editobj->params->dblist_keyval;
+                $filter = (GETPOSTISSET($mode.'_param_dblist_filter'))?GETPOST($mode.'_param_dblist_filter'):$editobj->params->dblist_filter;
+                break;                
+            case 'newfield':
+                $slct_table = GestionParcConstructOption($db->DDLListTables($conf->db->name), 'vv');
+                $tablist_keyval = '';
+                $filter = '';
+                break;
+            endswitch;
+            $params = array(
+                array(
+                    'label' => $langs->trans('gp_field_dblist').' <span class="required">*</span>','description' => $langs->transnoentities('gp_field_dblist_desc'),
+                    'field' => '<select class="gp-slct-simple" name="'.$mode.'_param_dblist_table" id="'.$mode.'_param_dblist_table" style="min-width:220px">'.$slct_table.'</select>'),
+                array(
+                    'label' => $langs->trans('gp_field_dblist_keyval').' <span class="required">*</span>','description' => $langs->transnoentities('gp_field_dblist_keyval_desc'),
+                    'field' => '<input type="text" name="'.$mode.'_param_dblist_keyval" id="'.$mode.'_param_dblist_keyval" value="'.$tablist_keyval.'">'),
+                array(
+                    'label' => $langs->trans('gp_field_dblist_filter').'','description' => $langs->transnoentities('gp_field_dblist_filter_desc'),
+                    'field' => '<input type="text" name="'.$mode.'_param_dblist_filter" id="'.$mode.'_param_dblist_filter" value="'.$filter.'">'),
+            );
         break;
 
         // TYPE 'YEARLIST'
-    case 'yearlist':
+        case 'yearlist':
 
-        // ON SUPPRIME LA VALEUR AUCUN TRI POUR CE TYPE DE CHAMP
-        $y_tabsort = $tab_sort; unset($y_tabsort['NO']);            
+            // ON SUPPRIME LA VALEUR AUCUN TRI POUR CE TYPE DE CHAMP
+            $y_tabsort = $tab_sort; unset($y_tabsort['NO']);
 
-        switch ($mode):
-        case 'editfield':
-            $v_default_value = (GETPOSTISSET($mode.'_default_value'))?GETPOST($mode.'_default_value'):$editobj->default_value;
-            $v_yearstart = (GETPOSTISSET($mode.'_param_yearstart'))?GETPOST($mode.'_param_yearstart'):$editobj->params->yearstart;
-            $v_yearstop = (GETPOSTISSET($mode.'_param_yearstop'))?GETPOST($mode.'_param_yearstop'):$editobj->params->yearstop;
-            $slct_listsort = GestionParcConstructOption($y_tabsort, 'kv', (GETPOSTISSET($mode.'_param_yearsort'))?GETPOST($mode.'_param_yearsort'):$editobj->params->yearsort);
-            $slct_yesno = GestionParcConstructOption($tab_yesno, 'kv', (GETPOSTISSET($mode.'_param_yearcustom'))?GETPOST($mode.'_param_yearcustom'):$editobj->params->yearcustom);
-            break;
-                
-        case 'newfield':
-            $v_default_value = GETPOST($mode.'_default_value');
-            $v_yearstart = GETPOST($mode.'_param_yearstart');
-            $v_yearstop = GETPOST($mode.'_param_yearstop');
-            $slct_listsort = GestionParcConstructOption($y_tabsort, 'kv', GETPOST($mode.'_param_yearsort'));
-            $slct_yesno = GestionParcConstructOption($tab_yesno, 'kv', GETPOST($mode.'_param_yearcustom'));
-            break;
-        endswitch;
+            switch ($mode):
+                case 'editfield':
+                    $v_default_value = (GETPOSTISSET($mode.'_default_value'))?GETPOST($mode.'_default_value'):$editobj->default_value;
+                    $v_yearstart = (GETPOSTISSET($mode.'_param_yearstart'))?GETPOST($mode.'_param_yearstart'):$editobj->params->yearstart;
+                    $v_yearstop = (GETPOSTISSET($mode.'_param_yearstop'))?GETPOST($mode.'_param_yearstop'):$editobj->params->yearstop;
+                    $slct_listsort = GestionParcConstructOption($y_tabsort, 'kv', (GETPOSTISSET($mode.'_param_yearsort'))?GETPOST($mode.'_param_yearsort'):$editobj->params->yearsort);
+                    $slct_yesno = GestionParcConstructOption($tab_yesno, 'kv', (GETPOSTISSET($mode.'_param_yearcustom'))?GETPOST($mode.'_param_yearcustom'):$editobj->params->yearcustom);
+                break;
+                    
+                case 'newfield':
+                    $v_default_value = GETPOST($mode.'_default_value');
+                    $v_yearstart = GETPOST($mode.'_param_yearstart');
+                    $v_yearstop = GETPOST($mode.'_param_yearstop');
+                    $slct_listsort = GestionParcConstructOption($y_tabsort, 'kv', GETPOST($mode.'_param_yearsort'));
+                    $slct_yesno = GestionParcConstructOption($tab_yesno, 'kv', GETPOST($mode.'_param_yearcustom'));
+                break;
+            endswitch;
 
-        $params = array(
-            array(
-                'label' => $langs->trans('gp_field_yearstart').' <span class="required">*</span>', 'description' => $form->textwithpicto($langs->transnoentities('gp_field_yearstart_desc'), $langs->transnoentities('gp_field_year_help')),
-                'field' => '<input type="text" name="'.$mode.'_param_yearstart" id="'.$mode.'_param_yearstart" placeholder="'.date('Y').'" value="'.$v_yearstart.'" >'),
-            array(
-                'label' => $langs->trans('gp_field_yearstop').' <span class="required">*</span>', 'description' => $form->textwithpicto($langs->transnoentities('gp_field_yearstop_desc'), $langs->transnoentities('gp_field_year_help')),
-                'field' => '<input type="text" name="'.$mode.'_param_yearstop" id="'.$mode.'_param_yearstop" placeholder="'.date('Y').'" value="'.$v_yearstop.'" >'),
-            array(
-                'label' => $langs->trans('DefaultValue'),'description' => $form->textwithpicto($langs->transnoentities('gp_field_default_desc'), $langs->transnoentities('gp_field_year_help')),
-                'field' => '<input type="text" name="'.$mode.'_default_value" id="'.$mode.'_default_value" value="'.$v_default_value.'">'),
-            array(
-                'label' => $langs->trans('gp_field_sort').' <span class="required">*</span>', 'description' => $langs->trans('gp_field_sort_desc'),
-                'field' => '<select class="gp-slct-simple" name="'.$mode.'_param_yearsort" id="'.$mode.'_param_yearsort">'.$slct_listsort.'</select>'),
-            array(
-                'label' => $langs->trans('gp_field_customvalue').' <span class="required">*</span>', 'description' => $langs->trans('gp_field_customvalue_desc'),
-                'field' => '<select class="gp-slct-simple" name="'.$mode.'_param_yearcustom" id="'.$mode.'_param_yearcustom">'.$slct_yesno.'</select>'),
-        );
+            $params = array(
+                array(
+                    'label' => $langs->trans('gp_field_yearstart').' <span class="required">*</span>', 'description' => $form->textwithpicto($langs->transnoentities('gp_field_yearstart_desc'), $langs->transnoentities('gp_field_year_help')),
+                    'field' => '<input type="text" name="'.$mode.'_param_yearstart" id="'.$mode.'_param_yearstart" placeholder="'.date('Y').'" value="'.$v_yearstart.'" >'),
+                array(
+                    'label' => $langs->trans('gp_field_yearstop').' <span class="required">*</span>', 'description' => $form->textwithpicto($langs->transnoentities('gp_field_yearstop_desc'), $langs->transnoentities('gp_field_year_help')),
+                    'field' => '<input type="text" name="'.$mode.'_param_yearstop" id="'.$mode.'_param_yearstop" placeholder="'.date('Y').'" value="'.$v_yearstop.'" >'),
+                array(
+                    'label' => $langs->trans('DefaultValue'),'description' => $form->textwithpicto($langs->transnoentities('gp_field_default_desc'), $langs->transnoentities('gp_field_year_help')),
+                    'field' => '<input type="text" name="'.$mode.'_default_value" id="'.$mode.'_default_value" value="'.$v_default_value.'">'),
+                array(
+                    'label' => $langs->trans('gp_field_sort').' <span class="required">*</span>', 'description' => $langs->trans('gp_field_sort_desc'),
+                    'field' => '<select class="gp-slct-simple" name="'.$mode.'_param_yearsort" id="'.$mode.'_param_yearsort">'.$slct_listsort.'</select>'),
+                array(
+                    'label' => $langs->trans('gp_field_customvalue').' <span class="required">*</span>', 'description' => $langs->trans('gp_field_customvalue_desc'),
+                    'field' => '<select class="gp-slct-simple" name="'.$mode.'_param_yearcustom" id="'.$mode.'_param_yearcustom">'.$slct_yesno.'</select>'),
+            );
+        break;
+
+        // TYPE DATE
+        case 'date':
+
+            // ON SUPPRIME LA VALEUR AUCUN TRI POUR CE TYPE DE CHAMP
+            $y_tabsort = $tab_sort; unset($y_tabsort['NO']);
+
+            switch ($mode):
+                case 'editfield':
+                    $v_default_value = (GETPOSTISSET($mode.'_default_value'))?GETPOST($mode.'_default_value'):$editobj->default_value;
+                    //$v_yearstart = (GETPOSTISSET($mode.'_param_yearstart'))?GETPOST($mode.'_param_yearstart'):$editobj->params->yearstart;
+                    //$v_yearstop = (GETPOSTISSET($mode.'_param_yearstop'))?GETPOST($mode.'_param_yearstop'):$editobj->params->yearstop;
+                    $slct_listsort = GestionParcConstructOption($y_tabsort, 'kv', (GETPOSTISSET($mode.'_param_datesort'))?GETPOST($mode.'_param_datesort'):$editobj->params->datesort);
+                    //$slct_yesno = GestionParcConstructOption($tab_yesno, 'kv', (GETPOSTISSET($mode.'_param_yearcustom'))?GETPOST($mode.'_param_yearcustom'):$editobj->params->yearcustom);
+                break;
+                    
+                case 'newfield':
+                    $v_default_value = GETPOST($mode.'_default_value');
+                    $slct_listsort = GestionParcConstructOption($y_tabsort, 'kv', GETPOST($mode.'_param_datesort'));
+                break;
+            endswitch;
+
+            $params = array(
+                array(
+                    'label' => $langs->trans('DefaultValue'),
+                    'description' => $form->textwithpicto($langs->transnoentities('gp_field_default_desc'), $langs->transnoentities('gp_field_date_help')),
+                    'field' => '<input type="text" name="'.$mode.'_default_value" id="'.$mode.'_default_value" value="'.$v_default_value.'">'),
+                array(
+                    'label' => $langs->trans('gp_field_sort').' <span class="required">*</span>', 
+                    'description' => $langs->trans('gp_field_sort_desc'),
+                    'field' => '<select class="gp-slct-simple" name="'.$mode.'_param_datesort" id="'.$mode.'_param_datesort">'.$slct_listsort.'</select>'),
+            );
+
         break;
 
         // LISTE PERSONNALISEE
-    case 'customlist':
+        case 'customlist':
 
-        switch ($mode):
-        case 'editfield':
-            $v_default_value = (GETPOSTISSET($mode.'_default_value'))?GETPOST($mode.'_default_value'):$editobj->default_value;
-            $listval = (GETPOSTISSET($mode.'_param_listvalues'))?GETPOST($mode.'_param_listvalues'):$editobj->params->listvalues;
-            $slct_customlist = GestionParcConstructOption($listval, 'vv', $listval, true);
-            $slct_listsort = GestionParcConstructOption($tab_sort, 'kv', (GETPOSTISSET($mode.'_param_listsort'))?GETPOST($mode.'_param_listsort'):$editobj->params->listsort);
-            $slct_yesno = GestionParcConstructOption($tab_yesno, 'kv', (GETPOSTISSET($mode.'_param_listcustom'))?GETPOST($mode.'_param_listcustom'):$editobj->params->listcustom);
-            break;
-                
-        case 'newfield':
-            $v_default_value = GETPOST($mode.'_default_value');
-            $slct_customlist = GestionParcConstructOption(GETPOST($mode.'_param_listvalues'), 'vv', GETPOST($mode.'_param_listvalues'), true);
-            $slct_listsort = GestionParcConstructOption($tab_sort, 'kv', GETPOST($mode.'_param_listsort'));
-            $slct_yesno = GestionParcConstructOption($tab_yesno, 'kv', GETPOST($mode.'_param_listcustom'));
-            break;
-        endswitch;
+            switch ($mode):
+            case 'editfield':
+                $v_default_value = (GETPOSTISSET($mode.'_default_value'))?GETPOST($mode.'_default_value'):$editobj->default_value;
+                $listval = (GETPOSTISSET($mode.'_param_listvalues'))?GETPOST($mode.'_param_listvalues'):$editobj->params->listvalues;
+                $slct_customlist = GestionParcConstructOption($listval, 'vv', $listval, true);
+                $slct_listsort = GestionParcConstructOption($tab_sort, 'kv', (GETPOSTISSET($mode.'_param_listsort'))?GETPOST($mode.'_param_listsort'):$editobj->params->listsort);
+                $slct_yesno = GestionParcConstructOption($tab_yesno, 'kv', (GETPOSTISSET($mode.'_param_listcustom'))?GETPOST($mode.'_param_listcustom'):$editobj->params->listcustom);
+                break;
+                    
+            case 'newfield':
+                $v_default_value = GETPOST($mode.'_default_value');
+                $slct_customlist = GestionParcConstructOption(GETPOST($mode.'_param_listvalues'), 'vv', GETPOST($mode.'_param_listvalues'), true);
+                $slct_listsort = GestionParcConstructOption($tab_sort, 'kv', GETPOST($mode.'_param_listsort'));
+                $slct_yesno = GestionParcConstructOption($tab_yesno, 'kv', GETPOST($mode.'_param_listcustom'));
+                break;
+            endswitch;
 
-        $params = array(
-            array(
-                'label' => $langs->trans('gp_field_customlist'),'description' => $langs->transnoentities('gp_field_customlist_desc'),
-                'field' => '<select multiple="multiple" class="gp-slct-multi-tags" name="'.$mode.'_param_listvalues[]" id="'.$mode.'_param_listvalues" style="min-width:220px">'.$slct_customlist.'</select>'),
-            array(
-                'label' => $langs->trans('DefaultValue'),'description' => $langs->transnoentities('gp_field_default_desc'),
-                'field' => '<input type="text" name="'.$mode.'_default_value" id="'.$mode.'_default_value" value="'.$v_default_value.'">'),
-            array(
-                'label' => $langs->trans('gp_field_sort').' <span class="required">*</span>', 'description' => $langs->trans('gp_field_sort_desc'),
-                'field' => '<select class="gp-slct-simple" name="'.$mode.'_param_listsort" id="'.$mode.'_param_listsort">'.$slct_listsort.'</select>'),
-            array(
-                'label' => $langs->trans('gp_field_customvalue').' <span class="required">*</span>', 'description' => $langs->trans('gp_field_customvalue_desc'),
-                'field' => '<select class="gp-slct-simple" name="'.$mode.'_param_listcustom" id="'.$mode.'_param_listcustom">'.$slct_yesno.'</select>'),
-        );
+            $params = array(
+                array(
+                    'label' => $langs->trans('gp_field_customlist'),'description' => $langs->transnoentities('gp_field_customlist_desc'),
+                    'field' => '<select multiple="multiple" class="gp-slct-multi-tags" name="'.$mode.'_param_listvalues[]" id="'.$mode.'_param_listvalues" style="min-width:220px">'.$slct_customlist.'</select>'),
+                array(
+                    'label' => $langs->trans('DefaultValue'),'description' => $langs->transnoentities('gp_field_default_desc'),
+                    'field' => '<input type="text" name="'.$mode.'_default_value" id="'.$mode.'_default_value" value="'.$v_default_value.'">'),
+                array(
+                    'label' => $langs->trans('gp_field_sort').' <span class="required">*</span>', 'description' => $langs->trans('gp_field_sort_desc'),
+                    'field' => '<select class="gp-slct-simple" name="'.$mode.'_param_listsort" id="'.$mode.'_param_listsort">'.$slct_listsort.'</select>'),
+                array(
+                    'label' => $langs->trans('gp_field_customvalue').' <span class="required">*</span>', 'description' => $langs->trans('gp_field_customvalue_desc'),
+                    'field' => '<select class="gp-slct-simple" name="'.$mode.'_param_listcustom" id="'.$mode.'_param_listcustom">'.$slct_yesno.'</select>'),
+            );
         break;
 
         // LISTE DE PRODUITS / SERVICE par TAG
-    case 'prodserv':
+        case 'prodserv':
 
-        $cats = $form->select_all_categories('product', $selected = '', 'parent', 64, 0, 1);
+            $cats = $form->select_all_categories('product', $selected = '', 'parent', 64, 0, 1);
 
-        switch ($mode):
-        case 'editfield':
-            $v_default_value = (GETPOSTISSET($mode.'_default_value'))?GETPOST($mode.'_default_value'):$editobj->default_value;
-            $listcats = (GETPOSTISSET($mode.'_param_prodservtags'))?GETPOST($mode.'_param_prodservtags'):$editobj->params->prodservtags;
-            $slct_cats = GestionParcConstructOption($cats, 'kv', $listcats, true);
-            $slct_yesno = GestionParcConstructOption($tab_yesno, 'kv', (GETPOSTISSET($mode.'_param_prodservref'))?GETPOST($mode.'_param_prodservref'):$editobj->params->prodservref);
-            break;
+            switch ($mode):
+            case 'editfield':
+                $v_default_value = (GETPOSTISSET($mode.'_default_value'))?GETPOST($mode.'_default_value'):$editobj->default_value;
+                $listcats = (GETPOSTISSET($mode.'_param_prodservtags'))?GETPOST($mode.'_param_prodservtags'):$editobj->params->prodservtags;
+                $slct_cats = GestionParcConstructOption($cats, 'kv', $listcats, true);
+                $slct_yesno = GestionParcConstructOption($tab_yesno, 'kv', (GETPOSTISSET($mode.'_param_prodservref'))?GETPOST($mode.'_param_prodservref'):$editobj->params->prodservref);
+                break;
+                    
+            case 'newfield':
+                $v_default_value = GETPOST($mode.'_default_value');                   
+                $slct_cats = GestionParcConstructOption($cats, 'kv', GETPOST($mode.'_param_prodservtags'), true);
+                $slct_yesno = GestionParcConstructOption($tab_yesno, 'kv', GETPOST($mode.'_param_prodservref'));
+                break;
+            endswitch;
+
                 
-        case 'newfield':
-            $v_default_value = GETPOST($mode.'_default_value');                   
-            $slct_cats = GestionParcConstructOption($cats, 'kv', GETPOST($mode.'_param_prodservtags'), true);
-            $slct_yesno = GestionParcConstructOption($tab_yesno, 'kv', GETPOST($mode.'_param_prodservref'));
-            break;
-        endswitch;
 
-            
-
-        $params = array(
-            array(
-                'label' => $langs->trans('gp_field_tagslist'),'description' => $langs->transnoentities('gp_field_tagslist_desc'),
-                'field' => '<select multiple="multiple" class="gp-slct-simple" name="'.$mode.'_param_prodservtags[]" id="'.$mode.'_param_prodservtags" style="min-width:220px">'.$slct_cats.'</select>'),
-            array(
-                'label' => $langs->trans('DefaultValue'),'description' => $langs->transnoentities('gp_field_proddefault_desc'),
-                'field' => '<input type="text" name="'.$mode.'_default_value" id="'.$mode.'_default_value" value="'.$v_default_value.'">'),
-            array(
-                'label' => $langs->trans('gp_field_showprodservref').' <span class="required">*</span>', 'description' => $langs->trans('gp_field_showprodservref_desc'),
-                'field' => '<select class="gp-slct-simple" name="'.$mode.'_param_prodservref" id="'.$mode.'_param_prodservref">'.$slct_yesno.'</select>'),
-        );
+            $params = array(
+                array(
+                    'label' => $langs->trans('gp_field_tagslist'),'description' => $langs->transnoentities('gp_field_tagslist_desc'),
+                    'field' => '<select multiple="multiple" class="gp-slct-simple" name="'.$mode.'_param_prodservtags[]" id="'.$mode.'_param_prodservtags" style="min-width:220px">'.$slct_cats.'</select>'),
+                array(
+                    'label' => $langs->trans('DefaultValue'),'description' => $langs->transnoentities('gp_field_proddefault_desc'),
+                    'field' => '<input type="text" name="'.$mode.'_default_value" id="'.$mode.'_default_value" value="'.$v_default_value.'">'),
+                array(
+                    'label' => $langs->trans('gp_field_showprodservref').' <span class="required">*</span>', 'description' => $langs->trans('gp_field_showprodservref_desc'),
+                    'field' => '<select class="gp-slct-simple" name="'.$mode.'_param_prodservref" id="'.$mode.'_param_prodservref">'.$slct_yesno.'</select>'),
+            );
         break;
 
         // CHAMP TEXTE
-    case 'textfield':
+        case 'textfield':
 
-        switch ($mode):
-        case 'editfield':
-            $v_default_value = (GETPOSTISSET($mode.'_default_value'))?GETPOST($mode.'_default_value'):$editobj->default_value;                    
-            break;                
-        case 'newfield':
-            $v_default_value = GETPOST($mode.'_default_value');                    
-            break;
-        endswitch;
+            switch ($mode):
+            case 'editfield':
+                $v_default_value = (GETPOSTISSET($mode.'_default_value'))?GETPOST($mode.'_default_value'):$editobj->default_value;                    
+                break;                
+            case 'newfield':
+                $v_default_value = GETPOST($mode.'_default_value');                    
+                break;
+            endswitch;
 
-        $params = array(
-            array(
-                'label' => $langs->trans('DefaultValue'),'description' => $langs->transnoentities('gp_field_default_desc'),
-                'field' => '<input type="text" name="'.$mode.'_default_value" id="'.$mode.'_default_value" value="'.$v_default_value.'">'),
-        );
+            $params = array(
+                array(
+                    'label' => $langs->trans('DefaultValue'),'description' => $langs->transnoentities('gp_field_default_desc'),
+                    'field' => '<input type="text" name="'.$mode.'_default_value" id="'.$mode.'_default_value" value="'.$v_default_value.'">'),
+            );
         break;
 
     endswitch;
+    //var_dump($params);
 
     return $params;
 }
@@ -338,7 +374,6 @@ function GestionParcGetListProdServ($tab_cats,$showref = false)
 //
 function GestionParcCheckCookieForSocid($cookie_name,$socid)
 {
-
     if(isset($_COOKIE[$cookie_name])) :
         $cookie = json_decode($_COOKIE[$cookie_name]);
         $cookie = (array) $cookie;

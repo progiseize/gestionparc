@@ -826,7 +826,13 @@ class GestionParcField
                 $gp = new GestionParc($this->db);
                 $gp->fetch_parcType($this->parc_id);
 
-                $check_addfield = $this->db->DDLAddField(MAIN_DB_PREFIX.$this->parent_table_element."__".$gp->parc_key, $this->field_key, array('type'=>'TEXT'));
+                if($this->type == 'date'):
+                    $options_sql = array('type'=>'DATE');
+                else:
+                    $options_sql = array('type'=>'TEXT');
+                endif;
+
+                $check_addfield = $this->db->DDLAddField(MAIN_DB_PREFIX.$this->parent_table_element."__".$gp->parc_key, $this->field_key, $options_sql);
                 if($check_addfield) : $this->db->commit(); return $this->rowid;
                 else: $this->db->rollback(); return false;
                 endif;
@@ -1081,63 +1087,59 @@ class GestionParcField
             // On recupere le nom des colonnes
             $tmp = explode(':', $this->params->dblist_keyval);
             if($tmp[0] == $tmp[1]) : $fieldselect = $tmp[0];
-      else: $fieldselect = $tmp[0].', '.$tmp[1];
-      endif;
-
-      // On commence à construire la requète
-      $sql = "SELECT ".$fieldselect." FROM ".$this->params->dblist_table;
-
-      // Condition
-      if(isset($this->params->dblist_filter) && !empty($this->params->dblist_filter)) :
-          $tmp_w = explode('=', $this->params->dblist_filter);
-          $sql.= " WHERE ".$tmp_w[0]."='".$tmp_w[1]."'";
-      endif;
-
-      // On lance la requète
-      $query_dblist = $this->db->query($sql);
-
-      if(!$query_dblist) :
-          $output_field .= 'Erreur paramètres';
-      else:
-
-          $nb_fields = $query_dblist->num_rows;
-          if(!$nb_fields) : $output_field .= 'Aucun résultat';
-       else:
-
-           // ON VERIFIE LES VARIABLES POST OU GET
-           if(GETPOSTISSET('gpfield_'.$this->field_key)) : $compare_value = GETPOST('gpfield_'.$this->field_key);
-        else: 
-            if(!empty($field_value)) : $compare_value = $field_value; 
+            else: $fieldselect = $tmp[0].', '.$tmp[1];
             endif;
-        endif;
 
-        $output_field .= '<select class="gp-slct-simple" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->field_key.'" style="width:100%">';
-        while($obj = $this->db->fetch_object($query_dblist)):
-            $is_selected = ($obj->{$tmp[1]} == $compare_value )?'selected="selected"':'';
-            $output_field .= '<option value="'.$obj->{$tmp[1]}.'" '.$is_selected.'>'.$obj->{$tmp[0]}.'</option>';
-        endwhile;
-        $output_field .= '</select>';                    
-                    
-       endif;
-      endif;
+            // On commence à construire la requète
+            $sql = "SELECT ".$fieldselect." FROM ".$this->params->dblist_table;
 
-            break;
+            // Condition
+            if(isset($this->params->dblist_filter) && !empty($this->params->dblist_filter)) :
+              $tmp_w = explode('=', $this->params->dblist_filter);
+              $sql.= " WHERE ".$tmp_w[0]."='".$tmp_w[1]."'";
+            endif;
+
+            // On lance la requète
+            $query_dblist = $this->db->query($sql);
+
+            if(!$query_dblist) :
+                $output_field .= 'Erreur paramètres';
+            else:
+                $nb_fields = $query_dblist->num_rows;
+                if(!$nb_fields) : $output_field .= 'Aucun résultat';
+                else:
+
+                    // ON VERIFIE LES VARIABLES POST OU GET
+                    if(GETPOSTISSET('gpfield_'.$this->field_key)) : 
+                        $compare_value = GETPOST('gpfield_'.$this->field_key);
+                    else: 
+                        if(!empty($field_value)) : $compare_value = $field_value; endif;
+                    endif;
+
+                    $output_field .= '<select class="gp-slct-simple" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->field_key.'" style="width:100%">';
+                    while($obj = $this->db->fetch_object($query_dblist)):
+                        $is_selected = ($obj->{$tmp[1]} == $compare_value )?'selected="selected"':'';
+                        $output_field .= '<option value="'.$obj->{$tmp[1]}.'" '.$is_selected.'>'.$obj->{$tmp[0]}.'</option>';
+                    endwhile;
+                    $output_field .= '</select>'; 
+                endif;
+            endif;
+        break;
 
         // NUMERO AUTOMATIQUE
         case 'autonumber':
             // SI ON EST DANS LA GESTION DES CHAMPS ON MET 1 COMME VALEUR
             if(empty($socid)) : $nb_val = 1; 
-                // SINON, ON VERIFIE SI LE CHAMP POSSEDE UNE VALEUR
-                  elseif(!empty($socid) && !empty($field_value)) : $nb_val = $field_value;
-                      // SINON ON CALCULE LE PROCHAIN NUMERO DISPO
-                   else : 
-                       $nb_val = $this->getNextAutoNumber($socid, $gestionparc->parc_key, $this->field_key);
-                   endif;
+            // SINON, ON VERIFIE SI LE CHAMP POSSEDE UNE VALEUR
+            elseif(!empty($socid) && !empty($field_value)) : $nb_val = $field_value;            
+            // SINON ON CALCULE LE PROCHAIN NUMERO DISPO
+            else :
+                $nb_val = $this->getNextAutoNumber($socid, $gestionparc->parc_key, $this->field_key);
+            endif;
+            $output_field = '<input type="number" min="1" step="1" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->field_key.'" value="'.$nb_val.'" />';
+        break;
 
-                   $output_field = '<input type="number" min="1" step="1" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->field_key.'" value="'.$nb_val.'" />';
-            break;
-
-            // LISTE ANNEE
+        // LISTE ANNEE
         case 'yearlist':
 
             // PARAMS
@@ -1149,50 +1151,63 @@ class GestionParcField
 
             // SI ON DOIT CALCULER L'ANNEE                
             if(substr($param_yearstart, 0, 1) === 'Y') : $param_yearstart = $this->calculY($param_yearstart);
-                else: $param_yearstart = intval($param_yearstart);
-                endif;
+            else: $param_yearstart = intval($param_yearstart);
+            endif;
 
-                if(substr($param_yearstop, 0, 1) === 'Y') : $param_yearstop = $this->calculY($param_yearstop);
-                      else: $param_yearstop = intval($param_yearstop);
-                      endif;
+            if(substr($param_yearstop, 0, 1) === 'Y') : $param_yearstop = $this->calculY($param_yearstop);
+            else: $param_yearstop = intval($param_yearstop);
+            endif;
 
-                      if(substr($param_yeardefault, 0, 1) === 'Y') : $param_yeardefault = $this->calculY($param_yeardefault);
-                      else: $param_yeardefault = intval($param_yeardefault);
-                      endif;
+            if(substr($param_yeardefault, 0, 1) === 'Y') : $param_yeardefault = $this->calculY($param_yeardefault);
+            else: $param_yeardefault = intval($param_yeardefault);
+            endif;
 
-                      // ON VERIFIE LES VARIABLES POST OU GET
-                      if(GETPOSTISSET('gpfield_'.$this->field_key)) : $compare_value = GETPOST('gpfield_'.$this->field_key);
-                      else: 
-                          if(!empty($field_value)) : $compare_value = $field_value;
-                          else: $compare_value = $param_yeardefault;
-                          endif;
-                      endif;
+            // ON VERIFIE LES VARIABLES POST OU GET
+            if(GETPOSTISSET('gpfield_'.$this->field_key)) : $compare_value = GETPOST('gpfield_'.$this->field_key);
+            else: 
+                if(!empty($field_value)) : $compare_value = $field_value;
+                else: $compare_value = $param_yeardefault; endif;
+            endif;
 
-                      // ON DETERMINE LA VALEUR LA PLUS GRANDE ETLA PLUS PETITE
-                      $max_y = max($param_yearstart, $param_yearstop);
-                      $min_y = min($param_yearstart, $param_yearstop);
+            // ON DETERMINE LA VALEUR LA PLUS GRANDE ETLA PLUS PETITE
+             $max_y = max($param_yearstart, $param_yearstop);
+            $min_y = min($param_yearstart, $param_yearstop);
 
-                      // ON CREE UN TABLEAU AVEC TOUTES LES VALEURS ET ON LE TRIE SI BESOIN
-                      $years = array();
-                      while($min_y <= $max_y): array_push($years, $min_y); $min_y++; 
-                      endwhile;
-                      if($param_yearsort == 'DESC') : rsort($years); 
-                      endif;
+            // ON CREE UN TABLEAU AVEC TOUTES LES VALEURS ET ON LE TRIE SI BESOIN
+            $years = array();
+            while($min_y <= $max_y): array_push($years, $min_y); $min_y++; endwhile;
+            if($param_yearsort == 'DESC') : rsort($years); endif;
 
-                      // ON DETERMINE LE TYPE DE SELECT
-                      if($this->params->yearcustom) : $slct_class = 'gp-slct-simple-tags'; else: $slct_class = 'gp-slct-simple'; 
-                      endif;
+            // ON DETERMINE LE TYPE DE SELECT
+            if($this->params->yearcustom) : $slct_class = 'gp-slct-simple-tags';
+            else: $slct_class = 'gp-slct-simple'; 
+            endif;
 
-                      $output_field .= '<select class="'.$slct_class.'" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->parc_id.'_'.$this->field_key.'" style="width:100%">';
-                      // $this->default_value
-                      foreach($years as $year):
-                          $is_selected = ($year == $compare_value )?'selected="selected"':'';
-                          $output_field .= '<option value="'.$year.'" '.$is_selected.'>'.$year.'</option>';
-                      endforeach;
-                      $output_field .= '</select>';
-            break;
+            $output_field .= '<select class="'.$slct_class.'" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->parc_id.'_'.$this->field_key.'" style="width:100%">';
+            foreach($years as $year):
+                $is_selected = ($year == $compare_value )?'selected="selected"':'';
+                $output_field .= '<option value="'.$year.'" '.$is_selected.'>'.$year.'</option>';
+            endforeach;
+            $output_field .= '</select>';
+        break;
 
-            // LISTE CUSTOM
+        // DATE
+        case 'date':
+
+            $default_value = $this->default_value;
+            if($this->default_value == 'dd/mm/YYYY' || $this->default_value == 'YYYY_mm_dd'):
+                $default_value = date('Y-m-d');
+            endif;
+
+            if(GETPOSTISSET('gpfield_'.$this->field_key)) : $compare_value = GETPOST('gpfield_'.$this->field_key);
+            else: $compare_value = $field_value ? $field_value : $default_value;
+            endif;
+
+            $output_field = '<input type="date" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->field_key.'" value="'.$compare_value.'" />';
+
+        break;
+
+        // LISTE CUSTOM
         case 'customlist':
 
             // PARAMS
@@ -1201,65 +1216,62 @@ class GestionParcField
             $param_listvalues = $this->params->listvalues;
 
             switch($param_listsort):
-            case 'ASC': sort($param_listvalues); 
-                break;
-            case 'DESC': rsort($param_listvalues); 
-                break;
+                case 'ASC': sort($param_listvalues); break;
+                case 'DESC': rsort($param_listvalues); break;
             endswitch;
 
             // ON VERIFIE LES VARIABLES POST OU GET
             if(GETPOSTISSET('gpfield_'.$this->field_key)) : $compare_value = GETPOST('gpfield_'.$this->field_key);
-                else: 
-                    //var_dump($field_value);
-                    if(!empty($field_value)) : $compare_value = $field_value;
-                    else: $compare_value = $param_default;
-                    endif;
-                    //var_dump($compare_value);
+            else: 
+                if(!empty($field_value)) : $compare_value = $field_value;
+                else: $compare_value = $param_default;
                 endif;
+            endif;
 
-                // ON DETERMINE LE TYPE DE SELECT
-                if($this->params->listcustom) : $slct_class = 'gp-slct-simple-tags'; else: $slct_class = 'gp-slct-simple'; 
-                endif;
+            // ON DETERMINE LE TYPE DE SELECT
+            if($this->params->listcustom) : $slct_class = 'gp-slct-simple-tags';
+            else: $slct_class = 'gp-slct-simple'; 
+            endif;
 
-                $output_field .= '<select class="'.$slct_class.'" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->parc_id.'_'.$this->field_key.'" style="width:100%">';
-                // $this->default_value
-                foreach($param_listvalues as $lv):
-                    //var_dump($lv);
-                    $is_selected = ($lv == $compare_value )?'selected="selected"':'';
-                    //var_dump($is_selected);
-                    $output_field .= '<option value="'.$lv.'" '.$is_selected.'>'.$lv.'</option>';
-                endforeach;
-                $output_field .= '</select>';
-            break;
+            $output_field .= '<select class="'.$slct_class.'" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->parc_id.'_'.$this->field_key.'" style="width:100%">';
+            // $this->default_value
+            foreach($param_listvalues as $lv):
+                //var_dump($lv);
+                $is_selected = ($lv == $compare_value )?'selected="selected"':'';
+                //var_dump($is_selected);
+                $output_field .= '<option value="'.$lv.'" '.$is_selected.'>'.$lv.'</option>';
+            endforeach;
+            $output_field .= '</select>';
+        break;
 
-            // PRODUITS / SERVICES
+        // PRODUITS / SERVICES
         case 'prodserv':
 
             $list_prodserv = GestionParcGetListProdServ($this->params->prodservtags, $this->params->prodservref);
 
             // ON VERIFIE LES VARIABLES POST OU GET
             if(GETPOSTISSET('gpfield_'.$this->field_key)) : $compare_value = GETPOST('gpfield_'.$this->field_key);
-                else: 
-                    if(!empty($field_value)) : $compare_value = $field_value;
-                    else: $compare_value = $this->default_value; 
-                    endif;
+            else: 
+                if(!empty($field_value)) : $compare_value = $field_value;
+                else: $compare_value = $this->default_value; 
                 endif;
+            endif;
 
-                $output_field .= '<select class="gp-slct-simple" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->parc_id.'_'.$this->field_key.'" style="width:100%">';
-                foreach($list_prodserv as $kps => $ps):
-                    $is_selected = ($kps == $compare_value )?'selected="selected"':'';
-                    $output_field .= '<option value="'.$kps.'" '.$is_selected.'>'.$ps.'</option>';
-                endforeach;
-                $output_field .= '</select>';
-            break;
+            $output_field .= '<select class="gp-slct-simple" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->parc_id.'_'.$this->field_key.'" style="width:100%">';
+            foreach($list_prodserv as $kps => $ps):
+                $is_selected = ($kps == $compare_value )?'selected="selected"':'';
+                $output_field .= '<option value="'.$kps.'" '.$is_selected.'>'.$ps.'</option>';
+            endforeach;
+            $output_field .= '</select>';
+        break;
             
-            // CHAMP TEXTE
+        // CHAMP TEXTE
         case 'textfield':
             if(GETPOSTISSET('gpfield_'.$this->field_key)) : $compare_value = GETPOST('gpfield_'.$this->field_key);
-                else: $compare_value = $field_value ? $field_value : $this->default_value;
-                endif;
-                $output_field = '<input type="text" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->field_key.'" value="'.$compare_value.'" />';
-            break;
+            else: $compare_value = $field_value ? $field_value : $this->default_value;
+            endif;
+            $output_field = '<input type="text" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->field_key.'" value="'.$compare_value.'" />';
+        break;
 
         endswitch;
 
