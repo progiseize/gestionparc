@@ -281,15 +281,7 @@ switch ($action):
                 break;
 
                 case 'date':
-
-                    //
-                    if(empty(GETPOST($fieldname.'_param_datesort'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_datesort')), null, 'errors'); endif;
-                    if(!$error) :
-                        // ON CONSTRUIT LE TABLEAU DES PARAMETRES
-                        $gpf->params = array(
-                            'datesort' => GETPOST($fieldname.'_param_datesort'),
-                        );
-                    endif;
+                    $gpf->params = array();
                 break;
 
                 case 'customlist':

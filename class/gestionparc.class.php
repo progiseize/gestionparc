@@ -1194,9 +1194,20 @@ class GestionParcField
         // DATE
         case 'date':
 
-            $default_value = $this->default_value;
+            $default_value = '';
             if($this->default_value == 'dd/mm/YYYY' || $this->default_value == 'YYYY_mm_dd'):
                 $default_value = date('Y-m-d');
+            elseif(!empty($this->default_value)):
+                
+                $pattern_fr = "/^\d{2}\/\d{2}\/\d{4}$/";
+                $pattern_us = "/^\d{4}-\d{2}-\d{2}$/";
+
+                if (preg_match($pattern_fr, $this->default_value)):
+                    $arraydate = explode('/', $this->default_value);
+                    $default_value = $arraydate[2].'-'.$arraydate[1].'-'.$arraydate[0];
+                elseif (preg_match($pattern_us, $this->default_value)):
+                    $default_value = $this->default_value;
+                endif;
             endif;
 
             if(GETPOSTISSET('gpfield_'.$this->field_key)) : $compare_value = GETPOST('gpfield_'.$this->field_key);

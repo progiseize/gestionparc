@@ -211,15 +211,9 @@ function GestionParcGetFieldParams($field_type,$mode,$editobj = '')
             switch ($mode):
                 case 'editfield':
                     $v_default_value = (GETPOSTISSET($mode.'_default_value'))?GETPOST($mode.'_default_value'):$editobj->default_value;
-                    //$v_yearstart = (GETPOSTISSET($mode.'_param_yearstart'))?GETPOST($mode.'_param_yearstart'):$editobj->params->yearstart;
-                    //$v_yearstop = (GETPOSTISSET($mode.'_param_yearstop'))?GETPOST($mode.'_param_yearstop'):$editobj->params->yearstop;
-                    $slct_listsort = GestionParcConstructOption($y_tabsort, 'kv', (GETPOSTISSET($mode.'_param_datesort'))?GETPOST($mode.'_param_datesort'):$editobj->params->datesort);
-                    //$slct_yesno = GestionParcConstructOption($tab_yesno, 'kv', (GETPOSTISSET($mode.'_param_yearcustom'))?GETPOST($mode.'_param_yearcustom'):$editobj->params->yearcustom);
-                break;
-                    
+                break;                    
                 case 'newfield':
-                    $v_default_value = GETPOST($mode.'_default_value');
-                    $slct_listsort = GestionParcConstructOption($y_tabsort, 'kv', GETPOST($mode.'_param_datesort'));
+                    $v_default_value = GETPOST($mode.'_default_value');                    
                 break;
             endswitch;
 
@@ -227,11 +221,8 @@ function GestionParcGetFieldParams($field_type,$mode,$editobj = '')
                 array(
                     'label' => $langs->trans('DefaultValue'),
                     'description' => $form->textwithpicto($langs->transnoentities('gp_field_default_desc'), $langs->transnoentities('gp_field_date_help')),
-                    'field' => '<input type="text" name="'.$mode.'_default_value" id="'.$mode.'_default_value" value="'.$v_default_value.'">'),
-                array(
-                    'label' => $langs->trans('gp_field_sort').' <span class="required">*</span>', 
-                    'description' => $langs->trans('gp_field_sort_desc'),
-                    'field' => '<select class="gp-slct-simple" name="'.$mode.'_param_datesort" id="'.$mode.'_param_datesort">'.$slct_listsort.'</select>'),
+                    'field' => '<input type="text" name="'.$mode.'_default_value" id="'.$mode.'_default_value" value="'.$v_default_value.'">'
+                ),
             );
 
         break;
