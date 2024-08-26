@@ -147,6 +147,7 @@ gp_field_dblist_filter=Filtre
 gp_field_dblist_filter_desc=Remplir comme ceci fieldname=value où fieldname est le nom du champ à tester
 gp_field_onlyverif=Mode vérification
 gp_field_onlyverif_desc=Ce champ sera visible uniquement en mode vérification. S'il est obligatoire, cela ne s'appliquera que dans ce mode.
+gp_field_date_help=Format FR ou US / dd/mm/YYYY ou YYYY_mm_dd pour la date du jour
 
 # RETOURS / ERREURS
 gp_error=Une erreur est survenue

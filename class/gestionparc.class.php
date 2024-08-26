@@ -1760,6 +1760,7 @@ class GestionParcVerif
 
         $langs->load('companies');
         $langs->load('bills');
+        $langs->load('gestionparc@gestionparc');
 
         //
         $customer = new Societe($this->db);
