@@ -154,8 +154,10 @@ class GestionParcExport extends ExportExcel2007
         $sheet->getStyle('C'.$row)->getFont()->setBold(true);
         $row++;
 
+        //
+        $phone = !empty($customer->phone) ? wordwrap($customer->phone,2,'.',TRUE) : '';
         $sheet->setCellValue('C'.$row, $langs->transnoentities('PhoneNumber'));
-        $sheet->setCellValue('D'.$row, wordwrap($customer->phone,2,'.',TRUE));
+        $sheet->setCellValue('D'.$row, $phone);
         $sheet->getStyle('C'.$row.':D'.$row)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
         $sheet->getStyle('C'.$row)->getFont()->setBold(true);
         $row++;

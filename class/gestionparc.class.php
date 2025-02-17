@@ -10,7 +10,6 @@ dol_include_once('./gestionparc/lib/gestionparc.lib.php');
 
 class GestionParc
 {
-    
     public $table_element = 'gestionparc';
     public $table_element_fields = 'gestionparc_fields';
 
@@ -29,31 +28,31 @@ class GestionParc
     public $fields;
 
     public $forbidden_words = array(
-    'ACCESSIBLE','ADD','ALL','ALTER','ANALYZE','AND','AS','ASC','ASENSITIVE','AUTO_INCREMENT',
-    'BDB','BEFORE','BERKELEYDB','BETWEEN','BIGINT','BINARY','BLOB','BOTH','BY',
-    'CALL','CASCADE','CASE','CHANGE','CHAR','CHARACTER','CHECK','COLLATE','COLUMN','COLUMNS','CONDITION','CONNECTION','CONSTRAINT','CONTINUE','CONVERT','CREATE','CROSS','CURRENT_DATE','CURRENT_TIME','CURRENT_TIMESTAMP','CURRENT_USER','CURSOR',
-    'DATABASE','DATABASES','DAY_HOUR','DAY_MICROSECOND','DAY_MINUTE','DAY_SECOND','DEC','DECIMAL','DECLARE','DEFAULT','DELAYED','DELETE','DESC','DESCRIBE','DETERMINISTIC','DISTINCT','DISTINCTROW','DIV','DOUBLE','DROP','DUAL',
-    'EACH','ELSE','ELSEIF','ENCLOSED','ESCAPED','EXISTS','EXIT','EXPLAIN',
-    'FALSE','FETCH','FIELDS','FLOAT','FLOAT4','FLOAT8','FOR','FORCE','FOREIGN','FOUND','FRAC_SECOND','FROM','FULLTEXT',
-    'GENERAL','GRANT','GROUP',
-    'HAVING','HIGH_PRIORITY','HOUR_MICROSECOND','HOUR_MINUTE','HOUR_SECOND',
-    'IF','IGNORE','IGNORE_SERVER_IDS','IN','INDEX','INFILE','INNER','INNODB','INOUT','INSENSITIVE','INSERT','INT','INT1','INT2','INT3','INT4','INT8','INTEGER','INTERVAL','INTO','IO_THREAD','IS','ITERATE',
-    'JOIN',
-    'KEY','KEYS','KILL',
-    'LEADING','LEAVE','LEFT','LIKE','LIMIT','LINEAR','LINES','LOAD','LOCALTIME','LOCALTIMESTAMP','LOCK','LONG','LONGBLOB','LONGTEXT','LOOP','LOW_PRIORITY',
-    'MASTER_HEARTBEAT_PERIOD','MASTER_SERVER_ID','MASTER_SSL_VERIFY_SERVER_CERT','MATCH','MAXVALUE','MEDIUMBLOB','MEDIUMINT','MEDIUMTEXT','MIDDLEINT','MINUTE_MICROSECOND','MINUTE_SECOND','MOD','MODIFIES','MySQL',
-    'NATURAL','NOT','NO_WRITE_TO_BINLOG','NULL','NUMERIC',
-    'ON','OPTIMIZE','OPTION','OPTIONALLY','OR','ORDER','OUT','OUTER','OUTFILE',
-    'PRECISION','PRIMARY','PRIVILEGES','PROCEDURE','PURGE',
-    'RANGE','READ','READS','READ_WRITE','REAL','REFERENCES','REGEXP','RELEASE','RENAME','REPEAT','REPLACE','REQUIRE','RESIGNAL','RESTRICT','RETURN','REVOKE','RIGHT','RLIKE',
-    'SCHEMA','SCHEMAS','SECOND_MICROSECOND','SELECT','SENSITIVE','SEPARATOR','SET','SHOW','SIGNAL','SLOW','SMALLINT','SOME','SONAME','SPATIAL','SPECIFIC','SQL','SQLEXCEPTION','SQLSTATE','SQLWARNING','SQL_BIG_RESULT','SQL_CALC_FOUND_ROWS','SQL_SMALL_RESULT','SQL_TSI_DAY','SQL_TSI_FRAC_SECOND','SQL_TSI_HOUR','SQL_TSI_MINUTE','SQL_TSI_MONTH','SQL_TSI_QUARTER','SQL_TSI_SECOND','SQL_TSI_WEEK','SQL_TSI_YEAR','SSL','STARTING','STRAIGHT_JOIN','STRIPED',
-    'TABLE','TABLES','TERMINATED','THEN','TIMESTAMPADD','TIMESTAMPDIFF','TINYBLOB','TINYINT','TINYTEXT','TO','TRAILING','TRIGGER','TRUE','THE',
-    'UNDO','UNION','UNIQUE','UNLOCK','UNSIGNED','UPDATE','USAGE','USE','USER_RESOURCES','USING','UTC_DATE','UTC_TIME','UTC_TIMESTAMP',
-    'VALUES','VARBINARY','VARCHAR','VARCHARACTER','VARYING',
-    'WHEN','WHERE','WHILE','WITH','WRITE',
-    'XOR',
-    'YEAR_MONTH',
-    'ZEROFILL',
+        'ACCESSIBLE','ADD','ALL','ALTER','ANALYZE','AND','AS','ASC','ASENSITIVE','AUTO_INCREMENT',
+        'BDB','BEFORE','BERKELEYDB','BETWEEN','BIGINT','BINARY','BLOB','BOTH','BY',
+        'CALL','CASCADE','CASE','CHANGE','CHAR','CHARACTER','CHECK','COLLATE','COLUMN','COLUMNS','CONDITION','CONNECTION','CONSTRAINT','CONTINUE','CONVERT','CREATE','CROSS','CURRENT_DATE','CURRENT_TIME','CURRENT_TIMESTAMP','CURRENT_USER','CURSOR',
+        'DATABASE','DATABASES','DAY_HOUR','DAY_MICROSECOND','DAY_MINUTE','DAY_SECOND','DEC','DECIMAL','DECLARE','DEFAULT','DELAYED','DELETE','DESC','DESCRIBE','DETERMINISTIC','DISTINCT','DISTINCTROW','DIV','DOUBLE','DROP','DUAL',
+        'EACH','ELSE','ELSEIF','ENCLOSED','ESCAPED','EXISTS','EXIT','EXPLAIN',
+        'FALSE','FETCH','FIELDS','FLOAT','FLOAT4','FLOAT8','FOR','FORCE','FOREIGN','FOUND','FRAC_SECOND','FROM','FULLTEXT',
+        'GENERAL','GRANT','GROUP',
+        'HAVING','HIGH_PRIORITY','HOUR_MICROSECOND','HOUR_MINUTE','HOUR_SECOND',
+        'IF','IGNORE','IGNORE_SERVER_IDS','IN','INDEX','INFILE','INNER','INNODB','INOUT','INSENSITIVE','INSERT','INT','INT1','INT2','INT3','INT4','INT8','INTEGER','INTERVAL','INTO','IO_THREAD','IS','ITERATE',
+        'JOIN',
+        'KEY','KEYS','KILL',
+        'LEADING','LEAVE','LEFT','LIKE','LIMIT','LINEAR','LINES','LOAD','LOCALTIME','LOCALTIMESTAMP','LOCK','LONG','LONGBLOB','LONGTEXT','LOOP','LOW_PRIORITY',
+        'MASTER_HEARTBEAT_PERIOD','MASTER_SERVER_ID','MASTER_SSL_VERIFY_SERVER_CERT','MATCH','MAXVALUE','MEDIUMBLOB','MEDIUMINT','MEDIUMTEXT','MIDDLEINT','MINUTE_MICROSECOND','MINUTE_SECOND','MOD','MODIFIES','MySQL',
+        'NATURAL','NOT','NO_WRITE_TO_BINLOG','NULL','NUMERIC',
+        'ON','OPTIMIZE','OPTION','OPTIONALLY','OR','ORDER','OUT','OUTER','OUTFILE',
+        'PRECISION','PRIMARY','PRIVILEGES','PROCEDURE','PURGE',
+        'RANGE','READ','READS','READ_WRITE','REAL','REFERENCES','REGEXP','RELEASE','RENAME','REPEAT','REPLACE','REQUIRE','RESIGNAL','RESTRICT','RETURN','REVOKE','RIGHT','RLIKE',
+        'SCHEMA','SCHEMAS','SECOND_MICROSECOND','SELECT','SENSITIVE','SEPARATOR','SET','SHOW','SIGNAL','SLOW','SMALLINT','SOME','SONAME','SPATIAL','SPECIFIC','SQL','SQLEXCEPTION','SQLSTATE','SQLWARNING','SQL_BIG_RESULT','SQL_CALC_FOUND_ROWS','SQL_SMALL_RESULT','SQL_TSI_DAY','SQL_TSI_FRAC_SECOND','SQL_TSI_HOUR','SQL_TSI_MINUTE','SQL_TSI_MONTH','SQL_TSI_QUARTER','SQL_TSI_SECOND','SQL_TSI_WEEK','SQL_TSI_YEAR','SSL','STARTING','STRAIGHT_JOIN','STRIPED',
+        'TABLE','TABLES','TERMINATED','THEN','TIMESTAMPADD','TIMESTAMPDIFF','TINYBLOB','TINYINT','TINYTEXT','TO','TRAILING','TRIGGER','TRUE','THE',
+        'UNDO','UNION','UNIQUE','UNLOCK','UNSIGNED','UPDATE','USAGE','USE','USER_RESOURCES','USING','UTC_DATE','UTC_TIME','UTC_TIMESTAMP',
+        'VALUES','VARBINARY','VARCHAR','VARCHARACTER','VARYING',
+        'WHEN','WHERE','WHILE','WITH','WRITE',
+        'XOR',
+        'YEAR_MONTH',
+        'ZEROFILL',
     );
 
     public $db;
@@ -81,7 +80,7 @@ class GestionParc
             $sql.= " '".$this->db->escape($this->label)."'";
             $sql.= ", '".$this->parc_key."'";
             $sql.= ", '".$this->db->escape($this->description)."'";
-            if(empty($this->tags)) : $sql.= ", NULL"; else: $sql.= ", '".$this->tags."'"; 
+            if(empty($this->tags)) : $sql.= ", NULL"; else: $sql.= ", '".$this->tags."'";
             endif;
             $sql.= ", '".$this->db->escape($this->position)."'";
             $sql.= ", '".$user->id."'";
@@ -91,7 +90,7 @@ class GestionParc
 
             $result = $this->db->query($sql);
 
-            if ($result) : 
+            if ($result) :
                 $this->rowid = $this->db->last_insert_id(MAIN_DB_PREFIX.$this->table_element);
                 $this->author = $user->id;
                 $this->entity = $conf->entity;
@@ -115,13 +114,13 @@ class GestionParc
                 $check_creatable = $this->db->DDLCreateTable(MAIN_DB_PREFIX.$this->table_element.'__'.$this->parc_key, $fields, 'rowid', 'innoDB');
 
                 if($check_creatable) : $this->db->commit(); return $this->rowid;
-                else: $this->db->rollback(); return false; 
+                else: $this->db->rollback(); return false;
                 endif;
 
-         else: $this->db->rollback(); return false; 
-         endif;
+        else: $this->db->rollback(); return false;
+        endif;
 
-     else: return false; 
+     else: return false;
      endif;
     }
 
@@ -140,14 +139,14 @@ class GestionParc
             $sql = "DELETE FROM ".MAIN_DB_PREFIX.$this->table_element;
             $sql .= " WHERE rowid = ".$parc_id;
             $result = $this->db->query($sql);
-            if ($result) : 
+            if ($result) :
 
                 $check_droptable = $this->db->DDLDropTable(MAIN_DB_PREFIX.$this->table_element.'__'.$this->parc_key);
                 if($check_droptable) : $this->db->commit(); return $this->rowid;
-                else: $this->db->rollback(); return false; 
+                else: $this->db->rollback(); return false;
                 endif;
 
-         else: $this->db->rollback(); 
+         else: $this->db->rollback();
          endif;
          return $result;
      else: return false;
@@ -181,7 +180,7 @@ class GestionParc
 
             $sql .= ",description  = '".$this->db->escape($this->description)."'";
 
-            if(empty($this->tags)) : $sql.= ",tags = NULL"; else: $sql.= ",tags = '".$this->tags."'"; 
+            if(empty($this->tags)) : $sql.= ",tags = NULL"; else: $sql.= ",tags = '".$this->tags."'";
             endif;
 
             $sql .= ",position  = '".$this->position."'";
@@ -190,7 +189,7 @@ class GestionParc
 
             $result = $this->db->query($sql);
 
-            if ($result) : 
+            if ($result) :
                 if($update_key) :
 
                     $altersql = "ALTER TABLE ".MAIN_DB_PREFIX.$this->table_element."__".$old_key." RENAME ".MAIN_DB_PREFIX.$this->table_element."__".$this->parc_key;
@@ -199,7 +198,7 @@ class GestionParc
                     else: $this->db->rollback(); return false;
                     endif;
 
-             else: $this->db->commit(); return true; 
+             else: $this->db->commit(); return true;
              endif;
          else: $this->db->rollback(); return false;
          endif;
@@ -216,7 +215,7 @@ class GestionParc
 
         global $conf, $user, $langs;
 
-        $cat = new Categorie($this->db);        
+        $cat = new Categorie($this->db);
 
         $sql = "SELECT * FROM ".MAIN_DB_PREFIX.$this->table_element." WHERE rowid = ".$rowid;
 
@@ -242,7 +241,7 @@ class GestionParc
       else:
           $tags = json_decode($item->tags);
           $tags_tab = array();
-          foreach ($tags as $tag_id): $cat->fetch($tag_id); $tags_tab[$tag_id] = $cat->label; 
+          foreach ($tags as $tag_id): $cat->fetch($tag_id); $tags_tab[$tag_id] = $cat->label;
           endforeach;
           $this->tags = $tags_tab;
       endif;
@@ -250,7 +249,7 @@ class GestionParc
       // ON CONSTRUIT LE TABLEAU DES CHAMPS
       $this->fields = $this->list_parcFields($this->rowid);
 
-      if(!$return_obj) : return $this->rowid; else: return $this; 
+      if(!$return_obj) : return $this->rowid; else: return $this;
       endif;
      endif;
     }
@@ -267,21 +266,21 @@ class GestionParc
 
         $sql = "SELECT rowid, label, parc_key FROM ".MAIN_DB_PREFIX.$this->table_element;
         $sql .= " WHERE entity = '".$conf->entity."'";
-        
+
         if($isforsoc) :
             if(!empty($soc_tags)) :
                 $sql .= " AND (tags IS NULL";
                 foreach($soc_tags as $st):
                     $sql .= " OR JSON_CONTAINS(tags, '\"".$st."\"')";
                 endforeach;
-                
+
                 $sql .= ")";
          else:
              $sql .= " AND tags IS NULL";
          endif;
         endif;
 
-        if($enabled) : $sql .= " AND enabled = '1'"; 
+        if($enabled) : $sql .= " AND enabled = '1'";
         endif;
         $sql .= " ORDER BY position";
         $result = $this->db->query($sql);
@@ -299,7 +298,7 @@ class GestionParc
                     $i++;
                 endwhile;
             endif;
-     else: dol_print_error($this->db); 
+     else: dol_print_error($this->db);
      endif;
 
      return $types;
@@ -312,7 +311,7 @@ class GestionParc
     {
 
         global $conf, $user, $langs;
-        
+
         $fields = array();
 
         $sql = "SELECT rowid FROM ".MAIN_DB_PREFIX.$this->table_element_fields." WHERE parc_id = ".$parc_id;
@@ -323,7 +322,7 @@ class GestionParc
             $nb_results = $this->db->num_rows($result);
             if($nb_results) : $i = 0;
                 while($i < $nb_results):
-                    $obj = $this->db->fetch_object($result);                    
+                    $obj = $this->db->fetch_object($result);
                     $gpf = new GestionParcField($this->db);
                     $gpf->fetch_parcField($obj->rowid);
                     array_push($fields, $gpf);
@@ -331,7 +330,7 @@ class GestionParc
                 endwhile;
                 //usort($fields, fn($a, $b) => intval($a->position) <=> intval($b->position)); // PHP 7.4+
                 usort(
-                    $fields, function ($a, $b) { 
+                    $fields, function ($a, $b) {
                         return intval($a->position) <=> intval($b->position);
                     }
                 );
@@ -357,11 +356,11 @@ class GestionParc
             if($result) : $this->db->commit(); return true;
          else: $this->db->rollback(); return false;
          endif;
-        
+
      else: return false;
      endif;
 
-        
+
     }
 
     /*****************************************************************/
@@ -374,7 +373,7 @@ class GestionParc
         $gpf->rowid = $field_id;
 
         if($gpf->setStatus($status)) : return true;
-     else: return false; 
+     else: return false;
      endif;
     }
 
@@ -388,7 +387,7 @@ class GestionParc
         $gpf->rowid = $field_id;
 
         if($gpf->setViewExport($yesorno)) : return true;
-     else: return false; 
+     else: return false;
      endif;
     }
 
@@ -404,7 +403,7 @@ class GestionParc
             $gpf->rowid = $field_id;
 
             if($gpf->remove_parcField($field_id, $user)) : return true;
-         else: return false; 
+         else: return false;
          endif;
 
      else: return false;
@@ -417,7 +416,7 @@ class GestionParc
     public function constructParcKey($parclabel)
     {
 
-        $key = $parclabel; 
+        $key = $parclabel;
         $key = strip_tags($key);
         $key = strtolower(strtr(utf8_decode($key), utf8_decode('àáâãäçèéêëìíîïñòóôõöùúûüýÿÀÁÂÃÄÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝ'), 'aaaaaceeeeiiiinooooouuuuyyAAAAACEEEEIIIINOOOOOUUUUY'));
         $key = stripslashes($key);
@@ -429,10 +428,10 @@ class GestionParc
 
         while (!$check_unique): $i++;
             if($this->checkParcKey($key)) : $check_unique = true;
-            else: $key = $u_key.'_'.$i; 
+            else: $key = $u_key.'_'.$i;
             endif;
         endwhile;
-        
+
         return $key;
     }
 
@@ -443,7 +442,7 @@ class GestionParc
     {
 
         // CHECK FORBIDDEN WORDS
-        if(in_array(strtoupper($key), $this->forbidden_words)) : return false; 
+        if(in_array(strtoupper($key), $this->forbidden_words)) : return false;
         endif;
 
         // VERIFICATION DE LA CLE UNIQUE
@@ -465,7 +464,7 @@ class GestionParc
         global $user;
 
         $soc_parclines = array();
-        
+
         $sql = "SELECT * FROM ".MAIN_DB_PREFIX.$this->table_element.'__'.$parc_key;
         $sql .= " WHERE socid = '".$socid."'";
         $sql .= " ORDER BY rowid ASC";
@@ -480,7 +479,7 @@ class GestionParc
                     $i++;
                 endwhile;
             endif;
-     else: dol_print_error($this->db); 
+     else: dol_print_error($this->db);
      endif;
 
      return $soc_parclines;
@@ -491,7 +490,7 @@ class GestionParc
 
         $sql = "SELECT COUNT(*) as nb_items FROM ".MAIN_DB_PREFIX.$this->table_element.'__'.$parc_key;
         $sql .= " WHERE socid = '".$socid."'";
-        if($isverif) : $sql .= " AND verif = '1'"; 
+        if($isverif) : $sql .= " AND verif = '1'";
         endif;
 
         $result = $this->db->query($sql);
@@ -517,13 +516,13 @@ class GestionParc
                 $societe = new Societe($this->db);
                 $societe->fetch($obj->socid);
 
-                if($societe->client == 1 && $societe->status == 1) : $nb_items++; 
+                if($societe->client == 1 && $societe->status == 1) : $nb_items++;
                 endif;
 
             endwhile;
         endif;
 
-        return $nb_items;    
+        return $nb_items;
     }
 
     /*****************************************************************/
@@ -543,7 +542,7 @@ class GestionParc
                 $societe = new Societe($this->db);
                 $societe->fetch($obj->socid);
 
-                if($societe->client == 1 && $societe->status == 1) : $nb_clients++; 
+                if($societe->client == 1 && $societe->status == 1) : $nb_clients++;
                 endif;
 
             endwhile;
@@ -609,12 +608,12 @@ class GestionParc
 
         foreach($list_parcs as $parc_id => $parc):
             switch ($action):
-                case 'add': 
+                case 'add':
                     if(!$this->db->DDLAddField(MAIN_DB_PREFIX.$this->table_element.'__'.$parc['key'], 'verif', array('type'=>'BOOLEAN','null' => 'NOT NULL','extra'=> 'DEFAULT 0', 'value' => ''))) :
                         $error++;
                     endif;
                     break;
-                case 'remove': 
+                case 'remove':
                     if(!$this->db->DDLDropField(MAIN_DB_PREFIX.$this->table_element.'__'.$parc['key'], 'verif')) :
                         $error++;
                     endif;
@@ -665,7 +664,7 @@ class GestionParc
 
                 $gfield = new GestionParcField($this->db);
                 foreach($parc_fields as $parcfield):
-                    if($parcfield->type == 'autonumber') : 
+                    if($parcfield->type == 'autonumber') :
                         array_push($autonumbers, $parcfield->field_key);
                         //$gfield->getNextAutoNumber($dest_socid,$parctype_infos['key'],$parcfield->field_key);
                     endif;
@@ -683,19 +682,19 @@ class GestionParc
                         endif;
                         $sql_up .= " WHERE rowid = '".$line_id."'";
                         $resql_up = $this->db->query($sql_up);
-                        if($resql_up) : $success++; else: $error++; 
+                        if($resql_up) : $success++; else: $error++;
                         endif;
 
                     endforeach;
                 endif;
 
             endforeach;
-            
+
             if(!$error) : $this->db->commit(); return $success;
-         else: $this->db->rollback(); return -1; 
+         else: $this->db->rollback(); return -1;
          endif;
 
-     else: return 0; 
+     else: return 0;
      endif;
 
     }
@@ -741,7 +740,7 @@ class GestionParcField
     public $required;
     public $default_value;
     public $position;
-    public $statut;    
+    public $statut;
     public $author;
     public $author_maj;
     public $date_creation;
@@ -819,7 +818,7 @@ class GestionParcField
 
             $result = $this->db->query($sql);
 
-            if ($result) : 
+            if ($result) :
                 $this->rowid = $this->db->last_insert_id(MAIN_DB_PREFIX.$this->table_element);
 
                 // ON RECUPERE LA TABLE CORRESPONDANT AU PARC
@@ -836,12 +835,12 @@ class GestionParcField
                 if($check_addfield) : $this->db->commit(); return $this->rowid;
                 else: $this->db->rollback(); return false;
                 endif;
-                
-                
-         else: $this->db->rollback(); return false; 
+
+
+         else: $this->db->rollback(); return false;
          endif;
 
-     else: $this->db->rollback(); return false; 
+     else: $this->db->rollback(); return false;
      endif;
     }
 
@@ -851,7 +850,7 @@ class GestionParcField
     public function fetch_parcField($rowid)
     {
 
-        global $conf, $user, $langs;        
+        global $conf, $user, $langs;
 
         $sql = "SELECT * FROM ".MAIN_DB_PREFIX.$this->table_element." WHERE rowid = ".$rowid;
         $result = $this->db->query($sql);
@@ -886,7 +885,7 @@ class GestionParcField
     public function getInfos_parcField($parc_id,$fieldkey)
     {
 
-        global $conf, $user, $langs;        
+        global $conf, $user, $langs;
 
         $sql = "SELECT * FROM ".MAIN_DB_PREFIX.$this->table_element." WHERE parc_id = ".$parc_id." AND field_key = '".$fieldkey."'";
         $result = $this->db->query($sql);
@@ -908,7 +907,7 @@ class GestionParcField
 
             $update_key = false;
             $this->author_maj = $user->id;
-            
+
             $sql = "UPDATE ".MAIN_DB_PREFIX.$this->table_element;
             $sql .= " SET label = '".$this->db->escape($this->label)."'";
 
@@ -918,7 +917,7 @@ class GestionParcField
                 // ON RECONSTRUIT LA CLE DU CHAMP
                 $this->field_key = $this->constructFieldKey($this->label);
                 $sql .= ",field_key  = '".$this->field_key."'";
-            endif;            
+            endif;
 
             $sql .= ",params  = '".json_encode($this->params, JSON_UNESCAPED_UNICODE)."'";
             $sql .= ",required  = '".$this->db->escape($this->required)."'";
@@ -931,7 +930,7 @@ class GestionParcField
 
             $result = $this->db->query($sql);
 
-            if ($result) : 
+            if ($result) :
                 if($update_key) :
 
                     $gp = new GestionParc($this->db);
@@ -942,7 +941,7 @@ class GestionParcField
                     if($check_alter) : $this->db->commit(); return true;
                     else: $this->db->rollback(); return false;
                     endif;
-             else: $this->db->commit(); return true; 
+             else: $this->db->commit(); return true;
              endif;
          else: $this->db->rollback(); return false;
          endif;
@@ -957,7 +956,7 @@ class GestionParcField
     public function constructFieldKey($fieldlabel)
     {
 
-        $key = $fieldlabel; 
+        $key = $fieldlabel;
         $key = strip_tags($key);
         $key = strtolower(strtr(utf8_decode($key), utf8_decode('àáâãäçèéêëìíîïñòóôõöùúûüýÿÀÁÂÃÄÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝ'), 'aaaaaceeeeiiiinooooouuuuyyAAAAACEEEEIIIINOOOOOUUUUY'));
         $key = stripslashes($key);
@@ -969,10 +968,10 @@ class GestionParcField
 
         while (!$check_unique): $i++;
             if($this->checkFieldKey($key, $this->parc_id)) : $check_unique = true;
-            else: $key = $u_key.'_'.$i; 
+            else: $key = $u_key.'_'.$i;
             endif;
         endwhile;
-        
+
         return $key;
     }
 
@@ -983,7 +982,7 @@ class GestionParcField
     {
 
         // CHECK FORBIDDEN WORDS
-        if(in_array(strtoupper($key), $this->forbidden_words)) : return false; 
+        if(in_array(strtoupper($key), $this->forbidden_words)) : return false;
         endif;
 
         // VERIFICATION DE LA CLE UNIQUE
@@ -1017,7 +1016,7 @@ class GestionParcField
             $sql .= " WHERE rowid = ".$rowid;
 
             $result = $this->db->query($sql);
-            if ($result) : 
+            if ($result) :
 
                 $check_dropfield = $this->db->DDLDropField(MAIN_DB_PREFIX.$this->parent_table_element."__".$gp->parc_key, $this->field_key);
                 if($check_dropfield) : $this->db->commit(); return true;
@@ -1047,7 +1046,7 @@ class GestionParcField
             if($result) : $this->db->commit(); return true;
          else: $this->db->rollback(); return false;
          endif;
-        
+
      else: return false;
      endif;
     }
@@ -1066,7 +1065,7 @@ class GestionParcField
             if($result) : $this->db->commit(); return true;
          else: $this->db->rollback(); return false;
          endif;
-        
+
      else: return false;
      endif;
     }
@@ -1110,9 +1109,9 @@ class GestionParcField
                 else:
 
                     // ON VERIFIE LES VARIABLES POST OU GET
-                    if(GETPOSTISSET('gpfield_'.$this->field_key)) : 
+                    if(GETPOSTISSET('gpfield_'.$this->field_key)) :
                         $compare_value = GETPOST('gpfield_'.$this->field_key);
-                    else: 
+                    else:
                         if(!empty($field_value)) : $compare_value = $field_value; endif;
                     endif;
 
@@ -1121,7 +1120,7 @@ class GestionParcField
                         $is_selected = ($obj->{$tmp[1]} == $compare_value )?'selected="selected"':'';
                         $output_field .= '<option value="'.$obj->{$tmp[1]}.'" '.$is_selected.'>'.$obj->{$tmp[0]}.'</option>';
                     endwhile;
-                    $output_field .= '</select>'; 
+                    $output_field .= '</select>';
                 endif;
             endif;
         break;
@@ -1129,9 +1128,9 @@ class GestionParcField
         // NUMERO AUTOMATIQUE
         case 'autonumber':
             // SI ON EST DANS LA GESTION DES CHAMPS ON MET 1 COMME VALEUR
-            if(empty($socid)) : $nb_val = 1; 
+            if(empty($socid)) : $nb_val = 1;
             // SINON, ON VERIFIE SI LE CHAMP POSSEDE UNE VALEUR
-            elseif(!empty($socid) && !empty($field_value)) : $nb_val = $field_value;            
+            elseif(!empty($socid) && !empty($field_value)) : $nb_val = $field_value;
             // SINON ON CALCULE LE PROCHAIN NUMERO DISPO
             else :
                 $nb_val = $this->getNextAutoNumber($socid, $gestionparc->parc_key, $this->field_key);
@@ -1149,7 +1148,7 @@ class GestionParcField
             $param_yearcustom = $this->params->yearcustom;
             $param_yeardefault = $this->default_value;
 
-            // SI ON DOIT CALCULER L'ANNEE                
+            // SI ON DOIT CALCULER L'ANNEE
             if(substr($param_yearstart, 0, 1) === 'Y') : $param_yearstart = $this->calculY($param_yearstart);
             else: $param_yearstart = intval($param_yearstart);
             endif;
@@ -1164,7 +1163,7 @@ class GestionParcField
 
             // ON VERIFIE LES VARIABLES POST OU GET
             if(GETPOSTISSET('gpfield_'.$this->field_key)) : $compare_value = GETPOST('gpfield_'.$this->field_key);
-            else: 
+            else:
                 if(!empty($field_value)) : $compare_value = $field_value;
                 else: $compare_value = $param_yeardefault; endif;
             endif;
@@ -1180,7 +1179,7 @@ class GestionParcField
 
             // ON DETERMINE LE TYPE DE SELECT
             if($this->params->yearcustom) : $slct_class = 'gp-slct-simple-tags';
-            else: $slct_class = 'gp-slct-simple'; 
+            else: $slct_class = 'gp-slct-simple';
             endif;
 
             $output_field .= '<select class="'.$slct_class.'" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->parc_id.'_'.$this->field_key.'" style="width:100%">';
@@ -1198,7 +1197,7 @@ class GestionParcField
             if($this->default_value == 'dd/mm/YYYY' || $this->default_value == 'YYYY_mm_dd'):
                 $default_value = date('Y-m-d');
             elseif(!empty($this->default_value)):
-                
+
                 $pattern_fr = "/^\d{2}\/\d{2}\/\d{4}$/";
                 $pattern_us = "/^\d{4}-\d{2}-\d{2}$/";
 
@@ -1233,7 +1232,7 @@ class GestionParcField
 
             // ON VERIFIE LES VARIABLES POST OU GET
             if(GETPOSTISSET('gpfield_'.$this->field_key)) : $compare_value = GETPOST('gpfield_'.$this->field_key);
-            else: 
+            else:
                 if(!empty($field_value)) : $compare_value = $field_value;
                 else: $compare_value = $param_default;
                 endif;
@@ -1241,7 +1240,7 @@ class GestionParcField
 
             // ON DETERMINE LE TYPE DE SELECT
             if($this->params->listcustom) : $slct_class = 'gp-slct-simple-tags';
-            else: $slct_class = 'gp-slct-simple'; 
+            else: $slct_class = 'gp-slct-simple';
             endif;
 
             $output_field .= '<select class="'.$slct_class.'" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->parc_id.'_'.$this->field_key.'" style="width:100%">';
@@ -1262,9 +1261,9 @@ class GestionParcField
 
             // ON VERIFIE LES VARIABLES POST OU GET
             if(GETPOSTISSET('gpfield_'.$this->field_key)) : $compare_value = GETPOST('gpfield_'.$this->field_key);
-            else: 
+            else:
                 if(!empty($field_value)) : $compare_value = $field_value;
-                else: $compare_value = $this->default_value; 
+                else: $compare_value = $this->default_value;
                 endif;
             endif;
 
@@ -1275,7 +1274,7 @@ class GestionParcField
             endforeach;
             $output_field .= '</select>';
         break;
-            
+
         // CHAMP TEXTE
         case 'textfield':
             if(GETPOSTISSET('gpfield_'.$this->field_key)) : $compare_value = GETPOST('gpfield_'.$this->field_key);
@@ -1300,7 +1299,7 @@ class GestionParcField
         $nb_used = array();
 
         // SI ON A DES RESULTATS
-        if($nb_fields) : 
+        if($nb_fields) :
 
             while($obj = $this->db->fetch_object($res)):
                 array_push($nb_used, intval($obj->{$field_key}));
@@ -1310,7 +1309,7 @@ class GestionParcField
 
             for ($i=1; $i < $nb_last + 1; $i++):
                 if(!in_array($i, $nb_used)) :$nb_val = $i;break;
-             else: $nb_val = $nb_last + 1; 
+             else: $nb_val = $nb_last + 1;
              endif;
             endfor;
      else: $nb_val = 1;
@@ -1346,7 +1345,7 @@ class GestionParcVerif
 {
 
     public $table_element = 'gestionparc_verifs';
-    public $parent_table_element = 'gestionparc';    
+    public $parent_table_element = 'gestionparc';
 
     public $model_pdf = 'soleil';
 
@@ -1361,7 +1360,7 @@ class GestionParcVerif
     public $fichinter_id;
     public $is_close;
     public $files_list;
-    public $db;    
+    public $db;
 
     public function __construct($db)
     {
@@ -1374,7 +1373,7 @@ class GestionParcVerif
     public function fetch($rowid)
     {
 
-        global $conf, $user, $langs;        
+        global $conf, $user, $langs;
 
         $sql = "SELECT * FROM ".MAIN_DB_PREFIX.$this->table_element." WHERE rowid = ".$rowid;
         $result = $this->db->query($sql);
@@ -1382,7 +1381,7 @@ class GestionParcVerif
         $item = $this->db->fetch_object($result);
 
         if($result->num_rows == 0) : return -1;
-     else:
+        else:
 
          $this->rowid = $item->rowid;
          $this->socid = $item->socid;
@@ -1394,7 +1393,7 @@ class GestionParcVerif
          $this->commentaires = $item->commentaires;
          $this->fichinter_id = $item->fichinter_id;
          $this->is_close = $item->is_close;
-         $this->files_list = json_decode($item->files_list);
+         $this->files_list = !empty($item->files_list) ? json_decode($item->files_list) : array();
 
          return $this->rowid;
      endif;
@@ -1414,9 +1413,9 @@ class GestionParcVerif
         $sql_check.= " AND is_close = '0'";
         $result_check = $this->db->query($sql_check);
 
-        if(!$result_check) : return false; 
+        if(!$result_check) : return false;
         endif;
-        if($result_check->num_rows > 0) : return false; 
+        if($result_check->num_rows > 0) : return false;
         endif;
 
         //
@@ -1463,7 +1462,7 @@ class GestionParcVerif
         $sql_update .= " WHERE rowid = '".$item_id."' AND socid = '".$socid."'";
 
         $resUpdate = $this->db->query($sql_update);
-        if($resUpdate) : 
+        if($resUpdate) :
 
             if($maj_verifid) :
                 $sql_bis = "UPDATE ".MAIN_DB_PREFIX.$this->table_element;
@@ -1501,7 +1500,7 @@ class GestionParcVerif
         if($maj_verifid):
 
             $nb_verifrows = $this->db->affected_rows($resUpdate);
-            
+
             $sql_bis = "UPDATE ".MAIN_DB_PREFIX.$this->table_element;
             $sql_bis.= " SET nb_verified = nb_verified + ".$nb_verifrows;
             $sql_bis.= " WHERE rowid = '".$maj_verifid."'";
@@ -1509,7 +1508,7 @@ class GestionParcVerif
 
             $this->nb_verified += $nb_verifrows;
         endif;
-        $this->db->commit(); 
+        $this->db->commit();
         return true;
     }
 
@@ -1530,7 +1529,7 @@ class GestionParcVerif
              $this->fetch($obj->rowid);
              return $obj->rowid;
          endif;
-            
+
      else: return false;
      endif;
     }
@@ -1541,7 +1540,7 @@ class GestionParcVerif
         $sql = "DELETE FROM ".MAIN_DB_PREFIX.$this->table_element." WHERE rowid = ".$verif_id;
         $result = $this->db->query($sql);
 
-        if($result) : $this->db->commit(); return true;            
+        if($result) : $this->db->commit(); return true;
      else: $this->db->rollback(); return false;
      endif;
     }
@@ -1556,11 +1555,11 @@ class GestionParcVerif
 
         // Version Dolibarr
         $dolibarr_version = explode('.', DOL_VERSION);
-        
+
         if(intval($dolibarr_version[0]) <= 17) :
             include_once DOL_DOCUMENT_ROOT.'/core/modules/export/export_csv.modules.php';
             $export_class_name = 'ExportCsv';
-        else: 
+        else:
             include_once DOL_DOCUMENT_ROOT.'/core/modules/export/export_csvutf8.modules.php';
             $export_class_name = 'ExportCsvUtf8';
         endif;
@@ -1572,14 +1571,14 @@ class GestionParcVerif
         $intervention = new Fichinter($this->db);
         $intervention->socid = $socid;
         $intervention->description = 'Vérification Parc Client '.date('d/m/Y');
-        if(!empty($description)) : $intervention->note_public = $description; 
+        if(!empty($description)) : $intervention->note_public = $description;
         endif;
         $intervention->create($user);
 
         $gestionparc = new GestionParc($this->db);
         $list_parctypes = $gestionparc->list_parcType();
 
-        // CONTENU 
+        // CONTENU
         $lineverif_desc = ''; $i = 0;
 
         /*var_dump($intervention);
@@ -1628,11 +1627,11 @@ class GestionParcVerif
                 $csv_labels_type = array('Text');
 
                 foreach($pos as $key_field => $key_pos):
-                        
-                    if($enabled[$key_field]) : 
+
+                    if($enabled[$key_field]) :
 
                         $column_name = $key_field;
-                        if($types[$key_field] == 'prodserv') : $column_name .='-ID'; 
+                        if($types[$key_field] == 'prodserv') : $column_name .='-ID';
                         endif;
 
                         array_push($csv_labels, $column_name);
@@ -1645,16 +1644,16 @@ class GestionParcVerif
 
                     endif;
                 endforeach;
-                    
+
                 $csv_parc->write_title($csv_labels, $csv_labels, $langs, $csv_labels_type);
-                
+
                 $lineverif_desc .= '<br/>';
                 $lineverif_desc .= '<b><u>'.$parctype_infos['label'].'</u></b><br/>';
 
                 $full_description = '';
 
                 // POUR CHAQUE ELEMENT ON AJOUTE + 1 SI VERIF
-                foreach($parc_lines as $parcline): 
+                foreach($parc_lines as $parcline):
 
                     $csv_line = array();
                     $csv_line_type = array();
@@ -1662,19 +1661,19 @@ class GestionParcVerif
                     $full_description .= '- ';
 
                     if($parcline->verif) :
-                        $verified_lines++; 
+                        $verified_lines++;
                         array_push($csv_line, 'oui');
                         array_push($csv_line_type, 'Text');
-                    else: 
-                        array_push($csv_line, 'non'); 
+                    else:
+                        array_push($csv_line, 'non');
                         array_push($csv_line_type, 'Text');
                     endif;
 
                     //var_dump($pos,$labels,$types,$enabled);
                     foreach($pos as $key_field => $key_pos):
-                        if($enabled[$key_field]) : 
+                        if($enabled[$key_field]) :
                             if(!empty($parcline->{$key_field})) : array_push($csv_line, $parcline->{$key_field});
-                            else: array_push($csv_line, ' '); 
+                            else: array_push($csv_line, ' ');
                             endif;
                             array_push($csv_line_type, 'Text');
 
@@ -1701,7 +1700,7 @@ class GestionParcVerif
                     endif;
                     $full_description .= '<br/>';
 
-                    $csv_parc->write_title($csv_line, $csv_line, $langs, $csv_line_type);                        
+                    $csv_parc->write_title($csv_line, $csv_line, $langs, $csv_line_type);
                 endforeach;
 
                 $csv_parc->write_footer($langs);
@@ -1717,7 +1716,7 @@ class GestionParcVerif
 
         // ON AJOUTE LA LIGNE
         $now = dol_now();
-        $intervention->addline($user, $intervention->id, $lineverif_desc, $now, $duree);        
+        $intervention->addline($user, $intervention->id, $lineverif_desc, $now, $duree);
 
         // ON VALIDE L'INTERVENTION
         $intervention->setValid($user);
@@ -1729,7 +1728,7 @@ class GestionParcVerif
         $intervention->array_options['options_gestionparc_isverif'] = $rowid;
         $intervention->updateExtraField('gestionparc_isverif');
 
-        // ON GENERE LE DOCUMENT 
+        // ON GENERE LE DOCUMENT
         $intervention->generateDocument($this->model_pdf, $langs);
 
         // ON CLOS LE MODE VERIF
@@ -1746,7 +1745,7 @@ class GestionParcVerif
         endif;
     }
 
-    public function advancedCloseVerif($socid,$description,$duree){
+    public function advancedCloseVerif($socid, $description, $duree){
 
         // TODO Ne pas créér d'onglets XLSX si pas de champ visible
 
@@ -1803,7 +1802,7 @@ class GestionParcVerif
 
         //
         $tab = 0;
-        foreach($list_parctypes as $parctype_id => $parctype_infos): 
+        foreach($list_parctypes as $parctype_id => $parctype_infos):
 
             $list_parcFields = $gestionparc->list_parcFields($parctype_id);
             $pos = array();
@@ -1825,7 +1824,7 @@ class GestionParcVerif
 
             // Si aucun champ à afficher, on passe au parc suivant
             if(empty($pos)): continue; endif;
-            
+
             // Tri et récupération du parc client
             asort($pos);
             $parc_lines = $gestionparc->getSocParcContent($socid, $parctype_infos['key']);
@@ -1844,7 +1843,7 @@ class GestionParcVerif
             endforeach;
 
             $row = 1;
-            if($addtosheetfile): 
+            if($addtosheetfile):
 
                 $tab++;
                 if($tab == 1):
@@ -1887,7 +1886,7 @@ class GestionParcVerif
                     $row = $rowafterheader;
                     $row++;
 
-                    // ********** PARC FIELDS TABLE  
+                    // ********** PARC FIELDS TABLE
                     $letterkey = 0;
                     foreach($pos as $key_field => $key_pos):
 
@@ -1902,7 +1901,7 @@ class GestionParcVerif
                                 switch ($alignkey) {
                                     case 'left': $align = \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT; break;
                                     case 'center': $align = \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER; break;
-                                    case 'right': $align = \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT; break;                                    
+                                    case 'right': $align = \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT; break;
                                     default: $align = \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT; break;
                                 }
                                 $sheet->getStyle($letters_array[$letterkey].$row)->getAlignment()->setHorizontal($align);
@@ -1916,7 +1915,7 @@ class GestionParcVerif
 
                 $letterkey = 0;
                 $parcsetline = 0;
-                foreach($parcset as $parcline): 
+                foreach($parcset as $parcline):
 
                     $letterkey = 0;
 
@@ -1940,7 +1939,7 @@ class GestionParcVerif
                                 switch ($alignkey) {
                                     case 'left': $align = \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT; break;
                                     case 'center': $align = \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER; break;
-                                    case 'right': $align = \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT; break;                                    
+                                    case 'right': $align = \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT; break;
                                     default: $align = \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT; break;
                                 }
                                 $sheet->getStyle($letters_array[$letterkey].$row)->getAlignment()->setHorizontal($align);
@@ -1956,7 +1955,7 @@ class GestionParcVerif
                         $parcsetline++;
                     endif;
 
-                    if($parcline->verif): 
+                    if($parcline->verif):
                         $verified_lines++;
                         $full_description .= '<b>Vérifié: </b>Oui';
                     else:
@@ -1970,7 +1969,7 @@ class GestionParcVerif
                 if($addtosheetfile && getDolGlobalInt('GESTIONPARC_ADVANCED_EXPORT_FILLEMPTY')):
                     if($splitconfig > 0 && $parcsetline < $splitconfig):
                         $splitdiff = $splitconfig - $parcsetline;
-                        for ($i=0; $i < $splitdiff; $i++):                        
+                        for ($i=0; $i < $splitdiff; $i++):
                             $letterkey = 0;
                             foreach($pos as $key_field => $key_pos):
                                 if($view_excel[$key_field] && $addtosheetfile):
@@ -2017,9 +2016,6 @@ class GestionParcVerif
         $now = dol_now();
         $intervention->addline($user, $intervention->id, $lineverif_desc, $now, $duree);
 
-        // ON VALIDE L'INTERVENTION
-        $intervention->setValid($user);
-
         // ON REPREND L'ENSEMBLE DES INFOS
         $intervention->fetch($intervention->id);
 
@@ -2027,7 +2023,10 @@ class GestionParcVerif
         $intervention->array_options['options_gestionparc_isverif'] = $this->rowid;
         $intervention->updateExtraField('gestionparc_isverif');
 
-        // ON GENERE LE DOCUMENT 
+        // ON VALIDE L'INTERVENTION
+        $blop = $intervention->setValid($user);
+
+        // ON GENERE LE DOCUMENT
         $intervention->generateDocument($this->model_pdf, $langs);
 
         // ON CLOS LE MODE VERIF

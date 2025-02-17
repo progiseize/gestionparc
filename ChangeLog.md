@@ -4,6 +4,9 @@
 [comment]: <> (Modele pdf)
 [comment]: <> (Harmoniser les constantes du module)
 
+### 1.7.1
+* FIX - Fix FichInter validation
+
 ### 1.7.0
 * NEW - Input type date
 
