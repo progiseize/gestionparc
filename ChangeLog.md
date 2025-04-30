@@ -4,6 +4,9 @@
 [comment]: <> (Modele pdf)
 [comment]: <> (Harmoniser les constantes du module)
 
+### 1.7.2
+* FIX - Fix redundant SQL queries in the homepage widget to improve page load speed
+
 ### 1.7.1
 * FIX - Fix FichInter validation
 
