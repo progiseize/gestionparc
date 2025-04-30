@@ -1,14 +1,14 @@
 <?php
-/* 
+/*
  * Copyright (C) 2021 Anthony Damhet - Progiseize <a.damhet@progiseize.fr>
 */
 
 $res=0;
-if (! $res && file_exists("../main.inc.php")) : $res=@include '../main.inc.php'; 
+if (! $res && file_exists("../main.inc.php")) : $res=@include '../main.inc.php';
 endif;
-if (! $res && file_exists("../../main.inc.php")) : $res=@include '../../main.inc.php'; 
+if (! $res && file_exists("../../main.inc.php")) : $res=@include '../../main.inc.php';
 endif;
-if (! $res && file_exists("../../../main.inc.php")) : $res=@include '../../../main.inc.php'; 
+if (! $res && file_exists("../../../main.inc.php")) : $res=@include '../../../main.inc.php';
 endif;
 
 // ON CHARGE LES FICHIERS NECESSAIRES
@@ -22,9 +22,9 @@ dol_include_once('./gestionparc/lib/gestionparc.lib.php');
 $langs->load("gestionparc@gestionparc");
 
 // Protection if external user
-if ($user->socid > 0) : accessforbidden(); 
+if ($user->socid > 0) : accessforbidden();
 endif;
-if (!$user->hasRight('gestionparc','parc','setup')) : accessforbidden(); 
+if (!$user->hasRight('gestionparc','parc','setup')) : accessforbidden();
 endif;
 
 /*******************************************************************
@@ -39,7 +39,7 @@ $action = GETPOST('action');
 if ($action == 'set_options') :
 
     $error = 0;
-    $db->begin(); 
+    $db->begin();
 
     $gestionparc = new GestionParc($db);
 
@@ -50,30 +50,30 @@ if ($action == 'set_options') :
         dolibarr_set_const($db, "GESTIONPARC_ADVANCED_EXPORT_LINESPLIT", GETPOST('GESTIONPARC_ADVANCED_EXPORT_LINESPLIT','int'), 'chaine', 0, '', $conf->entity);
 
         // Si l'option en cochée
-        if(GETPOSTISSET('gp-use-verif')) : 
+        if(GETPOSTISSET('gp-use-verif')) :
             dolibarr_set_const($db, "MAIN_MODULE_GESTIONPARC_USEVERIF", true, 'chaine', 0, '', $conf->entity);
             $extras_fichinter = $extrafields->fetch_name_optionals_label('fichinter');
 
-            if(!array_key_exists('gestionparc_isverif', $extras_fichinter)) : 
+            if(!array_key_exists('gestionparc_isverif', $extras_fichinter)) :
                 $extrafields->addExtraField('gestionparc_isverif', 'gp_extrafieldFichInter_isverif', 'int', '100', '', 'fichinter', 0, 0, 'null', '', 0, '', '0', '', '', $conf->entity, 'gestionparc@gestionparc');
             endif;
 
-            if(!$gestionparc->setVerifMode('add')) : $error++; 
+            if(!$gestionparc->setVerifMode('add')) : $error++;
             endif;
 
             if(!$conf->ficheinter->enabled) :
                 $res_act = activateModule('modFicheinter');
                 setEventMessages($langs->trans('gp_modFicheInterEnabled'), null, 'mesgs');
             endif;
-        else: 
+        else:
             dolibarr_set_const($db, "MAIN_MODULE_GESTIONPARC_USEVERIF", false, 'chaine', 0, '', $conf->entity);
-            if(!$gestionparc->setVerifMode('remove')) : $error++; 
+            if(!$gestionparc->setVerifMode('remove')) : $error++;
             endif;
 
             $dir = DOL_DATA_ROOT.'/gestionparc';
-            if (!is_dir($dir)) : 
-                if(!mkdir($dir, 0755)) : $error++; setEventMessages($langs->trans('gp_error_creafolder'), null, 'errors'); 
-                endif; 
+            if (!is_dir($dir)) :
+                if(!mkdir($dir, 0755)) : $error++; setEventMessages($langs->trans('gp_error_creafolder'), null, 'errors');
+                endif;
             endif;
 
         endif;
@@ -122,16 +122,16 @@ llxHeader('', $langs->transnoentities('Setup').' :: '.$langs->transnoentities('M
                     </tr>
                     <tr></tr>
                     <tr class="dolpgs-tbody">
-                        <td class="bold pgsz-optiontable-fieldname" valign="top"><?php echo $langs->trans('gp_setup_verif'); ?></td>               
+                        <td class="bold pgsz-optiontable-fieldname" valign="top"><?php echo $langs->trans('gp_setup_verif'); ?></td>
                         <td class="pgsz-optiontable-fielddesc "><?php echo $langs->transnoentities('gp_setup_verif_desc'); ?></td>
                         <td class="right pgsz-optiontable-field ">
-                            <input type="checkbox" name="gp-use-verif" <?php if($conf->global->MAIN_MODULE_GESTIONPARC_USEVERIF) : ?>checked="checked"<?php 
+                            <input type="checkbox" name="gp-use-verif" <?php if($conf->global->MAIN_MODULE_GESTIONPARC_USEVERIF) : ?>checked="checked"<?php
                            endif; ?> />
                         </td>
                     </tr>
 
                     <tr class="dolpgs-tbody">
-                        <td class="bold pgsz-optiontable-fieldname" valign="top"><?php echo $langs->trans('gp_setup_verif_usetime'); ?></td>               
+                        <td class="bold pgsz-optiontable-fieldname" valign="top"><?php echo $langs->trans('gp_setup_verif_usetime'); ?></td>
                         <td class="pgsz-optiontable-fielddesc "><?php echo $langs->transnoentities('gp_setup_verif_usetime_desc'); ?></td>
                         <td class="right pgsz-optiontable-field ">
                             <input type="number" name="gp-verifusetime" step="1" min="0" value="<?php echo $conf->global->MAIN_MODULE_GESTIONPARC_VERIFUSETIME; ?>" />
@@ -139,21 +139,21 @@ llxHeader('', $langs->transnoentities('Setup').' :: '.$langs->transnoentities('M
                     </tr>
 
                     <tr class="dolpgs-tbody">
-                        <td class="bold pgsz-optiontable-fieldname" valign="top"><?php echo $langs->trans('gp_setup_verif_redirect'); ?></td>               
+                        <td class="bold pgsz-optiontable-fieldname" valign="top"><?php echo $langs->trans('gp_setup_verif_redirect'); ?></td>
                         <td class="pgsz-optiontable-fielddesc "><?php echo $langs->transnoentities('gp_setup_verif_redirect_desc'); ?></td>
                         <td class="right pgsz-optiontable-field ">
                             <?php echo ajax_constantonoff('MAIN_MODULE_GESTIONPARC_VERIFREDIRECT'); ?>
                         </td>
                     </tr>
                     <tr class="dolpgs-tbody">
-                        <td class="bold pgsz-optiontable-fieldname" valign="top"><?php echo $langs->trans('gp_setup_verif_details'); ?></td>               
+                        <td class="bold pgsz-optiontable-fieldname" valign="top"><?php echo $langs->trans('gp_setup_verif_details'); ?></td>
                         <td class="pgsz-optiontable-fielddesc "><?php echo $langs->transnoentities('gp_setup_verif_details_desc'); ?></td>
                         <td class="right pgsz-optiontable-field ">
                             <?php echo ajax_constantonoff('MAIN_MODULE_GESTIONPARC_VERIFDETAILS'); ?>
                         </td>
                     </tr>
                     <tr class="dolpgs-tbody">
-                        <td class="bold pgsz-optiontable-fieldname" valign="top"><?php echo $langs->trans('gp_setup_useAdvancedExport'); ?></td>               
+                        <td class="bold pgsz-optiontable-fieldname" valign="top"><?php echo $langs->trans('gp_setup_useAdvancedExport'); ?></td>
                         <td class="pgsz-optiontable-fielddesc "><?php echo $langs->transnoentities('gp_setup_useAdvancedExportDesc'); ?></td>
                         <td class="right pgsz-optiontable-field ">
                             <?php echo ajax_constantonoff('GESTIONPARC_ADVANCED_EXPORT'); ?>
@@ -161,7 +161,7 @@ llxHeader('', $langs->transnoentities('Setup').' :: '.$langs->transnoentities('M
                     </tr>
                     <?php if(getDolGlobalInt('GESTIONPARC_ADVANCED_EXPORT')): ?>
                     <tr class="dolpgs-tbody">
-                        <td class="bold pgsz-optiontable-fieldname" valign="top"><?php echo $langs->trans('gp_setup_AdvancedExportLineSet'); ?></td>               
+                        <td class="bold pgsz-optiontable-fieldname" valign="top"><?php echo $langs->trans('gp_setup_AdvancedExportLineSet'); ?></td>
                         <td class="pgsz-optiontable-fielddesc "><?php echo $langs->transnoentities('gp_setup_AdvancedExportLineSetDesc'); ?></td>
                         <td class="right pgsz-optiontable-field ">
                             <input type="number" min="0" step="1" name="GESTIONPARC_ADVANCED_EXPORT_LINESPLIT" value="<?php echo getDolGlobalInt('GESTIONPARC_ADVANCED_EXPORT_LINESPLIT'); ?>">

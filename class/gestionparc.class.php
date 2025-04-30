@@ -506,14 +506,14 @@ class GestionParc
     public function count_parcItems($parc_key)
     {
         // Compte le nombre total d'éléments dans le parc
-        $sql = "SELECT COUNT(*) as nb_items 
-                FROM ".MAIN_DB_PREFIX.$this->table_element.'__'.$parc_key." p 
-                JOIN ".MAIN_DB_PREFIX."societe s ON p.socid = s.rowid 
+        $sql = "SELECT COUNT(*) as nb_items
+                FROM ".MAIN_DB_PREFIX.$this->table_element.'__'.$parc_key." p
+                JOIN ".MAIN_DB_PREFIX."societe s ON p.socid = s.rowid
                 WHERE s.client = 1 AND s.status = 1";
-                
+
         $result = $this->db->query($sql);
         if (!$result) return 0;
-        
+
         $obj = $this->db->fetch_object($result);
         return $obj->nb_items;
     }
@@ -524,14 +524,14 @@ class GestionParc
     public function count_parcSoc($parc_key)
     {
         // Compte le nombre de sociétés distinctes possédant ce type de parc
-        $sql = "SELECT COUNT(DISTINCT p.socid) as nb_clients 
-                FROM ".MAIN_DB_PREFIX.$this->table_element.'__'.$parc_key." p 
-                JOIN ".MAIN_DB_PREFIX."societe s ON p.socid = s.rowid 
+        $sql = "SELECT COUNT(DISTINCT p.socid) as nb_clients
+                FROM ".MAIN_DB_PREFIX.$this->table_element.'__'.$parc_key." p
+                JOIN ".MAIN_DB_PREFIX."societe s ON p.socid = s.rowid
                 WHERE s.client = 1 AND s.status = 1";
-                
+
         $result = $this->db->query($sql);
         if (!$result) return 0;
-        
+
         $obj = $this->db->fetch_object($result);
         return $obj->nb_clients;
     }
@@ -542,16 +542,16 @@ class GestionParc
     public function get_lastParc($parc_key)
     {
         // Version corrigée avec le bon nom de colonne pour le nom de la société
-        
-        $sql = "SELECT p.rowid, p.socid, p.date_creation, s.nom 
-                FROM ".MAIN_DB_PREFIX.$this->table_element.'__'.$parc_key." p 
-                JOIN ".MAIN_DB_PREFIX."societe s ON p.socid = s.rowid 
-                WHERE s.client = 1 AND s.status = 1 
-                ORDER BY p.date_creation DESC 
+
+        $sql = "SELECT p.rowid, p.socid, p.date_creation, s.nom
+                FROM ".MAIN_DB_PREFIX.$this->table_element.'__'.$parc_key." p
+                JOIN ".MAIN_DB_PREFIX."societe s ON p.socid = s.rowid
+                WHERE s.client = 1 AND s.status = 1
+                ORDER BY p.date_creation DESC
                 LIMIT 1";
-                
+
         $result = $this->db->query($sql);
-        
+
         if ($result && $result->num_rows > 0) {
             $obj = $this->db->fetch_object($result);
             return array(
@@ -559,16 +559,16 @@ class GestionParc
                 'url' => dol_buildpath('gestionparc/tabs/gestionparc.php?socid='.$obj->socid, 1)
             );
         }
-        
+
         // Si aucun résultat, on essaie sans les conditions sur la société
-        $sql = "SELECT p.rowid, p.socid, p.date_creation, s.nom 
-                FROM ".MAIN_DB_PREFIX.$this->table_element.'__'.$parc_key." p 
-                JOIN ".MAIN_DB_PREFIX."societe s ON p.socid = s.rowid 
-                ORDER BY p.date_creation DESC 
+        $sql = "SELECT p.rowid, p.socid, p.date_creation, s.nom
+                FROM ".MAIN_DB_PREFIX.$this->table_element.'__'.$parc_key." p
+                JOIN ".MAIN_DB_PREFIX."societe s ON p.socid = s.rowid
+                ORDER BY p.date_creation DESC
                 LIMIT 1";
-                
+
         $result = $this->db->query($sql);
-        
+
         if ($result && $result->num_rows > 0) {
             $obj = $this->db->fetch_object($result);
             return array(
@@ -576,7 +576,7 @@ class GestionParc
                 'url' => dol_buildpath('gestionparc/tabs/gestionparc.php?socid='.$obj->socid, 1)
             );
         }
-        
+
         return array('name' => '', 'url' => '');
     }
 

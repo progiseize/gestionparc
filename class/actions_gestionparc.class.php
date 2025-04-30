@@ -34,9 +34,9 @@ class ActionsGestionParc
         // SI ON EST SUR UN TIERS
         if($element == 'societe' && $parameters['mode'] == 'add') :
 
-            $nb_items = 0; 
+            $nb_items = 0;
 
-            // ON CALCULE LE NBRE D'ITEMS            
+            // ON CALCULE LE NBRE D'ITEMS
             $socid = $parameters['object']->id;
             $gp = new GestionParc($db);
             $list_parctypes = $gp->list_parcType();
@@ -54,7 +54,7 @@ class ActionsGestionParc
             foreach($tabs as $tab_key => $tab):
 
                 // ON AJOUTE LE NBRE D'ITEMS AU BON ONGLET
-                if($tab[2] == 'gestionparc') :  
+                if($tab[2] == 'gestionparc') :
                     $parameters['head'][$tab_key][1] .= '<span class="badge marginleftonlyshort">'.$nb_items.'</span>';
                 endif;
 
@@ -63,7 +63,7 @@ class ActionsGestionParc
         endif;
 
         $this->results = $parameters['head'];
-        return 1;        
+        return 1;
     }
 
     public function replaceThirdparty(&$parameters, &$object, &$action, $hookmanager)
@@ -88,16 +88,16 @@ class ActionsGestionParc
             $verif = new GestionParcVerif($db);
             $result_mergeverifs = $verif->mergeVerifs($soc_origin, $soc_dest);
 
-            if($result_mergeparcs < 0) : $error++; 
+            if($result_mergeparcs < 0) : $error++;
             endif;
-            if($result_mergeverifs < 0) : $error++; 
+            if($result_mergeverifs < 0) : $error++;
             endif;
 
             if(!$error) :
 
-                if($result_mergeparcs > 0) : setEventMessages($langs->trans('gp_mergeParcSuccess', $result_mergeparcs), null, 'mesgs'); 
+                if($result_mergeparcs > 0) : setEventMessages($langs->trans('gp_mergeParcSuccess', $result_mergeparcs), null, 'mesgs');
                 endif;
-                if($result_mergeverifs > 0) : setEventMessages($langs->trans('gp_mergeVerifSuccess', $result_mergeverifs), null, 'mesgs'); 
+                if($result_mergeverifs > 0) : setEventMessages($langs->trans('gp_mergeVerifSuccess', $result_mergeverifs), null, 'mesgs');
                 endif;
                 return 1;
 

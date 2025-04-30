@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2021      Progiseize <a.damhet@progiseize.fr> *
+/* Copyright (C) 2021      Progiseize <a.damhet@progiseize.fr>
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
@@ -72,7 +72,7 @@ class box_gestionparc extends ModeleBoxes
         $this->info_box_contents[$i][3] = array('td' => 'class="bold right"','text' => $langs->trans('gp_boxNb_countItems'));
         $i++;
 
-        foreach($parc_types as $parc_key => $parc_infos):            
+        foreach($parc_types as $parc_key => $parc_infos):
             $nb_items = $gestionparc->count_parcItems($parc_infos['key']);
             $nb_socs = $gestionparc->count_parcSoc($parc_infos['key']);
             $last_entry = $gestionparc->get_lastParc($parc_infos['key']);

@@ -1,15 +1,15 @@
 <?php
-/* 
+/*
  * Copyright (C) 2021 Anthony Damhet - Progiseize <a.damhet@progiseize.fr>
 */
 
 
 $res=0;
-if (! $res && file_exists("../main.inc.php")) : $res=@include '../main.inc.php'; 
+if (! $res && file_exists("../main.inc.php")) : $res=@include '../main.inc.php';
 endif;
-if (! $res && file_exists("../../main.inc.php")) : $res=@include '../../main.inc.php'; 
+if (! $res && file_exists("../../main.inc.php")) : $res=@include '../../main.inc.php';
 endif;
-if (! $res && file_exists("../../../main.inc.php")) : $res=@include '../../../main.inc.php'; 
+if (! $res && file_exists("../../../main.inc.php")) : $res=@include '../../../main.inc.php';
 endif;
 
 
@@ -26,7 +26,7 @@ $langs->load("gestionparc@gestionparc");
 
 // Protection if external user
 if ($user->socid > 0) : accessforbidden(); endif;
-if (!$user->hasRight('gestionparc','parc','setup')) : accessforbidden(); 
+if (!$user->hasRight('gestionparc','parc','setup')) : accessforbidden();
 endif;
 
 
@@ -52,9 +52,9 @@ if ($action == 'add_parctype') :
     $error = 0;
 
     // ON VERIFIE LES CHAMPS
-    if(GETPOST('token') != $_SESSION['token']) : $error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings'); 
+    if(GETPOST('token') != $_SESSION['token']) : $error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings');
     endif;
-    if(empty(GETPOST('gpnewtype-label', 'alphanohtml'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', 'Label'), null, 'errors'); 
+    if(empty(GETPOST('gpnewtype-label', 'alphanohtml'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', 'Label'), null, 'errors');
     endif;
 
     // SI IL N'Y A PAS D'ERREURS
@@ -65,11 +65,11 @@ if ($action == 'add_parctype') :
 
         $soc_tags_selected = GETPOST('gpnewtype-soctags');
         if(!empty($soc_tags_selected)) : $gestionparc->tags = json_encode($soc_tags_selected);
-        else: $gestionparc->tags = null; 
+        else: $gestionparc->tags = null;
         endif;
 
-        if(empty(GETPOST('gpnewtype-position', 'int'))) : $gestionparc->position = 100; 
-        else: $gestionparc->position = GETPOST('gpnewtype-position', 'int'); 
+        if(empty(GETPOST('gpnewtype-position', 'int'))) : $gestionparc->position = 100;
+        else: $gestionparc->position = GETPOST('gpnewtype-position', 'int');
         endif;
 
         // CREATION DU TYPE DE PARC
@@ -80,7 +80,7 @@ if ($action == 'add_parctype') :
     endif;
 
     if(!$error) :$db->commit(); setEventMessages($langs->trans('gp_addnewparc_success'), null, 'mesgs'); unset($_POST);
-    else: $db->rollback(); 
+    else: $db->rollback();
     endif;
 
     // SUPPRIMER UN TYPE DE PARC
@@ -88,20 +88,20 @@ elseif ($action == 'confirm_delete') :
 
     $error = 0;
 
-    if(GETPOST('token') != $_SESSION['token']) : $error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings'); 
+    if(GETPOST('token') != $_SESSION['token']) : $error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings');
     endif;
-    if(empty(GETPOST('rowid', 'int'))) : $error++; setEventMessages($langs->trans('gp_deleteparc_needId'), null, 'errors'); 
+    if(empty(GETPOST('rowid', 'int'))) : $error++; setEventMessages($langs->trans('gp_deleteparc_needId'), null, 'errors');
     endif;
 
     // SI IL N'Y A PAS D'ERREURS
     if(!$error) :
         if(!$gestionparc->remove_parcType(GETPOST('rowid', 'int'), $user)) :
-            $error++; setEventMessages($langs->trans('gp_deleteparc_needRights'), null, 'errors'); 
+            $error++; setEventMessages($langs->trans('gp_deleteparc_needRights'), null, 'errors');
         endif;
     endif;
 
     if(!$error) :$db->commit(); setEventMessages($langs->trans('gp_deleteparc_success'), null, 'mesgs');
-    else: $db->rollback(); 
+    else: $db->rollback();
     endif;
 
     // EDITER TYPE DE PARC
@@ -116,9 +116,9 @@ elseif ($action == 'edit_parctype') :
     $majtype_rowid = GETPOST('rowid', 'int');
 
     // ON VERIFIE LES CHAMPS
-    if(GETPOST('token') != $_SESSION['token']) : $error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings'); 
+    if(GETPOST('token') != $_SESSION['token']) : $error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings');
     endif;
-    if(empty(GETPOST('gpedittype-label', 'alphanohtml'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', 'Label'), null, 'errors'); 
+    if(empty(GETPOST('gpedittype-label', 'alphanohtml'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', 'Label'), null, 'errors');
     endif;
 
     // SI IL N'Y A PAS D'ERREURS
@@ -131,12 +131,12 @@ elseif ($action == 'edit_parctype') :
         $gestionparc->description = GETPOST('gpedittype-description');
 
         if(!empty($majtype_tags)) : $gestionparc->tags = json_encode($majtype_tags);
-        else: $gestionparc->tags = null; 
+        else: $gestionparc->tags = null;
         endif;
 
 
-        if(empty(GETPOST('gpedittype-position', 'int'))) : $gestionparc->position = 100; 
-        else: $gestionparc->position = GETPOST('gpedittype-position', 'int'); 
+        if(empty(GETPOST('gpedittype-position', 'int'))) : $gestionparc->position = 100;
+        else: $gestionparc->position = GETPOST('gpedittype-position', 'int');
         endif;
 
         // CREATION DU TYPE DE PARC
@@ -159,7 +159,7 @@ elseif ($action == 'enable_parc') :
 
         // IDENTIFIANT DU PARC
         $parc_id = GETPOST('rowid', 'int');
-        if(empty($parc_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'warnings'); 
+        if(empty($parc_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'warnings');
         endif;
 
         // ON MET A JOUR LE CHAMP
@@ -174,14 +174,14 @@ elseif ($action == 'enable_parc') :
 
     // DESACTIVER CHAMP
 elseif ($action == 'disable_parc') :
-    
+
 
     if(GETPOST('token') == $_SESSION['token']) :
         $error = 0;
 
         // IDENTIFIANT DU PARC
         $parc_id = GETPOST('rowid', 'int');
-        if(empty($parc_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'warnings'); 
+        if(empty($parc_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'warnings');
         endif;
 
         // ON MET A JOUR LE CHAMP
@@ -212,15 +212,15 @@ llxHeader('', $langs->transnoentities('gp_manager_pagetitle').' :: '.$langs->tra
 // ACTIONS NECESSITANT LE HEADER
 if ($action == 'delete') :
     $gestionparc->fetch_parcType(GETPOST('rowid', 'int'));
-    if(!empty($gestionparc->fields)) : $nb_items = count($gestionparc->fields); else: $nb_items = 0; 
+    if(!empty($gestionparc->fields)) : $nb_items = count($gestionparc->fields); else: $nb_items = 0;
     endif;
     echo $form->formconfirm($_SERVER['PHP_SELF'].'?rowid='.GETPOST('rowid', 'int'), $langs->trans('gp_confirm'), $langs->trans('gp_confirmDeleteParc_xItems', $nb_items), 'confirm_delete', '', '', 1, 0, 500, 0);
 endif;
 ?>
-    
+
 <div class="dolpgs-main-wrapper">
 
-    <h1 class="has-before"><?php echo $langs->transnoentities('gp_manager_pagetitle'); ?></h1>    
+    <h1 class="has-before"><?php echo $langs->transnoentities('gp_manager_pagetitle'); ?></h1>
     <?php $head = GestionParcAdminPrepareHead(); dol_fiche_head($head, 'manager', 'GestionParc', 1, 'fa-boxes_fas_#fb2a52'); ?>
 
     <div class="tabBar">
@@ -233,7 +233,7 @@ endif;
             <h3 class="dolpgs-table-title"><?php echo $langs->trans('gp_options_tab_manager'); ?></h3>
             <table class="dolpgs-table">
                 <tbody>
-                    
+
                     <?php // TITRES COLONNES TABLEAU ?>
                     <tr class="dolpgs-thead noborderside">
                         <th><?php echo $langs->trans('gp_manager_newparclabel'); ?></th>
@@ -246,16 +246,16 @@ endif;
                     </tr>
                     <?php // CREATION D'UN NOUVEAU PARC  ?>
                     <tr class="dolpgs-tbody">
-                        <td class="bold pgsz-optiontable-fieldname"><input class="quatrevingtpercent" type="text" name="gpnewtype-label" <?php if($action == 'edit') : echo 'disabled="disabled"'; 
+                        <td class="bold pgsz-optiontable-fieldname"><input class="quatrevingtpercent" type="text" name="gpnewtype-label" <?php if($action == 'edit') : echo 'disabled="disabled"';
                        endif;?> value="<?php echo GETPOST('gpnewtype-label'); ?>"></td>
-                        <td><input class="quatrevingtpercent" type="text" name="gpnewtype-description" <?php if($action == 'edit') : echo 'disabled="disabled"'; 
+                        <td><input class="quatrevingtpercent" type="text" name="gpnewtype-description" <?php if($action == 'edit') : echo 'disabled="disabled"';
                        endif;?> value="<?php echo GETPOST('gpnewtype-description'); ?>"></td>
                         <td><?php echo $form->multiselectarray('gpnewtype-soctags', $soc_tags, GETPOST('gpnewtype-soctags'), '', 0, '', 0, '100%'); ?></td>
-                        <td class="right"><input class="" type="text" name="gpnewtype-position" style="text-align: right;" size="5" <?php if($action == 'edit') : echo 'disabled="disabled"'; 
+                        <td class="right"><input class="" type="text" name="gpnewtype-position" style="text-align: right;" size="5" <?php if($action == 'edit') : echo 'disabled="disabled"';
                        endif;?> value="<?php echo (GETPOST('gpnewtype-position'))?GETPOST('gpnewtype-position'):'100'; ?>"></td>
                         <td class="center"><span class="opacitymedium">0</span></td>
                         <td class="center"></td>
-                        <td class="right"><input type="submit" class="dolpgs-btn btn-secondary" value="<?php echo $langs->trans('Add'); ?>" <?php if($action == 'edit') : echo 'disabled="disabled"'; 
+                        <td class="right"><input type="submit" class="dolpgs-btn btn-secondary" value="<?php echo $langs->trans('Add'); ?>" <?php if($action == 'edit') : echo 'disabled="disabled"';
                        endif;?>></td>
                     </tr>
                     <?php foreach($list_parctypes as $parctype_id => $parctype_infos): $gestionparc->fetch_parcType($parctype_id); ?>
@@ -267,30 +267,30 @@ endif;
                             <input class="quatrevingtpercent" type="text" name="gpedittype-label" value="<?php echo (GETPOST('gpedittype-label'))?GETPOST('gpedittype-label'):$gestionparc->label; ?>">
                         </td>
                         <td><input class="quatrevingtpercent" type="text" name="gpedittype-description" value="<?php echo (GETPOST('gpedittype-description'))?GETPOST('gpedittype-description'):$gestionparc->description; ?>"></td>
-                            <?php $slct_tags_edit = array(); if(!empty($gestionparc->tags)) : $slct_tags_edit = array_keys($gestionparc->tags); 
+                            <?php $slct_tags_edit = array(); if(!empty($gestionparc->tags)) : $slct_tags_edit = array_keys($gestionparc->tags);
                             endif; ?>
                         <td><?php echo $form->multiselectarray('gpedittype-soctags', $soc_tags, (GETPOST('gpedittype-soctags'))?GETPOST('gpedittype-soctags'):$slct_tags_edit, '', 0, '', 0, '100%'); ?></td>
-                        
+
                         <td class="right"><input class="" type="text" name="gpedittype-position" size="5" value="<?php echo (GETPOST('gpedittype-position'))?GETPOST('gpedittype-position'):$gestionparc->position; ?>"></td>
                         <td class="center">0</td>
                         <td class="center"></td>
                         <td class="right">
                             <input type="button" class="dolpgs-btn btn-danger btn-sm" value="<?php echo $langs->trans('Cancel'); ?>" onClick="window.location='<?php echo $_SERVER['PHP_SELF']; ?>'">
-                            <input type="submit" class="dolpgs-btn btn-primary btn-sm" value="<?php echo $langs->trans('Save'); ?>"> 
+                            <input type="submit" class="dolpgs-btn btn-primary btn-sm" value="<?php echo $langs->trans('Save'); ?>">
                         </td>
                     <?php else: ?>
                         <td class="bold pgsz-optiontable-fieldname"><?php echo $langs->trans($gestionparc->label); ?></td>
                         <td class="pgsz-optiontable-fielddesc"><?php echo $gestionparc->description; ?></td>
-                        <td><?php if(!empty($gestionparc->tags)) : echo implode(', ', $gestionparc->tags); else: echo $langs->trans('gp_manager_allsocs'); 
+                        <td><?php if(!empty($gestionparc->tags)) : echo implode(', ', $gestionparc->tags); else: echo $langs->trans('gp_manager_allsocs');
                        endif; ?></td>
                         <td class="right"><?php echo $gestionparc->position; ?></td>
                         <td class="center">
-                            <?php if(!empty($gestionparc->fields)) : echo count($gestionparc->fields); else: echo '0'; 
+                            <?php if(!empty($gestionparc->fields)) : echo count($gestionparc->fields); else: echo '0';
                             endif; ?>
                         </td>
                         <td class="center">
                             <?php if($gestionparc->enabled) : echo '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?rowid='.$gestionparc->rowid.'&action=disable_parc&token='.newToken().'">'.img_picto($langs->trans("Activated"), 'switch_on').'</a>';
-                            else: echo '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?rowid='.$gestionparc->rowid.'&action=enable_parc&token='.newToken().'">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>'; 
+                            else: echo '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?rowid='.$gestionparc->rowid.'&action=enable_parc&token='.newToken().'">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>';
                             endif; ?>
                         </td>
                         <td class="right">

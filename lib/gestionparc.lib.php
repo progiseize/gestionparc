@@ -14,7 +14,7 @@ function GestionParcAdminPrepareHead()
 
     $gestionparc = new GestionParc($db);
     $list_parctypes = $gestionparc->list_parcType();
-    
+
     $h = 0;
     $head = array();
 
@@ -29,12 +29,12 @@ function GestionParcAdminPrepareHead()
     $h++;
 
     if(!empty($list_parctypes)) :
-    
+
         foreach($list_parctypes as $rowid => $parc_type):
 
             $gestionparc->fetch_parcType($rowid);
 
-            if(!empty($gestionparc->fields)) : $nb_items = count($gestionparc->fields); else: $nb_items = 0; 
+            if(!empty($gestionparc->fields)) : $nb_items = count($gestionparc->fields); else: $nb_items = 0;
             endif;
 
             $head[$h][0] = dol_buildpath("/gestionparc/admin/parc.php?id=".$rowid, 1);
@@ -44,7 +44,7 @@ function GestionParcAdminPrepareHead()
         endforeach;
 
     endif;
-    
+
     complete_head_from_modules($conf, $langs, '', $head, $h, 'gestionparc');
 
     return $head;
@@ -74,7 +74,7 @@ function GestionParcGetFieldsType()
     global $langs;
 
     $gp_fields = array();
-    
+
     $gp_fields['customdata']['autonumber'] = $langs->trans('gp_fieldtype_autonumber');
     $gp_fields['customdata']['date'] = $langs->trans('Date');
     $gp_fields['customdata']['customlist'] = $langs->trans('gp_fieldtype_customlist');
@@ -98,16 +98,16 @@ function GestionParcConstructOption($tab,$mode = 'kv',$varselected = '',$isarray
     if(!empty($tab)) :
         foreach($tab as $kparam => $vparam):
 
-            if($mode == 'kv') : 
+            if($mode == 'kv') :
                 if(!empty($varselected) && !$isarray && $varselected == $kparam) : $listo .= '<option value="'.$kparam.'" selected="selected">'.$vparam.'</option>';
                 elseif(!empty($varselected) && $isarray && in_array($kparam, $varselected)) : $listo .= '<option value="'.$kparam.'" selected="selected">'.$vparam.'</option>';
-                else: $listo .= '<option value="'.$kparam.'">'.$vparam.'</option>'; 
+                else: $listo .= '<option value="'.$kparam.'">'.$vparam.'</option>';
                 endif;
-            elseif($mode == 'vv') : 
+            elseif($mode == 'vv') :
                 if(!empty($varselected) && !$isarray && $varselected == $vparam) : $listo .= '<option value="'.$vparam.'" selected="selected">'.$vparam.'</option>';
                 elseif(!empty($varselected) && $isarray && in_array($vparam, $varselected)) : $listo .= '<option value="'.$vparam.'" selected="selected">'.$vparam.'</option>';
-                else: $listo .= '<option value="'.$vparam.'">'.$vparam.'</option>'; 
-                endif; 
+                else: $listo .= '<option value="'.$vparam.'">'.$vparam.'</option>';
+                endif;
             endif;
 
         endforeach;
@@ -133,13 +133,13 @@ function GestionParcGetFieldParams($field_type,$mode,$editobj = '')
     switch ($field_type):
 
         //
-        case 'dblist': 
+        case 'dblist':
             switch ($mode):
             case 'editfield':
                 $slct_table = GestionParcConstructOption($db->DDLListTables($conf->db->name), 'vv', $editobj->params->dblist_table);
                 $tablist_keyval = (GETPOSTISSET($mode.'_param_dblist_keyval'))?GETPOST($mode.'_param_dblist_keyval'):$editobj->params->dblist_keyval;
                 $filter = (GETPOSTISSET($mode.'_param_dblist_filter'))?GETPOST($mode.'_param_dblist_filter'):$editobj->params->dblist_filter;
-                break;                
+                break;
             case 'newfield':
                 $slct_table = GestionParcConstructOption($db->DDLListTables($conf->db->name), 'vv');
                 $tablist_keyval = '';
@@ -173,7 +173,7 @@ function GestionParcGetFieldParams($field_type,$mode,$editobj = '')
                     $slct_listsort = GestionParcConstructOption($y_tabsort, 'kv', (GETPOSTISSET($mode.'_param_yearsort'))?GETPOST($mode.'_param_yearsort'):$editobj->params->yearsort);
                     $slct_yesno = GestionParcConstructOption($tab_yesno, 'kv', (GETPOSTISSET($mode.'_param_yearcustom'))?GETPOST($mode.'_param_yearcustom'):$editobj->params->yearcustom);
                 break;
-                    
+
                 case 'newfield':
                     $v_default_value = GETPOST($mode.'_default_value');
                     $v_yearstart = GETPOST($mode.'_param_yearstart');
@@ -211,9 +211,9 @@ function GestionParcGetFieldParams($field_type,$mode,$editobj = '')
             switch ($mode):
                 case 'editfield':
                     $v_default_value = (GETPOSTISSET($mode.'_default_value'))?GETPOST($mode.'_default_value'):$editobj->default_value;
-                break;                    
+                break;
                 case 'newfield':
-                    $v_default_value = GETPOST($mode.'_default_value');                    
+                    $v_default_value = GETPOST($mode.'_default_value');
                 break;
             endswitch;
 
@@ -238,7 +238,7 @@ function GestionParcGetFieldParams($field_type,$mode,$editobj = '')
                 $slct_listsort = GestionParcConstructOption($tab_sort, 'kv', (GETPOSTISSET($mode.'_param_listsort'))?GETPOST($mode.'_param_listsort'):$editobj->params->listsort);
                 $slct_yesno = GestionParcConstructOption($tab_yesno, 'kv', (GETPOSTISSET($mode.'_param_listcustom'))?GETPOST($mode.'_param_listcustom'):$editobj->params->listcustom);
                 break;
-                    
+
             case 'newfield':
                 $v_default_value = GETPOST($mode.'_default_value');
                 $slct_customlist = GestionParcConstructOption(GETPOST($mode.'_param_listvalues'), 'vv', GETPOST($mode.'_param_listvalues'), true);
@@ -275,15 +275,15 @@ function GestionParcGetFieldParams($field_type,$mode,$editobj = '')
                 $slct_cats = GestionParcConstructOption($cats, 'kv', $listcats, true);
                 $slct_yesno = GestionParcConstructOption($tab_yesno, 'kv', (GETPOSTISSET($mode.'_param_prodservref'))?GETPOST($mode.'_param_prodservref'):$editobj->params->prodservref);
                 break;
-                    
+
             case 'newfield':
-                $v_default_value = GETPOST($mode.'_default_value');                   
+                $v_default_value = GETPOST($mode.'_default_value');
                 $slct_cats = GestionParcConstructOption($cats, 'kv', GETPOST($mode.'_param_prodservtags'), true);
                 $slct_yesno = GestionParcConstructOption($tab_yesno, 'kv', GETPOST($mode.'_param_prodservref'));
                 break;
             endswitch;
 
-                
+
 
             $params = array(
                 array(
@@ -303,10 +303,10 @@ function GestionParcGetFieldParams($field_type,$mode,$editobj = '')
 
             switch ($mode):
             case 'editfield':
-                $v_default_value = (GETPOSTISSET($mode.'_default_value'))?GETPOST($mode.'_default_value'):$editobj->default_value;                    
-                break;                
+                $v_default_value = (GETPOSTISSET($mode.'_default_value'))?GETPOST($mode.'_default_value'):$editobj->default_value;
+                break;
             case 'newfield':
-                $v_default_value = GETPOST($mode.'_default_value');                    
+                $v_default_value = GETPOST($mode.'_default_value');
                 break;
             endswitch;
 
@@ -331,29 +331,29 @@ function GestionParcGetListProdServ($tab_cats,$showref = false)
 
     $tab_prodserv = array();
 
-    $sql = "SELECT rowid, label, ref FROM ".MAIN_DB_PREFIX."product as a";    
+    $sql = "SELECT rowid, label, ref FROM ".MAIN_DB_PREFIX."product as a";
 
     $nbcats = 0;
     if(!empty($tab_cats)) :
         $sql .=" LEFT JOIN ".MAIN_DB_PREFIX."categorie_product as b ON a.rowid = b.fk_product";
-        $sql .= " WHERE";    
+        $sql .= " WHERE";
         foreach($tab_cats as $cat_id): $nbcats++;
-            if($nbcats > 1) : $sql .= " OR"; 
+            if($nbcats > 1) : $sql .= " OR";
             endif;
             $sql .=" b.fk_categorie = '".$cat_id."'";
         endforeach;
     endif;
-    
+
     $sql .=" ORDER BY label";
     $results_prodserv = $db->query($sql);
 
     if($results_prodserv) : $count_prods = $db->num_rows($results_prodserv); $i = 0;
         while ($i < $count_prods): $prodserv = $db->fetch_object($results_prodserv);
-            if($prodserv) : 
+            if($prodserv) :
                 $labeltoshow = $prodserv->label;
-                if($showref) : $labeltoshow.= ' ('.$prodserv->ref.')'; 
+                if($showref) : $labeltoshow.= ' ('.$prodserv->ref.')';
                 endif;
-                $tab_prodserv[$prodserv->rowid] = $labeltoshow; 
+                $tab_prodserv[$prodserv->rowid] = $labeltoshow;
             endif;
             $i++;
         endwhile;
@@ -368,8 +368,8 @@ function GestionParcCheckCookieForSocid($cookie_name,$socid)
     if(isset($_COOKIE[$cookie_name])) :
         $cookie = json_decode($_COOKIE[$cookie_name]);
         $cookie = (array) $cookie;
-        if(in_array($socid, $cookie)) : return true; 
-        else: return false; 
+        if(in_array($socid, $cookie)) : return true;
+        else: return false;
         endif;
     endif;
 }

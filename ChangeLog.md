@@ -4,6 +4,10 @@
 [comment]: <> (Modele pdf)
 [comment]: <> (Harmoniser les constantes du module)
 
+### 1.7.3
+* FIX - Remove check module version (Bad practice)
+* FIX - Remove trailing spaces
+
 ### 1.7.2
 * FIX - Fix redundant SQL queries in the homepage widget to improve page load speed
 

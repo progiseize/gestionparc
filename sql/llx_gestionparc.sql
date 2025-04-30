@@ -1,7 +1,7 @@
 -- Copyright (C) 2022 ProgiSeize <contact@progiseize.fr>
 --
--- This program and files/directory inner it is free software: you can 
--- redistribute it and/or modify it under the terms of the 
+-- This program and files/directory inner it is free software: you can
+-- redistribute it and/or modify it under the terms of the
 -- GNU Affero General Public License (AGPL) as published by
 -- the Free Software Foundation, either version 3 of the License, or
 -- (at your option) any later version.

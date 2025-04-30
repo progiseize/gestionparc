@@ -1,28 +1,28 @@
 <?php
-/* 
+/*
  * Copyright (C) 2018 - 2023 Anthony Damhet - Progiseize <a.damhet@progiseize.fr>
  */
 
 $res=0;
-if (! $res && file_exists("../main.inc.php")) : $res=@include '../main.inc.php'; 
+if (! $res && file_exists("../main.inc.php")) : $res=@include '../main.inc.php';
 endif;
-if (! $res && file_exists("../../main.inc.php")) : $res=@include '../../main.inc.php'; 
+if (! $res && file_exists("../../main.inc.php")) : $res=@include '../../main.inc.php';
 endif;
-if (! $res && file_exists("../../../main.inc.php")) : $res=@include '../../../main.inc.php'; 
+if (! $res && file_exists("../../../main.inc.php")) : $res=@include '../../../main.inc.php';
 endif;
 
 // Protection if external user
-if ($user->socid > 0) : accessforbidden(); 
+if ($user->socid > 0) : accessforbidden();
 endif;
 
-if (!$user->hasRight('gestionparc','parc','read')) : accessforbidden(); 
+if (!$user->hasRight('gestionparc','parc','read')) : accessforbidden();
 endif;
 
 // Version Dolibarr
 $dolibarr_version = explode('.', DOL_VERSION);
 
 /************************************************
-*  FICHIERS NECESSAIRES 
+*  FICHIERS NECESSAIRES
 ************************************************/
 require_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
@@ -33,7 +33,7 @@ dol_include_once('./gestionparc/class/gestionparc.class.php');
 $langs->load('interventions');
 
 /************************************************
-*  TODO 
+*  TODO
 ************************************************/
 
 // Voir suite dev dolibarr pour voir si integration dans ressources avec SOCID
@@ -76,32 +76,32 @@ switch($action):
     // INIT CLOSE VERIF
     case 'initclose_verif':
 
-        if(GETPOST('token') != $_SESSION['token']) : $error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings'); 
+        if(GETPOST('token') != $_SESSION['token']) : $error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings');
         endif;
-        if(empty(GETPOST('socid'))) : $error++; setEventMessages($langs->trans('gp_error_needSocId'), null, 'warnings'); 
+        if(empty(GETPOST('socid'))) : $error++; setEventMessages($langs->trans('gp_error_needSocId'), null, 'warnings');
         endif;
 
-        if(GETPOSTISSET('cancel_verif') && GETPOSTISSET('verif_id') && !$error) : 
+        if(GETPOSTISSET('cancel_verif') && GETPOSTISSET('verif_id') && !$error) :
             if($verification->cancelVerif(GETPOST('verif_id', 'int'))) :
                 setEventMessages($langs->trans('gp_verif_success_oncancel'), null, 'mesgs'); $action=''; $is_mode_verif = false;
             endif;
         endif;
         break;
-    
+
     // CLOSE VERIF
     case 'close_verif':
 
         include_once DOL_DOCUMENT_ROOT.'/fichinter/class/fichinter.class.php';
         include_once DOL_DOCUMENT_ROOT.'/core/lib/date.lib.php';
 
-        if(GETPOST('token') != $_SESSION['token']) : $error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings'); 
+        if(GETPOST('token') != $_SESSION['token']) : $error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings');
         endif;
-        if(empty(GETPOST('socid'))) : $error++; setEventMessages($langs->trans('gp_error_needSocId'), null, 'warnings'); 
+        if(empty(GETPOST('socid'))) : $error++; setEventMessages($langs->trans('gp_error_needSocId'), null, 'warnings');
         endif;
 
         if(isset($verification->rowid)) :
             if($verification->nb_verified != $verification->nb_total) :
-                if(empty(GETPOST('intercom'))) : 
+                if(empty(GETPOST('intercom'))) :
                     $error++; $action = 'initclose_verif';
                     setEventMessages($langs->trans('gp_verif_error_needIntercom'), null, 'errors');
                 endif;
@@ -123,7 +123,7 @@ switch($action):
                     $ficheinter->fetch($id_intervention); $last_intervention = $id_intervention;
                     $is_mode_verif = false;
                     setEventMessages($langs->trans('gp_verif_success_onclose', $ficheinter->ref), null, 'mesgs');
-                    if($conf->global->MAIN_MODULE_GESTIONPARC_VERIFREDIRECT) : 
+                    if($conf->global->MAIN_MODULE_GESTIONPARC_VERIFREDIRECT) :
                         header('Location: '.dol_buildpath('fichinter/card.php?id='.$id_intervention, 1));
                     endif;
                 else: setEventMessages($langs->trans('gp_verif_error_onclose'), null, 'errors');
@@ -131,17 +131,17 @@ switch($action):
             endif;
         endif;
         break;
-    
+
     // Activer le mode verifiation
     case 'mode_verif':
 
         //$_SESSION['verif_'.$socid] = 'active';
-        if(GETPOST('token') != $_SESSION['token']) : $error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings'); 
+        if(GETPOST('token') != $_SESSION['token']) : $error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings');
         endif;
-        if(empty(GETPOST('socid'))) : $error++; setEventMessages($langs->trans('gp_error_needSocId'), null, 'warnings'); 
+        if(empty(GETPOST('socid'))) : $error++; setEventMessages($langs->trans('gp_error_needSocId'), null, 'warnings');
         endif;
 
-        if(!$error) : 
+        if(!$error) :
             if($verif_id = $verification->openVerif($socid)) :
                 $id_mode_verif = $verif_id;
                 $is_mode_verif = true;
@@ -151,7 +151,7 @@ switch($action):
         break;
 
     // VERIF ALL LINES
-    case 'verifall_confirm': 
+    case 'verifall_confirm':
 
         if(!$user->admin): $error++; setEventMessages($langs->trans('NotEnoughPermissions'), null, 'warnings'); endif;
         if(GETPOST('token') != $_SESSION['token']) : $error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings'); endif;
@@ -165,7 +165,7 @@ switch($action):
         endif;
 
         break;
-    
+
     // VERIFICATION LIGNE
     case 'set_line_verify':
 
@@ -177,7 +177,7 @@ switch($action):
         if(!$error) :
             $gestionparc->fetch_parcType(GETPOST('parcid'));
             if($verification->setLineCheck($socid, $gestionparc->parc_key, GETPOST('itemid'), 1, $verification->rowid)) : setEventMessages($langs->trans('gp_verifline_success'), null, 'mesgs');
-                else: $error++; setEventMessages($langs->trans('gp_error'), null, 'warnings'); 
+                else: $error++; setEventMessages($langs->trans('gp_error'), null, 'warnings');
                 endif;
         endif;
         break;
@@ -191,13 +191,13 @@ switch($action):
             $cookie_val = json_decode($_COOKIE['gestionparc_empty_views']);
             $cookie_val = (array) $cookie_val;
 
-            if(GETPOSTISSET('view_empty_parc') && !in_array($socid, $cookie_val) ) : 
-                array_push($cookie_val, $socid); 
+            if(GETPOSTISSET('view_empty_parc') && !in_array($socid, $cookie_val) ) :
+                array_push($cookie_val, $socid);
                 $cookie_val = json_encode($cookie_val);
                 setcookie('gestionparc_empty_views', $cookie_val, time()+(60*60*24*30));
 
-                else: 
-                    if (($key = array_search($socid, $cookie_val)) !== false) : unset($cookie_val[$key]); 
+                else:
+                    if (($key = array_search($socid, $cookie_val)) !== false) : unset($cookie_val[$key]);
                     endif;
                     $cookie_val = json_encode($cookie_val);
                     setcookie('gestionparc_empty_views', $cookie_val, time()+(60*60*24*30));
@@ -220,11 +220,11 @@ switch($action):
     case 'add':
 
         //var_dump($_POST); // ON VERIFIE LES CHAMPS
-        if(GETPOST('token') != $_SESSION['token']) : $error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings'); 
+        if(GETPOST('token') != $_SESSION['token']) : $error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings');
         endif;
-        if(empty(GETPOST('socid'))) : $error++; setEventMessages($langs->trans('gp_error_needSocId'), null, 'warnings'); 
+        if(empty(GETPOST('socid'))) : $error++; setEventMessages($langs->trans('gp_error_needSocId'), null, 'warnings');
         endif;
-        if(empty(GETPOST('parcid'))) : $error++; setEventMessages($langs->trans('gp_error_needTypeId'), null, 'warnings'); 
+        if(empty(GETPOST('parcid'))) : $error++; setEventMessages($langs->trans('gp_error_needTypeId'), null, 'warnings');
         endif;
 
         if(!$error) :
@@ -236,7 +236,7 @@ switch($action):
 
                 if($parcfield->enabled) :
 
-                    // 
+                    //
                     if($parcfield->only_verif && $parcfield->required) :
                         if($is_mode_verif  && empty(GETPOST('gpfield_'.$parcfield->field_key))) :
                             $error++; setEventMessages($langs->trans('ErrorFieldRequired', $parcfield->label), null, 'warnings');
@@ -253,7 +253,7 @@ switch($action):
                             $sql .= " WHERE ".$parcfield->field_key." = ".GETPOST('gpfield_'.$parcfield->field_key);
                             $sql .= " AND socid=".GETPOST('socid');
                             $res = $db->query($sql);
-                            if($res->num_rows > 0) : $error++; setEventMessages($langs->trans('gp_error_autonumber_exist'), null, 'warnings'); 
+                            if($res->num_rows > 0) : $error++; setEventMessages($langs->trans('gp_error_autonumber_exist'), null, 'warnings');
                             endif;
 
                         endif;
@@ -269,27 +269,27 @@ switch($action):
                 $sql_insert = "INSERT INTO ".MAIN_DB_PREFIX."gestionparc__".$gestionparc->parc_key." (socid, author";
                 foreach($gestionparc->fields as $parcfield): if($parcfield->enabled) :
                         $sql_insert .= ", ".$parcfield->field_key;
-                endif; 
+                endif;
                 endforeach;
                 $sql_insert .= ") VALUES (".GETPOST('socid').", ".$user->id;
                 foreach($gestionparc->fields as $parcfield): if($parcfield->enabled) :
                         $sql_insert .= ", '".$db->escape(GETPOST('gpfield_'.$parcfield->field_key))."'";
-                endif; 
+                endif;
                 endforeach;
                 $sql_insert .= ")";
 
                 $result_insert = $db->query($sql_insert);
 
-                if($result_insert) : 
+                if($result_insert) :
                     $db->commit();
                     setEventMessages($langs->trans('RecordSaved'), null, 'mesgs');
-                    foreach($gestionparc->fields as $parcfield): unset($_POST['gpfield_'.$parcfield->field_key]); 
+                    foreach($gestionparc->fields as $parcfield): unset($_POST['gpfield_'.$parcfield->field_key]);
                     endforeach;
                     else:
                         $error++; setEventMessages($langs->trans('gp_error'), null, 'warnings');
                         $db->rollback();
                     endif;
-                    
+
 
             endif;
 
@@ -300,13 +300,13 @@ switch($action):
     case 'duplicate':
 
         // ON VERIFIE LES CHAMPS
-        if(GETPOST('token') != $_SESSION['token']) : $error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings'); 
+        if(GETPOST('token') != $_SESSION['token']) : $error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings');
         endif;
-        if(empty(GETPOST('socid'))) : $error++; setEventMessages($langs->trans('gp_error_needSocId'), null, 'warnings'); 
+        if(empty(GETPOST('socid'))) : $error++; setEventMessages($langs->trans('gp_error_needSocId'), null, 'warnings');
         endif;
-        if(empty(GETPOST('parcid'))) : $error++; setEventMessages($langs->trans('gp_error_needTypeId'), null, 'warnings'); 
+        if(empty(GETPOST('parcid'))) : $error++; setEventMessages($langs->trans('gp_error_needTypeId'), null, 'warnings');
         endif;
-        if(empty(GETPOST('itemid'))) : $error++; setEventMessages($langs->trans('gp_error_needItemId'), null, 'warnings'); 
+        if(empty(GETPOST('itemid'))) : $error++; setEventMessages($langs->trans('gp_error_needItemId'), null, 'warnings');
         endif;
 
         if(!$error) :
@@ -315,12 +315,12 @@ switch($action):
 
             $db->begin();
             $sql_dup = "INSERT INTO ".MAIN_DB_PREFIX."gestionparc__".$gestionparc->parc_key." (socid, author";
-            foreach($gestionparc->fields as $parcfield): 
+            foreach($gestionparc->fields as $parcfield):
                 $sql_dup .= ", ".$parcfield->field_key;
             endforeach;
             $sql_dup .= ")";
             $sql_dup .= " SELECT '".GETPOST('socid')."', '".$user->id."' ";
-            foreach($gestionparc->fields as $parcfield): 
+            foreach($gestionparc->fields as $parcfield):
 
                 if($parcfield->type == 'autonumber') :
                     $nxt_autonum = $parcfield->getNextAutoNumber(GETPOST('socid'), $gestionparc->parc_key, $parcfield->field_key);
@@ -349,15 +349,15 @@ switch($action):
 
         $error = 0;
 
-        if(GETPOST('token') != $_SESSION['token']) : $error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings'); 
+        if(GETPOST('token') != $_SESSION['token']) : $error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings');
         endif;
-        if(empty(GETPOST('socid'))) : $error++; setEventMessages($langs->trans('gp_error_needSocId'), null, 'warnings'); 
+        if(empty(GETPOST('socid'))) : $error++; setEventMessages($langs->trans('gp_error_needSocId'), null, 'warnings');
         endif;
-        if(empty(GETPOST('itemid'))) : $error++; setEventMessages($langs->trans('gp_error_needItemId'), null, 'warnings'); 
+        if(empty(GETPOST('itemid'))) : $error++; setEventMessages($langs->trans('gp_error_needItemId'), null, 'warnings');
         endif;
-        if(empty(GETPOST('parcid'))) : $error++; setEventMessages($langs->trans('gp_error_needTypeId'), null, 'warnings'); 
+        if(empty(GETPOST('parcid'))) : $error++; setEventMessages($langs->trans('gp_error_needTypeId'), null, 'warnings');
         endif;
-        if(GETPOST('confirm') != 'yes') : $error++; setEventMessages($langs->trans('gp_error_needActionConfirm'), null, 'warnings'); 
+        if(GETPOST('confirm') != 'yes') : $error++; setEventMessages($langs->trans('gp_error_needActionConfirm'), null, 'warnings');
         endif;
 
         if(!$error) :
@@ -384,20 +384,20 @@ switch($action):
     // EDITION
     case 'edit':
 
-        $editItem_id = 0; 
+        $editItem_id = 0;
         $error = 0;
 
         // ON VERIFIE LES CHAMPS
-        if(GETPOST('token') != $_SESSION['token']) : $error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings'); $action = ''; 
+        if(GETPOST('token') != $_SESSION['token']) : $error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings'); $action = '';
         endif;
-        if(empty(GETPOST('socid'))) : $error++; setEventMessages($langs->trans('gp_error_needSocId'), null, 'warnings'); 
+        if(empty(GETPOST('socid'))) : $error++; setEventMessages($langs->trans('gp_error_needSocId'), null, 'warnings');
         endif;
-        if(empty(GETPOST('itemid'))) : $error++; setEventMessages($langs->trans('gp_error_needItemId'), null, 'warnings'); 
+        if(empty(GETPOST('itemid'))) : $error++; setEventMessages($langs->trans('gp_error_needItemId'), null, 'warnings');
         endif;
-        if(empty(GETPOST('parcid'))) : $error++; setEventMessages($langs->trans('gp_error_needTypeId'), null, 'warnings'); 
+        if(empty(GETPOST('parcid'))) : $error++; setEventMessages($langs->trans('gp_error_needTypeId'), null, 'warnings');
         endif;
 
-        if(!$error) : $editItem_id = GETPOST('itemid'); 
+        if(!$error) : $editItem_id = GETPOST('itemid');
         endif;
         break;
 
@@ -406,13 +406,13 @@ switch($action):
 
         $error = 0;
 
-        if(GETPOST('token') != $_SESSION['token']) : $error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings'); 
+        if(GETPOST('token') != $_SESSION['token']) : $error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings');
         endif;
-        if(empty(GETPOST('socid'))) : $error++; setEventMessages($langs->trans('gp_error_needSocId'), null, 'warnings'); 
+        if(empty(GETPOST('socid'))) : $error++; setEventMessages($langs->trans('gp_error_needSocId'), null, 'warnings');
         endif;
-        if(empty(GETPOST('itemid'))) : $error++; setEventMessages($langs->trans('gp_error_needItemId'), null, 'warnings'); 
+        if(empty(GETPOST('itemid'))) : $error++; setEventMessages($langs->trans('gp_error_needItemId'), null, 'warnings');
         endif;
-        if(empty(GETPOST('parcid'))) : $error++; setEventMessages($langs->trans('gp_error_needTypeId'), null, 'warnings'); 
+        if(empty(GETPOST('parcid'))) : $error++; setEventMessages($langs->trans('gp_error_needTypeId'), null, 'warnings');
         endif;
 
         if(!$error) :
@@ -424,7 +424,7 @@ switch($action):
 
                 if($parcfield->enabled) :
 
-                    // 
+                    //
                     if($parcfield->only_verif && $parcfield->required) :
                         if($is_mode_verif  && empty(GETPOST('gpfield_'.$parcfield->field_key))) :
                             $error++; setEventMessages($langs->trans('ErrorFieldRequired', $parcfield->label), null, 'warnings');
@@ -448,7 +448,7 @@ switch($action):
                 $sql_update .= " SET author_maj = '".$user->id."'";
                 foreach($gestionparc->fields as $parcfield): if($parcfield->enabled) :
                         $sql_update .= ", ".$parcfield->field_key." = '".$db->escape(GETPOST('gpfield_'.$parcfield->field_key))."'";
-                endif; 
+                endif;
                 endforeach;
                 $sql_update .= " WHERE rowid = '".GETPOST('itemid')."' AND socid = '".$socid."'";
 
@@ -456,7 +456,7 @@ switch($action):
                 if($result) :
                     $db->commit(); $action = '';
                     setEventMessages($langs->trans('RecordSaved'), null, 'mesgs');
-                    foreach($gestionparc->fields as $parcfield): unset($_POST['gpfield_'.$parcfield->field_key]); 
+                    foreach($gestionparc->fields as $parcfield): unset($_POST['gpfield_'.$parcfield->field_key]);
                     endforeach;
                 else:
                     $error++; setEventMessages($langs->trans('gp_error'), null, 'warnings');
@@ -475,23 +475,23 @@ endswitch;
 
 $tabs = array(); $nb_tabs = 0; $abc = '';
 if(!empty($list_parctypes)) :
-    foreach($list_parctypes as $parctype_key => $parctype_infos): 
+    foreach($list_parctypes as $parctype_key => $parctype_infos):
 
         $gestionparc->fetch_parcType($parctype_key);
         $show_parc = true;
 
-        if($parctype == $parctype_infos['key']) : $keyparc = $parctype_key; 
+        if($parctype == $parctype_infos['key']) : $keyparc = $parctype_key;
         endif;
 
         // ON VERIFIE SI ON PEUT AFFICHER LE PARC EST ACTIF
-        if(!$gestionparc->enabled) : $show_parc = false; 
+        if(!$gestionparc->enabled) : $show_parc = false;
         endif;
 
         // ON VERIFIE SI ON PEUT AFFICHER LE PARC SUR CE TYPE DE TIERS
         // Ajoutée à la requête
 
         // ON VERIFIE S'IL CONTIENT DES CHAMPS
-        if(empty($gestionparc->fields)) : $show_parc = false; 
+        if(empty($gestionparc->fields)) : $show_parc = false;
         endif;
 
         // SI ON PEUT AFFICHER
@@ -508,11 +508,11 @@ if(!empty($list_parctypes)) :
 
                 if(intval($nb_verifs) > 0) :
                     if(intval($nb_verifs) == intval($nb_lines)) : $color_class = 'dolpgs-bg-success';
-                    else: $color_class = 'dolpgs-bg-warning'; 
+                    else: $color_class = 'dolpgs-bg-warning';
                     endif;
                 else:
                     if(intval($nb_lines) == 0) : $color_class = 'dolpgs-bg-success';
-                    else: $color_class = 'dolpgs-bg-danger'; 
+                    else: $color_class = 'dolpgs-bg-danger';
                     endif;
                 endif;
 
@@ -552,18 +552,18 @@ llxHeader('', $societe->name.' - '.$langs->trans('gp_clientparc'), '', '', '', '
 // ACTIONS NECESSITANT LE HEADER
 if ($action == 'delete') :
     $error = 0;
-    if(GETPOST('token') != $_SESSION['token']) : $error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings'); 
+    if(GETPOST('token') != $_SESSION['token']) : $error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings');
     endif;
-    if(!$error) : echo $form->formconfirm($_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&itemid='.GETPOST('itemid').'&parcid='.GETPOST('parcid'), $langs->trans('gp_confirmDeleteTitle'), $langs->trans('gp_confirmDelete'), 'confirm_delete', '', '', 1, 0, 500, 0); 
+    if(!$error) : echo $form->formconfirm($_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&itemid='.GETPOST('itemid').'&parcid='.GETPOST('parcid'), $langs->trans('gp_confirmDeleteTitle'), $langs->trans('gp_confirmDelete'), 'confirm_delete', '', '', 1, 0, 500, 0);
     endif;
 elseif ($action == 'verifall') :
     $error = 0;
-    if(GETPOST('token') != $_SESSION['token']) : 
-        $error++; 
+    if(GETPOST('token') != $_SESSION['token']) :
+        $error++;
         setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings');
     endif;
-    if(!$error) : 
-        echo $form->formconfirm($_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&parcid='.GETPOST('parcid'), $langs->trans('gp_verifall'), $langs->trans('gp_confirmVerifAll'), 'verifall_confirm', '', '', 1, 0, 500, 0); 
+    if(!$error) :
+        echo $form->formconfirm($_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&parcid='.GETPOST('parcid'), $langs->trans('gp_verifall'), $langs->trans('gp_confirmVerifAll'), 'verifall_confirm', '', '', 1, 0, 500, 0);
     endif;
 endif;
 
@@ -600,7 +600,7 @@ echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"), 0, 'c
                     </td>
                 </tr>
             <?php endif; ?>
-            
+
             <?php if($last_intervention) : $ficheinter->fetch($last_intervention); ?>
                 <tr>
                     <td><?php echo $langs->trans('gp_client_lastverif'); ?></td>
@@ -612,7 +612,7 @@ echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"), 0, 'c
                 <td valign="middle"><?php echo $langs->trans('gp_client_verifmode'); ?></td>
                 <td>
                     <form enctype="multipart/form-data" action="<?php print $_SERVER["PHP_SELF"]; ?>?socid=<?php echo $societe->id; ?>&parctype=<?php echo $parctype; ?>" method="POST">
-                        
+
                         <input type="hidden" name="token" value="<?php echo $_SESSION['newtoken']; ?>">
                         <?php if($is_mode_verif) : ?>
 
@@ -627,8 +627,8 @@ echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"), 0, 'c
                                     <input type="hidden" name="durationhour" value="<?php echo $conf->global->MAIN_MODULE_GESTIONPARC_VERIFUSETIME; ?>">
                                     <input type="hidden" name="durationmin" value="0">
                                 <?php endif; ?>
-                                        
-                                    
+
+
                                 <div style="font-weight: bold;text-decoration: underline;margin-bottom: 3px">
                                     <?php echo $langs->trans('gp_verifcom'); ?>
                                     <?php if($verification->nb_verified != $verification->nb_total) : ?>
@@ -639,7 +639,7 @@ echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"), 0, 'c
                                 <input type="hidden" name="action" value="close_verif">
                                 <input type="submit" name="" value="<?php echo $langs->trans('gp_verif_close'); ?>" class="dolpgs-btn btn-primary btn-sm">
                             <?php else: ?>
-                                <?php if($verification->nb_verified == $verification->nb_total) : $class_sub = "dolpgs-btn btn-sm btn-primary"; else: $class_sub = "dolpgs-btn btn-sm btn-primary not-full"; 
+                                <?php if($verification->nb_verified == $verification->nb_total) : $class_sub = "dolpgs-btn btn-sm btn-primary"; else: $class_sub = "dolpgs-btn btn-sm btn-primary not-full";
                                 endif; ?>
                                 <input type="hidden" name="action" value="initclose_verif">
                                 <input type="submit" name="close" value="<?php echo $langs->trans('gp_verif_close'); ?>" class="<?php echo $class_sub; ?>" style="margin: 8px 0;">
@@ -663,15 +663,15 @@ echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"), 0, 'c
     <div class="dolpgs-main-wrapper">
 
         <?php // ON AFFICHE LES TABS
-        if(!empty($tabs)) : 
-            echo dol_fiche_head($tabs, $parctype, '', 1); 
+        if(!empty($tabs)) :
+            echo dol_fiche_head($tabs, $parctype, '', 1);
         endif; ?>
         <div style="border-top:1px solid #bbb;margin-bottom:16px;"></div>
 
-        <?php 
-            // 
+        <?php
+            //
             $nb_verified = 0;
-            if(!empty($parc_lines)): foreach($parc_lines as $lineid => $linecontent): 
+            if(!empty($parc_lines)): foreach($parc_lines as $lineid => $linecontent):
                 if($linecontent->verif): $nb_verified++; endif;
             endforeach; endif;
         ?>
@@ -682,18 +682,18 @@ echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"), 0, 'c
 
         <?php if($gestionparc->rowid > 0) : ?>
         <form enctype="multipart/form-data" action="<?php print $_SERVER["PHP_SELF"]; ?>?socid=<?php echo $societe->id; ?>&parctype=<?php echo $parctype; ?>" method="POST" id="" >
-                    
+
             <input type="hidden" name="token" value="<?php echo $_SESSION['newtoken']; ?>">
             <input type="hidden" name="parcid" value="<?php echo $parc->rowid; ?>">
 
-            <?php if($is_mode_verif && $user->admin && !empty($parc_lines)): 
+            <?php if($is_mode_verif && $user->admin && !empty($parc_lines)):
 
                 if($nb_verified < count($parc_lines)): ?>
                     <div class="gestionparc-verifall">
                         <a class="reposition" href="<?php echo $_SERVER['PHP_SELF'].'?socid='.$societe->id.'&parctype='.$parctype.'&parcid='.$parc->rowid.'&action=verifall&token='.newToken(); ?>"><?php echo img_picto($langs->trans("gp_verifall"), 'switch_off'); ?></a> <span class="veriftxt"><?php echo $langs->trans('gp_verifall'); ?></span>
-                    </div>                
+                    </div>
                 <?php endif; ?>
-                
+
             <?php endif; ?>
 
             <table class="dolpgs-table gestionparc-table" style="border-top:none;" id="gestionparc-table-<?php echo $gestionparc->rowid; ?>">
@@ -706,9 +706,9 @@ echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"), 0, 'c
                         <?php endif; ?>
                         <?php foreach($parc->fields as $parcfield_key => $parcfield): ?>
                             <?php if($parcfield->enabled) : ?>
-                                <?php if($parcfield->only_verif && !$is_mode_verif) : continue; 
+                                <?php if($parcfield->only_verif && !$is_mode_verif) : continue;
                                 endif; ?>
-                                <th><?php echo $parcfield->label; if($parcfield->required) : echo ' <span class="required">*</span>'; 
+                                <th><?php echo $parcfield->label; if($parcfield->required) : echo ' <span class="required">*</span>';
                                endif; ?></th>
                             <?php endif; ?>
                         <?php endforeach; ?>
@@ -724,10 +724,10 @@ echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"), 0, 'c
                     <tr class="dolpgs-tbody gestionparc-newline" <?php if($action == "add" && $error && GETPOST('parcid') == $parc->rowid) : echo 'style="display: table-row;"'; endif; ?>>
                         <?php if($is_mode_verif) : ?><td></td><?php endif; ?>
                         <?php foreach($parc->fields as $parcfield_key => $parcfield): if($parcfield->enabled) : ?>
-                                <?php if($parcfield->only_verif && !$is_mode_verif) : continue; 
+                                <?php if($parcfield->only_verif && !$is_mode_verif) : continue;
                                 endif; ?>
                             <td><?php echo $parcfield->construct_field($parc, $societe->id); ?></td>
-                        <?php endif; 
+                        <?php endif;
                         endforeach; ?>
                         <td class="right">
                             <input type="hidden" name="action" value="add">
@@ -744,22 +744,22 @@ echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"), 0, 'c
                                 <?php if($action != "edit" || $action == "edit" && $editItem_id != $linecontent->rowid) :
                                     if($linecontent->verif) : echo img_picto($langs->trans("Activated"), 'switch_on');
                                     else: echo '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?socid='.$societe->id.'&parctype='.$parctype.'&itemid='.$linecontent->rowid.'&action=set_line_verify&parcid='.$parc->rowid.'&token='.newToken().'">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>';
-                                    endif; 
+                                    endif;
                                 endif; ?>
-                            </td>                                     
+                            </td>
                         <?php endif; ?>
 
                         <?php foreach($parc->fields as $parcfield_key => $parcfield): if($parcfield->enabled) : ?>
 
                             <?php if($parcfield->only_verif && !$is_mode_verif) : continue; endif; ?>
-                            <td class="pgsz-optiontable-fielddesc"><?php 
+                            <td class="pgsz-optiontable-fielddesc"><?php
 
                             // SI ON EST EN MODE EDITION
                             if($action == 'edit' && $editItem_id == $linecontent->rowid) :
 
                                 echo '<span class="gp-infos-label">'.$parcfield->label.' : </span>';
 
-                                if($parcfield->type == 'autonumber') : 
+                                if($parcfield->type == 'autonumber') :
                                     echo $linecontent->{$parcfield->field_key};
                                     echo '<input type="hidden" name="gpfield_'.$parcfield->field_key.'" id="gpfield_'.$parcfield->field_key.'" value="'.$linecontent->{$parcfield->field_key}.'">';
                                 else: echo $parcfield->construct_field($parc, $societe->id, $linecontent->{$parcfield->field_key});
@@ -772,7 +772,7 @@ echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"), 0, 'c
 
                                 // SI ON DOIT RETROUVER UN PRODUIT
                                 if($parcfield->type == 'prodserv') :
-                                     
+
                                     if(!empty($linecontent->{$parcfield->field_key})) :
                                         $prodserv = new Product($db);
                                         $check_prodserv = $prodserv->fetch($linecontent->{$parcfield->field_key});
@@ -785,21 +785,21 @@ echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"), 0, 'c
                                 elseif($parcfield->type == 'dblist') :
                                     if(!empty($linecontent->{$parcfield->field_key})) :
                                         $l_content = $parc->getContentForDbList($linecontent->{$parcfield->field_key}, $parcfield->params);
-                                        if($l_content) : echo $l_content; 
+                                        if($l_content) : echo $l_content;
                                         endif;
                                     endif;
                                 elseif($parcfield->type == 'date'):
                                     echo dol_print_date($linecontent->{$parcfield->field_key},'%d/%m/%Y');
                                 // ON AFFICHE LA VALEUR DU CHAMP
                                 else: echo $linecontent->{$parcfield->field_key};
-                                endif; 
+                                endif;
 
                             endif;
 
 
-                            ?>                                        
+                            ?>
                             </td>
-                        <?php endif; 
+                        <?php endif;
                         endforeach; ?>
 
                         <td class="right">
@@ -811,7 +811,7 @@ echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"), 0, 'c
                             </div>
                             <?php elseif($action == "edit" && GETPOST('itemid') == $linecontent->rowid) : ?>
                                 <input type="hidden" name="action" value="edit_item">
-                                <input type="hidden" name="itemid" value="<?php echo $linecontent->rowid; ?>">                                
+                                <input type="hidden" name="itemid" value="<?php echo $linecontent->rowid; ?>">
                                 <input type="button" class="dolpgs-btn btn-danger btn-sm" value="<?php echo $langs->trans('Cancel'); ?>" onClick="window.location='<?php echo $_SERVER['PHP_SELF']; ?>?socid=<?php echo $socid; ?>&parctype=<?php echo $parc->parc_key; ?>'">
                                 <input type="submit" class="dolpgs-btn btn-primary btn-sm" value="<?php echo $langs->trans('Save'); ?>">
                             <?php endif; ?>

@@ -65,9 +65,9 @@ class modGestionParc extends DolibarrModules
         $this->descriptionlong = "Ce module offre une solution pratique pour organiser et suivre les informations liées aux équipements des clients et de générer des vérifications. Gardez une trace précise des équipements de vos clients et gérer efficacement leur maintenance.";
         $this->editor_name = 'Progiseize';
         $this->editor_url = 'https://progiseize.fr';
-        
+
         // Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-        $this->version = '1.7.2';
+        $this->version = '1.7.3';
         //$this->url_last_version ="https://progiseize.fr/modules_info/lastversion.php?module=".$this->numero;
 
         // Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
@@ -106,7 +106,7 @@ class modGestionParc extends DolibarrModules
             'menus' => 0,
             'theme' => 0,
             'tpl' => 0,
-            'barcode' => 0, 
+            'barcode' => 0,
             'models' => 1,
             'css' => array(),
             'js' => array(),
@@ -134,7 +134,7 @@ class modGestionParc extends DolibarrModules
 
         // Constants
         // List of particular constants to add when module is enabled (key, 'chaine', value, desc, visible, 'current' or 'allentities', deleteonunactive)
-        // Example: 
+        // Example:
         $this->const=array(
             0=>array('MAIN_MODULE_GESTIONPARC_USEVERIF','chaine',false,'',0),
             1=>array('MAIN_MODULE_GESTIONPARC_VERIFMODEL','chaine','simple','',0),
@@ -178,7 +178,7 @@ class modGestionParc extends DolibarrModules
             $conf->gestionparc=new stdClass();
             $conf->gestionparc->enabled=0;
         }
-        
+
         // Dictionaries
         $this->dictionaries=array();
         /* Example:
@@ -245,7 +245,7 @@ class modGestionParc extends DolibarrModules
         $this->menu = array();          // List of menus to add
         $r=0;
 
-        /*$this->menu[$r]=array( 
+        /*$this->menu[$r]=array(
             'fk_menu'=>'fk_mainmenu=companies',
             'type'=>'left',
             'titre'=> $langs->trans('Module300320Name'),
@@ -275,10 +275,10 @@ class modGestionParc extends DolibarrModules
 
         /*--------------- */
         $r++;
-        
+
 
         // Example to declare a Left Menu entry into an existing Top menu entry:
-        
+
         $r++;
 
 
@@ -350,7 +350,7 @@ class modGestionParc extends DolibarrModules
     {
 
         global $conf, $db;
-        dolibarr_set_const($db, "CHECKLASTVERSION_EXTERNALMODULE", '1', 'int', 0, '', $conf->entity);
+        //dolibarr_set_const($db, "CHECKLASTVERSION_EXTERNALMODULE", '1', 'int', 0, '', $conf->entity);
 
         $this->_load_tables('/gestionparc/sql/');
 

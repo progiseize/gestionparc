@@ -1,14 +1,14 @@
 <?php
-/* 
+/*
  * Copyright (C) 2021 Anthony Damhet - Progiseize <a.damhet@progiseize.fr>
 */
 
 $res=0;
-if (! $res && file_exists("../main.inc.php")) : $res=@include '../main.inc.php'; 
+if (! $res && file_exists("../main.inc.php")) : $res=@include '../main.inc.php';
 endif;
-if (! $res && file_exists("../../main.inc.php")) : $res=@include '../../main.inc.php'; 
+if (! $res && file_exists("../../main.inc.php")) : $res=@include '../../main.inc.php';
 endif;
-if (! $res && file_exists("../../../main.inc.php")) : $res=@include '../../../main.inc.php'; 
+if (! $res && file_exists("../../../main.inc.php")) : $res=@include '../../../main.inc.php';
 endif;
 
 // ON CHARGE LES FICHIERS NECESSAIRES
@@ -25,18 +25,18 @@ $langs->load("gestionparc@gestionparc");
 /*******************************************************************
 * CHECKS
 ********************************************************************/
-if ($user->socid > 0) : accessforbidden(); 
+if ($user->socid > 0) : accessforbidden();
 endif;
-if (!$user->hasRight('gestionparc','parc','setup')) : accessforbidden(); 
+if (!$user->hasRight('gestionparc','parc','setup')) : accessforbidden();
 endif;
 
-$rowid = GETPOST('id', 'int'); if(empty($rowid)) : header('Location: '.$dolibarr_main_url_root.'/custom/gestionparc/admin/manager'); 
+$rowid = GETPOST('id', 'int'); if(empty($rowid)) : header('Location: '.$dolibarr_main_url_root.'/custom/gestionparc/admin/manager');
 endif;
 
 $gestionparc = new GestionParc($db);
 
 $check_id = $gestionparc->fetch_parcType($rowid);
-if($check_id <= 0) : header('Location: '.$dolibarr_main_url_root.'/custom/gestionparc/admin/manager'); 
+if($check_id <= 0) : header('Location: '.$dolibarr_main_url_root.'/custom/gestionparc/admin/manager');
 endif;
 
 
@@ -62,7 +62,7 @@ switch ($action):
             $error = 0;
             // IDENTIFIANT DU CHAMP
             $field_id = GETPOST('field_id', 'int');
-            if(empty($field_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'warnings'); 
+            if(empty($field_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'warnings');
             endif;
             // ON MET A JOUR LE CHAMP
             if(!$error) :
@@ -82,7 +82,7 @@ switch ($action):
 
             // IDENTIFIANT DU CHAMP
             $field_id = GETPOST('field_id', 'int');
-            if(empty($field_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'warnings'); 
+            if(empty($field_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'warnings');
             endif;
 
             // ON MET A JOUR LE CHAMP
@@ -102,7 +102,7 @@ switch ($action):
             $error = 0;
             // IDENTIFIANT DU CHAMP
             $field_id = GETPOST('field_id', 'int');
-            if(empty($field_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'warnings'); 
+            if(empty($field_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'warnings');
             endif;
             // ON MET A JOUR LE CHAMP
             if(!$error) :
@@ -122,7 +122,7 @@ switch ($action):
 
             // IDENTIFIANT DU CHAMP
             $field_id = GETPOST('field_id', 'int');
-            if(empty($field_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'warnings'); 
+            if(empty($field_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'warnings');
             endif;
 
             // ON MET A JOUR LE CHAMP
@@ -138,14 +138,14 @@ switch ($action):
 
     // SUPPRIMER UN CHAMP
     case 'confirm_delete':
-            
+
         if(GETPOST('token') == $_SESSION['token']) :
 
             $error = 0;
 
             // IDENTIFIANT DU CHAMP
             $field_id = GETPOST('field_id', 'int');
-            if(empty($field_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'warnings'); 
+            if(empty($field_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'warnings');
             endif;
             if(!$error) :
                 if($gestionparc->removeField($field_id, $user)) : setEventMessages($langs->trans('gp_parcfield_delete_success'), null, 'mesgs');
@@ -168,7 +168,7 @@ switch ($action):
 
             // IDENTIFIANT DU CHAMP
             $field_type = GETPOST('gpnewfield_type', 'alpha');
-            if(empty($field_type)) : $error++; setEventMessages($langs->trans('gp_parcfield_new_needType'), null, 'errors'); 
+            if(empty($field_type)) : $error++; setEventMessages($langs->trans('gp_parcfield_new_needType'), null, 'errors');
             endif;
 
             else: $error++;setEventMessages("SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry", null, 'warnings');
@@ -183,7 +183,7 @@ switch ($action):
 
             // IDENTIFIANT DU CHAMP
             $field_id = GETPOST('field_id', 'int');
-            if(empty($field_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'errors'); 
+            if(empty($field_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'errors');
             endif;
 
             $field_to_update = new GestionParcField($db);
@@ -201,7 +201,7 @@ switch ($action):
             $error = 0;
             $gpf = new GestionParcField($db);
 
-            if($action == 'add_parcfield') : 
+            if($action == 'add_parcfield') :
 
                 $fieldname = 'newfield';
                 $field_type = GETPOST($fieldname.'_type', 'alpha');
@@ -209,13 +209,13 @@ switch ($action):
                 $gpf->parc_id = $gestionparc->rowid;
                 $gpf->type = $field_type;
 
-            elseif($action == 'edit_parcfield') : 
+            elseif($action == 'edit_parcfield') :
 
                 $fieldname = 'editfield';
 
                 // IDENTIFIANT DU CHAMP
                 $field_id = GETPOST('field_id', 'int');
-                if(empty($field_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'errors'); 
+                if(empty($field_id)) : $error++; setEventMessages($langs->trans('gp_error_needId'), null, 'errors');
                 endif;
 
                 //$field_to_update = new GestionParcField($db);
@@ -226,32 +226,32 @@ switch ($action):
 
             endif;
 
-            // VERIFICATIONS COMMUNES            
-            if(empty(GETPOST($fieldname.'_label', 'alpha'))) : 
-                $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('Label')), null, 'errors'); 
-            endif; 
-            if(empty(GETPOST($fieldname.'_position', 'int'))) : $newfield_position = 100;
-            else: $newfield_position = GETPOST($fieldname.'_position', 'int'); 
+            // VERIFICATIONS COMMUNES
+            if(empty(GETPOST($fieldname.'_label', 'alpha'))) :
+                $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('Label')), null, 'errors');
             endif;
-            $gpf->label = GETPOST($fieldname.'_label', 'alpha');            
+            if(empty(GETPOST($fieldname.'_position', 'int'))) : $newfield_position = 100;
+            else: $newfield_position = GETPOST($fieldname.'_position', 'int');
+            endif;
+            $gpf->label = GETPOST($fieldname.'_label', 'alpha');
             $gpf->required = (GETPOSTISSET($fieldname.'_required'))?1:0;
             $gpf->default_value = GETPOST($fieldname.'_default_value', 'alpha');
-            $gpf->position = $newfield_position;            
+            $gpf->position = $newfield_position;
             if(GETPOSTISSET($fieldname.'_onlyverif') && GETPOST($fieldname.'_onlyverif', 'aZ09') == 'on') : $gpf->only_verif = 1;
             else: $gpf->only_verif = 0;
             endif;
 
             switch ($field_type):
 
-                case 'autonumber': 
-                    $gpf->required = true; 
+                case 'autonumber':
+                    $gpf->required = true;
                 break;
 
                 case 'dblist':
-                    if(empty(GETPOST($fieldname.'_param_dblist_table'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_dblist')), null, 'errors'); 
+                    if(empty(GETPOST($fieldname.'_param_dblist_table'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_dblist')), null, 'errors');
                     endif;
-                    if(empty(GETPOST($fieldname.'_param_dblist_keyval'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_dblist_keyval')), null, 'errors'); 
-                    endif;                    
+                    if(empty(GETPOST($fieldname.'_param_dblist_keyval'))) : $error++; setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('gp_field_dblist_keyval')), null, 'errors');
+                    endif;
                     if(!$error) :
                         // ON CONSTRUIT LE TABLEAU DES PARAMETRES
                         $gpf->params = array(
@@ -318,7 +318,7 @@ switch ($action):
             else:
                 setEventMessages("SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry", null, 'warnings');
             endif;
-        break;    
+        break;
 endswitch;
 
 /***************************************************
@@ -338,7 +338,7 @@ if ($action == 'delete') :
 endif;
 
 ?>
-    
+
 <div class="dolpgs-main-wrapper">
 
     <h1 class="has-before"><?php echo $langs->transnoentities('Module300320Name').' : '.$gestionparc->label; ?></h1>
@@ -382,7 +382,7 @@ endif;
                     <th><?php echo $langs->trans('Type'); ?></th>
                     <th><?php echo $langs->trans('DefaultValue'); ?></th>
                     <th class="right"><?php echo $form->textwithpicto($langs->trans('Preview'), $langs->trans('gp_parc_col_fieldpreview_help')); ?></th>
-                    <th class="right"><?php echo $langs->trans('Required'); ?></th>                    
+                    <th class="right"><?php echo $langs->trans('Required'); ?></th>
                     <th class="right"><?php echo $langs->trans('gp_parcfield_on_onlyverif'); ?></th>
                     <th class="right"><?php echo $langs->trans('Position'); ?></th>
                     <th class="center"><?php echo $langs->trans('Statut'); ?></th>
@@ -399,24 +399,24 @@ endif;
                                     <?php echo showValueWithClipboardCPButton(strtoupper($field->field_key), 0,'none'); ?>
                                 </span>
                             <?php endif; ?>
-                            <?php echo $langs->trans($field->label); ?>                            
-                            <?php if($field->required) : echo ' <span class="required">*</span>'; endif; ?>                           
+                            <?php echo $langs->trans($field->label); ?>
+                            <?php if($field->required) : echo ' <span class="required">*</span>'; endif; ?>
                        </td>
                         <td><?php echo $langs->trans('gp_fieldtype_'.$field->type); ?></td>
                         <td><?php echo $field->default_value; ?></td>
                         <td class="right pgsz-optiontable-field"><?php echo $field->construct_field($gestionparc); ?></td>
                         <td class="right"><?php echo ($field->required)?$langs->trans('Yes'):$langs->trans('No'); ?></td>
                         <td class="right"><?php echo $field->only_verif?$langs->trans('Yes'):$langs->trans('No'); ?></td>
-                        <td class="right"><?php echo $field->position; ?></td> 
+                        <td class="right"><?php echo $field->position; ?></td>
                         <td class="center">
                             <?php if($field->enabled) : echo '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?id='.$gestionparc->rowid.'&field_id='.$field->rowid.'&action=disable_field&token='.newToken().'">'.img_picto($langs->trans("Activated"), 'switch_on').'</a>';
-                            else: echo '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?id='.$gestionparc->rowid.'&field_id='.$field->rowid.'&action=enable_field&token='.newToken().'">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>'; 
+                            else: echo '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?id='.$gestionparc->rowid.'&field_id='.$field->rowid.'&action=enable_field&token='.newToken().'">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>';
                             endif; ?>
                         </td>
                         <?php if(getDolGlobalInt('GESTIONPARC_ADVANCED_EXPORT')): ?>
                             <td class="center">
                                 <?php if($field->view_excel) : echo '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?id='.$gestionparc->rowid.'&field_id='.$field->rowid.'&action=disable_viewexport&token='.newToken().'">'.img_picto($langs->trans("Activated"), 'switch_on').'</a>';
-                                else: echo '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?id='.$gestionparc->rowid.'&field_id='.$field->rowid.'&action=enable_viewexport&token='.newToken().'">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>'; 
+                                else: echo '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?id='.$gestionparc->rowid.'&field_id='.$field->rowid.'&action=enable_viewexport&token='.newToken().'">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>';
                                 endif; ?>
                             </td>
                         <?php endif; ?>
@@ -424,8 +424,8 @@ endif;
                             <?php echo '<a class="reposition editfielda paddingrightonly" href="'.$_SERVER['PHP_SELF'].'?id='.$gestionparc->rowid.'&field_id='.$field->rowid.'&action=edit&token='.newToken().'">'.img_edit().'</a> &nbsp; '; ?>
                             <?php echo '<a class="reposition" href="'.$_SERVER['PHP_SELF'].'?id='.$gestionparc->rowid.'&field_id='.$field->rowid.'&action=delete&token='.newToken().'">'.img_delete().'</a>'; ?>
                         </td>
-                    </tr>                
-                <?php endforeach; 
+                    </tr>
+                <?php endforeach;
                 endif; ?>
             </tbody>
         </table>
@@ -436,7 +436,7 @@ endif;
             <input type="hidden" name="action" value="add_parcfield">
             <input type="hidden" name="token" value="<?php echo $_SESSION['newtoken']; ?>">
             <input type="hidden" name="newfield_type" value="<?php echo $field_type; ?>">
-            
+
             <h3 class="dolpgs-table-title"><?php echo $langs->trans('gp_parc_addfieldtitle', $langs->transnoentities('gp_fieldtype_'.$field_type)); ?></h3>
             <table class="dolpgs-table">
                 <tbody>
@@ -461,7 +461,7 @@ endif;
                         <tr class="dolpgs-tbody">
                             <td class="bold pgsz-optiontable-fieldname"><?php echo $langs->trans('Required'); ?></td>
                             <td class="pgsz-optiontable-fielddesc"><?php echo $langs->trans('gp_field_required_desc'); ?></td>
-                            <td class="right pgsz-optiontable-field"><input type="checkbox" name="newfield_required" <?php if(GETPOST('newfield_required')) : echo 'checked="checked"'; 
+                            <td class="right pgsz-optiontable-field"><input type="checkbox" name="newfield_required" <?php if(GETPOST('newfield_required')) : echo 'checked="checked"';
                            endif; ?>></td>
                         </tr>
                     <?php endif; ?>
@@ -477,7 +477,7 @@ endif;
                     <tr class="dolpgs-tbody">
                         <td class="bold pgsz-optiontable-fieldname"><?php echo $langs->trans('gp_field_onlyverif'); ?></td>
                         <td class="pgsz-optiontable-fielddesc"><?php echo $langs->trans('gp_field_onlyverif_desc'); ?></td>
-                        <td class="right pgsz-optiontable-field"><input type="checkbox" name="newfield_onlyverif" <?php if(GETPOST('newfield_onlyverif')) : echo 'checked="checked"'; 
+                        <td class="right pgsz-optiontable-field"><input type="checkbox" name="newfield_onlyverif" <?php if(GETPOST('newfield_onlyverif')) : echo 'checked="checked"';
                        endif; ?>></td>
                     </tr>
 
@@ -516,7 +516,7 @@ endif;
                     <tr class="dolpgs-tbody">
                         <td class="bold pgsz-optiontable-fieldname"><?php echo $langs->trans('Required'); ?></td>
                         <td class="pgsz-optiontable-fielddesc"><?php echo $langs->trans('gp_field_required_desc'); ?></td>
-                        <td class="right pgsz-optiontable-field"><input type="checkbox" name="editfield_required" <?php if(GETPOST('editfield_required') || $field_to_update->required) : echo 'checked="checked"'; 
+                        <td class="right pgsz-optiontable-field"><input type="checkbox" name="editfield_required" <?php if(GETPOST('editfield_required') || $field_to_update->required) : echo 'checked="checked"';
                        endif; ?>></td>
                     </tr>
                     <?php endif; ?>
@@ -532,10 +532,10 @@ endif;
                     <tr class="dolpgs-tbody">
                         <td class="bold pgsz-optiontable-fieldname"><?php echo $langs->trans('gp_field_onlyverif'); ?></td>
                         <td class="pgsz-optiontable-fielddesc"><?php echo $langs->trans('gp_field_onlyverif_desc'); ?></td>
-                        <td class="right pgsz-optiontable-field"><input type="checkbox" name="editfield_onlyverif" <?php if(GETPOST('editfield_onlyverif') || $field_to_update->only_verif) : echo 'checked="checked"'; 
+                        <td class="right pgsz-optiontable-field"><input type="checkbox" name="editfield_onlyverif" <?php if(GETPOST('editfield_onlyverif') || $field_to_update->only_verif) : echo 'checked="checked"';
                        endif; ?>></td>
                     </tr>
-                    
+
                 </tbody>
             </table>
             <div class="right">
@@ -546,7 +546,7 @@ endif;
             </form>
         <?php endif; ?>
     </div>
-    
+
 </div>
 
 <?php dol_fiche_end(); llxFooter(); $db->close(); ?>

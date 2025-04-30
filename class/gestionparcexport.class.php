@@ -52,7 +52,7 @@ class GestionParcExport extends ExportExcel2007
         $sheet->getStyle('A'.$row.':'.$letters_array[$lastcol_letterkey].$row)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM);
         $sheet->getStyle('A'.$row.':'.$letters_array[$lastcol_letterkey].$row)->getFont()->setBold(true);
         $row++;
-        
+
         //
         $lastrowforlogo = $row+4;
         $sheet->mergeCells('A'.$row.':B'.$lastrowforlogo.'');
@@ -105,7 +105,7 @@ class GestionParcExport extends ExportExcel2007
             $sheet->mergeCells('E'.$row.':'.$letters_array[$lastcol_letterkey].$row.'');
         endif;
         $row++;
-        
+
         $sheet->mergeCells('C'.$row.':D'.$row.'');
         $sheet->setCellValue('C'.$row, $langs->transnoentities('gp_advexp_user'));
         $sheet->setCellValue('E'.$row, $user->firstname.' '.$user->lastname);
@@ -173,7 +173,7 @@ class GestionParcExport extends ExportExcel2007
         $sheet->getStyle('C'.$row.':D'.$row)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
         $sheet->getStyle('C'.$row)->getFont()->setBold(true);
         $row++;
-        
+
         return $row;
 	}
 
