@@ -4,6 +4,10 @@
 [comment]: <> (Modele pdf)
 [comment]: <> (Harmoniser les constantes du module)
 
+### 1.7.4
+* FIX - Remove verif warning
+* FIX - Fix errors with date field if empty
+
 ### 1.7.3
 * FIX - Remove check module version (Bad practice)
 * FIX - Remove trailing spaces

@@ -607,7 +607,7 @@ echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"), 0, 'c
                     <td><a href="<?php echo dol_buildpath('fichinter/card.php?id='.$ficheinter->id, 1); ?>"><?php echo $ficheinter->ref; ?></a></td>
                 </tr>
             <?php endif; ?>
-            <?php if($conf->global->MAIN_MODULE_GESTIONPARC_USEVERIF) : ?>
+            <?php if(getDolGlobalInt('MAIN_MODULE_GESTIONPARC_USEVERIF')) : ?>
             <tr>
                 <td valign="middle"><?php echo $langs->trans('gp_client_verifmode'); ?></td>
                 <td>
@@ -669,11 +669,12 @@ echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"), 0, 'c
         <div style="border-top:1px solid #bbb;margin-bottom:16px;"></div>
 
         <?php
-            //
-            $nb_verified = 0;
-            if(!empty($parc_lines)): foreach($parc_lines as $lineid => $linecontent):
-                if($linecontent->verif): $nb_verified++; endif;
-            endforeach; endif;
+            if(getDolGlobalInt('MAIN_MODULE_GESTIONPARC_USEVERIF')) :
+                $nb_verified = 0;
+                if(!empty($parc_lines)): foreach($parc_lines as $lineid => $linecontent):
+                    if($linecontent->verif): $nb_verified++; endif;
+                endforeach; endif;
+            endif;
         ?>
 
         <?php if(!empty($parc->description)) : ?>
@@ -788,16 +789,15 @@ echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"), 0, 'c
                                         if($l_content) : echo $l_content;
                                         endif;
                                     endif;
-                                elseif($parcfield->type == 'date'):
-                                    echo dol_print_date($linecontent->{$parcfield->field_key},'%d/%m/%Y');
+                                elseif($parcfield->type == 'date') :
+                                    if (!empty($linecontent->{$parcfield->field_key}) && $linecontent->{$parcfield->field_key} != '0000-00-00'):
+                                        echo dol_print_date($linecontent->{$parcfield->field_key},'%d/%m/%Y');
+                                    //else: echo '<span class="opacitymedium">--</span>';
+                                    endif;
                                 // ON AFFICHE LA VALEUR DU CHAMP
                                 else: echo $linecontent->{$parcfield->field_key};
                                 endif;
-
-                            endif;
-
-
-                            ?>
+                            endif; ?>
                             </td>
                         <?php endif;
                         endforeach; ?>
