@@ -664,7 +664,7 @@ echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"), 0, 'c
 
         <?php // ON AFFICHE LES TABS
         if(!empty($tabs)) :
-            echo dol_fiche_head($tabs, $parctype, '', 1);
+            echo dol_fiche_head($tabs, $parctype, '', 1, '', 0, '', '', 5);
         endif; ?>
         <div style="border-top:1px solid #bbb;margin-bottom:16px;"></div>
 

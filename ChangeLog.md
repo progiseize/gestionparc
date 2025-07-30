@@ -4,111 +4,114 @@
 [comment]: <> (Modele pdf)
 [comment]: <> (Harmoniser les constantes du module)
 
+### Unreleased
+- MAJ: Limit tabs to 5
+
 ### 1.7.4
-* FIX - Remove verif warning
-* FIX - Fix errors with date field if empty
+- FIX: Remove verif warning
+- FIX: Fix errors with date field if empty
 
 ### 1.7.3
-* FIX - Remove check module version (Bad practice)
-* FIX - Remove trailing spaces
+- FIX: Remove check module version (Bad practice)
+- FIX: Remove trailing spaces
 
 ### 1.7.2
-* FIX - Fix redundant SQL queries in the homepage widget to improve page load speed
+- FIX: Fix redundant SQL queries in the homepage widget to improve page load speed
 
 ### 1.7.1
-* FIX - Fix FichInter validation
+- FIX: Fix FichInter validation
 
 ### 1.7.0
-* NEW - Input type date
+- NEW: Input type date
 
 ### 1.6.2
-* MAJ - Add info for parc key if advanced exports is active (Copy to Clipboard Icon)
-* FIX - Count excel fields by value 1
+- MAJ: Add info for parc key if advanced exports is active (Copy to Clipboard Icon)
+- FIX: Count excel fields by value 1
 
 ### 1.6.1
-* MAJ - Advanced Exports: Add email address
-* NEW - Advanced Exports: Align field with const GESTIONPARC_EXCEL_ALIGN_[FIELDKEY] and values left/center/right
-* NEW - Advanced Exports: Group the lines in packs of X lines
-* NEW - Advanced Exports: Add border to empty group lines with GESTIONPARC_ADVANCED_EXPORT_FILLEMPTY 
-* MAJ - Advanced Exports: Add borders to parcset and automerge cells after E
-* MAJ - Add missing FR translations
-* FIX - Fix error : Add key value Verif DB field
+- MAJ: Advanced Exports: Add email address
+- NEW: Advanced Exports: Align field with const GESTIONPARC_EXCEL_ALIGN_[FIELDKEY] and values left/center/right
+- NEW: Advanced Exports: Group the lines in packs of X lines
+- NEW: Advanced Exports: Add border to empty group lines with GESTIONPARC_ADVANCED_EXPORT_FILLEMPTY 
+- MAJ: Advanced Exports: Add borders to parcset and automerge cells after E
+- MAJ: Add missing FR translations
+- FIX: Fix error : Add key value Verif DB field
 
 ### 1.6.0
-* NEW - Advanced Exports in Excel format
-* FIX - Remove empty lines & console logs
+- NEW: Advanced Exports in Excel format
+- FIX: Remove empty lines & console logs
 
 ### 1.5.1
-* FIX - Load langs in loadBox 
+- FIX: Load langs in loadBox 
 
 ### 1.5.0
-* NEW - Détails de la vérification sur les fiches d'intervention
-* MAJ - Mise à jour de la page setup
+- NEW: Détails de la vérification sur les fiches d'intervention
+- MAJ: Mise à jour de la page setup
 
 ### 1.4.2
-* NEW - Nouveau droit lecture (différenciation droits gestion & lecture)
+- NEW: Nouveau droit lecture (différenciation droits gestion & lecture)
 
 ### 1.4.1
-* FIX - Var name $results_prodserv (GestionParcGetListProdServ())
-* NEW - Possibilité de vérifier tous les éléments d'un parc pour les admins seulement  
+- FIX: Var name $results_prodserv (GestionParcGetListProdServ())
+- NEW: Possibilité de vérifier tous les éléments d'un parc pour les admins seulement  
 
 ### 1.4.0
-* FIX - Code review with PHPCS 
+- FIX: Code review with PHPCS 
 
 ### 1.3.9
-* NEW - Option champ visible uniquement en mode vérif 
+- NEW: Option champ visible uniquement en mode vérif 
 
 ### 1.3.8 (03/10/2023) 
-* FIX - Fix for V18 Module Export
-* FIX - get all products without categories
+- FIX: Fix for V18 Module Export
+- FIX: get all products without categories
 
 ### 1.3.7 (08/09/2023) 
-* NEW - Add a repair page for repair retro-compatibility admin/repair.php
-* FIX - modification action add Tab Parc
-* FIX - Restriction for field name
+- NEW: Add a repair page for repair retro-compatibility admin/repair.php
+- FIX: modification action add Tab Parc
+- FIX: Restriction for field name
 
 ### 1.3.6 (23/05/2023) 
-* MAJ - Corrections Descripteur module
-* FIX - Corrections tabs si aucun parc créé ou activé
-* FIX - Correction assignation catégorie de tiers
-* FIX - Correction creation table SQL llx_gestionparc_fields
-* FIX - Correction compatibilité PHP < 7.4
-* MAJ - Mise à jour CSS
-* FIX - DEFAULT VALUE for verif
+- MAJ: Corrections Descripteur module
+- FIX: Corrections tabs si aucun parc créé ou activé
+- FIX: Correction assignation catégorie de tiers
+- FIX: Correction creation table SQL llx_gestionparc_fields
+- FIX: Correction compatibilité PHP < 7.4
+- MAJ: Mise à jour CSS
+- FIX: DEFAULT VALUE for verif
 
 ### 1.3.5 (01/03/2023) 
-* MAJ - CSV séparateur par défault ';'
-* MAJ - CSV : Si produit ou service, ajoute une colonne avec le label du produit/service
+- MAJ: CSV séparateur par défault ';'
+- MAJ: CSV : Si produit ou service, ajoute une colonne avec le label du produit/service
 
 ### 1.3.4 (07/02/2023) 
-* MAJ - Update Lang
+- MAJ: Update Lang
 
 ### 1.3.3 (01/02/2023) 
-* FIX - SQL, ajout DEFAULT 0 sur author_maj
+- FIX: SQL, ajout DEFAULT 0 sur author_maj
 
 ### 1.3.2 (01/06/2022) 
-* FIX - Ajout valeur par defaut pour author_maj (SQL)
+- FIX: Ajout valeur par defaut pour author_maj (SQL)
 
 ### 1.3.1 (01/06/2022) 
-* NEW - Affichage mises à jour pages modules
+- NEW: Affichage mises à jour pages modules
 
 ### 1.3 (23/05/2022)
-* NEW - Activation / Désactivation des parcs
-* NEW - Nouvelle interface à onglets
-* MAJ - Champ désactivé par défaut lors de la création
-* MAJ - Fichiers CSV - En attente du modèle en cours de dev
+- NEW: Activation / Désactivation des parcs
+- NEW: Nouvelle interface à onglets
+- MAJ: Champ désactivé par défaut lors de la création
+- MAJ: Fichiers CSV: En attente du modèle en cours de dev
 
 ### 1.2 (04/05/2022)
-* NEW - fusion des parcs et des interventions lors de la fusion de tiers
-* NEW - Option pour saisie des heures par l'utilisateur ou en automatique.
+- NEW: fusion des parcs et des interventions lors de la fusion de tiers
+- NEW: Option pour saisie des heures par l'utilisateur ou en automatique.
 
 ### 1.1 (16/03/2022)
-* MAJ - Le bouton vérification n'est plus visible si l'ensemble des parcs sont vides
-* NEW - Il est possible d'annuler une vérification
-* NEW - Possibilité de masquer le contenu des parcs
-* NEW - Option pour redirection vers les fiches d'interventions générées
+- MAJ: Le bouton vérification n'est plus visible si l'ensemble des parcs sont vides
+- NEW: Il est possible d'annuler une vérification
+- NEW: Possibilité de masquer le contenu des parcs
+- NEW: Option pour redirection vers les fiches d'interventions générées
 
 ### 1.0 (16/03/2022)
-* Module permettant de créer des parcs clients et créer des interventions sur ces parcs.
-* Traductible  100%
-* Box Accueil : Suivi du nombre de parcs, nombre total d'items 
+- Module permettant de créer des parcs clients et créer des interventions sur ces parcs.
+- Traductible  100%
+- Box Accueil : Suivi du nombre de parcs, nombre total d'items 
