@@ -3,8 +3,7 @@
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formfile.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formactions.class.php';
 require_once DOL_DOCUMENT_ROOT.'/comm/action/class/actioncomm.class.php';
-
-dol_include_once('./gestionparc/class/gestionparc.class.php');
+dol_include_once('/gestionparc/class/gestionparc.class.php');
 
 class ActionsGestionParc
 {
@@ -22,48 +21,35 @@ class ActionsGestionParc
      */
     public function completeTabsHead(&$parameters, &$object, &$action, $hookmanager)
     {
-
         global $langs, $conf, $user,$db;
 
         // ON CHARGE LE FICHIER LANGUE
         $langs->load('gestionparc@gestionparc');
 
         // ON RECUPERE LE TYPE D'ELEMENT SUR LEQUEL ON EST
-        $element = isset($parameters['object']->element)?$parameters['object']->element:'';
+        $element = isset($parameters['object']->element) ? $parameters['object']->element : '';
 
         // SI ON EST SUR UN TIERS
-        if($element == 'societe' && $parameters['mode'] == 'add') :
+        if ($element == 'societe' && $parameters['mode'] == 'add' && $parameters['filterorigmodule'] == 'external') {
+            $nbItems = 0;
+            $gestionparc = new GestionParc($db);
+            $listParctypes = $gestionparc->list_parcType();
 
-            $nb_items = 0;
-
-            // ON CALCULE LE NBRE D'ITEMS
-            $socid = $parameters['object']->id;
-            $gp = new GestionParc($db);
-            $list_parctypes = $gp->list_parcType();
-
-            foreach($list_parctypes as $parctype_id => $parctype_infos):
-
-                $sql = "SELECT rowid FROM ".MAIN_DB_PREFIX."gestionparc__".$parctype_infos['key']." WHERE socid = ".$socid;
+            foreach ($listParctypes as $parctypeID => $parctypeInfos) {
+                $sql = "SELECT rowid FROM ".MAIN_DB_PREFIX."gestionparc__".$parctypeInfos['key']." WHERE socid = ".$object->id;
                 $res = $db->query($sql);
-                $nb_items += $res->num_rows;
+                $nbItems += $res->num_rows;
+            }
 
-            endforeach;
+            $newtab = array();
+            $newtab[0] = dol_buildpath('/gestionparc/tabs/gestionparc.php?socid='.$object->id, 1);
+            $newtab[1] = $langs->trans('gp_clientparc').' <span class="badge marginleftonlyshort">'.$nbItems.'</span>';
+            $newtab[2] = 'gestionparc';
 
-            // ON RECUPERE LA LISTE DES ONGLETS
-            $tabs = $parameters['head'];
-            foreach($tabs as $tab_key => $tab):
-
-                // ON AJOUTE LE NBRE D'ITEMS AU BON ONGLET
-                if($tab[2] == 'gestionparc') :
-                    $parameters['head'][$tab_key][1] .= '<span class="badge marginleftonlyshort">'.$nb_items.'</span>';
-                endif;
-
-            endforeach;
-
-        endif;
-
-        $this->results = $parameters['head'];
-        return 1;
+            //
+            $parameters['head'][] = $newtab;
+        }
+        return 0;
     }
 
     public function replaceThirdparty(&$parameters, &$object, &$action, $hookmanager)
@@ -76,7 +62,7 @@ class ActionsGestionParc
 
         $contexts = explode(':', $parameters['context']);
 
-        if(in_array('thirdpartycard', $contexts) && $action == 'confirm_merge') :
+        if (in_array('thirdpartycard', $contexts) && $action == 'confirm_merge') {
 
             $soc_origin = $parameters['soc_origin'];
             $soc_dest = $parameters['soc_dest'];
@@ -88,24 +74,25 @@ class ActionsGestionParc
             $verif = new GestionParcVerif($db);
             $result_mergeverifs = $verif->mergeVerifs($soc_origin, $soc_dest);
 
-            if($result_mergeparcs < 0) : $error++;
-            endif;
-            if($result_mergeverifs < 0) : $error++;
-            endif;
+            if ($result_mergeparcs < 0) {
+                $error++;
+            }
+            if ($result_mergeverifs < 0) {
+                $error++;
+            }
 
-            if(!$error) :
-
-                if($result_mergeparcs > 0) : setEventMessages($langs->trans('gp_mergeParcSuccess', $result_mergeparcs), null, 'mesgs');
-                endif;
-                if($result_mergeverifs > 0) : setEventMessages($langs->trans('gp_mergeVerifSuccess', $result_mergeverifs), null, 'mesgs');
-                endif;
+            if (!$error) {
+                if ($result_mergeparcs > 0) {
+                    setEventMessages($langs->trans('gp_mergeParcSuccess', $result_mergeparcs), null, 'mesgs');
+                }
+                if ($result_mergeverifs > 0) {
+                    setEventMessages($langs->trans('gp_mergeVerifSuccess', $result_mergeverifs), null, 'mesgs');
+                }
                 return 1;
-
-         else:
-             setEventMessages($langs->trans('gp_mergeError'), null, 'errors'); return -1;
-         endif;
-
-        endif;
+            } else {
+                setEventMessages($langs->trans('gp_mergeError'), null, 'errors'); return -1;
+            }
+        }
     }
 
 

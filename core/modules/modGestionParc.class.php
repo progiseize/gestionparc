@@ -110,7 +110,7 @@ class modGestionParc extends DolibarrModules
             'models' => 1,
             'css' => array(),
             'js' => array(),
-            'hooks' => array('thirdpartycard'),
+            'hooks' => array('all'),
             'dir' => array(),
             'workflow' => array(),
 
@@ -171,7 +171,7 @@ class modGestionParc extends DolibarrModules
         // 'thirdparty'       to add a tab in third party view
         // 'user'             to add a tab in user view
         $this->tabs = array(
-            'thirdparty:+gestionparc:gp_clientparc:gestionparc@gestionparc:$object->client && $user->hasRight("gestionparc","parc","read"):/gestionparc/tabs/gestionparc.php?socid=__ID__'
+            //'thirdparty:+gestionparc:gp_clientparc:gestionparc@gestionparc:$object->client && $user->hasRight("gestionparc","parc","read"):/gestionparc/tabs/gestionparc.php?socid=__ID__'
         );
 
         if (! isset($conf->gestionparc) || ! isset($conf->gestionparc->enabled)) {
