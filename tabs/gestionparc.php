@@ -274,6 +274,12 @@ switch ($action):
 			// ON VERIFIE LES CHAMPS DYNAMIQUES
 			foreach ($gestionparc->fields as $parcfield) {
 				if ($parcfield->enabled || $parcfield->type == 'autonumber') {
+
+					// On check les autonumber
+					if ($parcfield->type == 'autonumber' && !$parcfield->enabled) {
+						$nextnum = $parcfield->getNextAutoNumber($socid, $gestionparc->parc_key, $parcfield->field_key);
+						$_POST['gpfield_'.$parcfield->field_key] = $nextnum;
+					}
 					//
 					if ($parcfield->only_verif && $parcfield->required) {
 						if ($is_mode_verif  && empty(GETPOST('gpfield_'.$parcfield->field_key))) {
@@ -305,13 +311,13 @@ switch ($action):
 				$db->begin();
 				$sql_insert = "INSERT INTO ".MAIN_DB_PREFIX."gestionparc__".$gestionparc->parc_key." (socid, author";
 				foreach ($gestionparc->fields as $parcfield) {
-					if ($parcfield->enabled) {
+					if ($parcfield->enabled || $parcfield->type == 'autonumber') {
 						$sql_insert .= ", ".$parcfield->field_key;
 					}
 				}
 				$sql_insert .= ") VALUES (".GETPOST('socid').", ".$user->id;
 				foreach ($gestionparc->fields as $parcfield) {
-					if ($parcfield->enabled) {
+					if ($parcfield->enabled || $parcfield->type == 'autonumber') {
 						$sql_insert .= ", '".$db->escape(GETPOST('gpfield_'.$parcfield->field_key))."'";
 					}
 				}
@@ -642,7 +648,7 @@ if ($action == 'delete') {
 
 // AFFICHAGE DES ONGLETS THIRDPARTY
 $head = societe_prepare_head($societe, $user);
-echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"), 0, 'company');
+echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"), -1, 'company');
 
 print '<div class="gestionparc-full-wrapper">';
 
@@ -791,7 +797,7 @@ print '<div class="gestionparc-full-wrapper">';
 				print '</th>';
 				print '</tr>';
 
-				//
+				// NEW LINE
 				if ($action != 'edit') {
 					print '<tr class="dolpgs-tbody gestionparc-newline" '.(($action == "add" && $error && GETPOST('parcid') == $parc->rowid) ? 'style="display: table-row;"' : '').'>';
 					if ($is_mode_verif) {
@@ -802,8 +808,8 @@ print '<div class="gestionparc-full-wrapper">';
 							if ($parcfield->only_verif && !$is_mode_verif) {
 								continue;
 							}
+							print '<td>'.$parcfield->construct_field($parc, $societe->id).'</td>';
 						}
-						print '<td>'.$parcfield->construct_field($parc, $societe->id).'</td>';
 					}
 					print '<td class="right">';
 						print '<input type="hidden" name="action" value="add">';
