@@ -6,6 +6,7 @@
 
 ### Unreleased
 - MAJ: Limit tabs to 5
+- FIX: Undefined variable $nb_val
 
 ### 1.7.4
 - FIX: Remove verif warning

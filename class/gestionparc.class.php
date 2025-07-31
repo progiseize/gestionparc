@@ -1291,34 +1291,35 @@ class GestionParcField
         return $output_field;
     }
 
-    public function getNextAutoNumber($socid,$parc_key,$field_key)
+    public function getNextAutoNumber(int $socid, $parc_key, $field_key)
     {
-
-        $sql = "SELECT rowid, ".$field_key." FROM ".MAIN_DB_PREFIX.$this->parent_table_element."__".$parc_key;
-        $sql .= " WHERE socid = ".$socid;
+        $sql = "SELECT rowid, ".$field_key." FROM ".MAIN_DB_PREFIX.$this->parent_table_element."__".$this->db->escape($parc_key);
+        $sql .= " WHERE socid = ".(int) $socid;
         $res = $this->db->query($sql);
 
         $nb_fields = $res->num_rows;
         $nb_used = array();
+        $numero = 1;
 
         // SI ON A DES RESULTATS
-        if($nb_fields) :
-
-            while($obj = $this->db->fetch_object($res)):
+        if ($nb_fields) {
+            while ($obj = $this->db->fetch_object($res)) {
                 array_push($nb_used, intval($obj->{$field_key}));
-            endwhile;
+            }
             sort($nb_used, SORT_NUMERIC);
             $nb_last = max($nb_used);
 
-            for ($i=1; $i < $nb_last + 1; $i++):
-                if(!in_array($i, $nb_used)) :$nb_val = $i;break;
-             else: $nb_val = $nb_last + 1;
-             endif;
-            endfor;
-     else: $nb_val = 1;
-     endif;
+            for ($i=1; $i < $nb_last + 1; $i++) {
+                if (!in_array($i, $nb_used)) {
+                    $numero = $i;
+                    break;
+                } else {
+                    $numero = $nb_last + 1;
+                }
+            }
+        }
 
-     return $nb_val;
+        return $numero;
     }
 
     /*****************************************************************/
