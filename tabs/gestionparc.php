@@ -42,6 +42,7 @@ $langs->load('interventions');
 * VARIABLES
 ********************************************************************/
 $action = GETPOST('action');
+$cancel =  GETPOST('cancel', 'alpha');
 $socid  = GETPOST('socid', 'int');
 
 $societe = new Societe($db);
@@ -72,6 +73,11 @@ if ($id_mode_verif && $id_mode_verif > 0) {
 /*******************************************************************
 * ACTIONS
 ********************************************************************/
+if ($cancel) {
+	header("Location: ".$_SERVER['PHP_SELF'].'?socid='.$object->id.'&parctype='.$parctype);
+	exit;
+}
+
 switch ($action):
 
 	// INIT CLOSE VERIF
@@ -267,7 +273,7 @@ switch ($action):
 
 			// ON VERIFIE LES CHAMPS DYNAMIQUES
 			foreach ($gestionparc->fields as $parcfield) {
-				if ($parcfield->enabled) {
+				if ($parcfield->enabled || $parcfield->type == 'autonumber') {
 					//
 					if ($parcfield->only_verif && $parcfield->required) {
 						if ($is_mode_verif  && empty(GETPOST('gpfield_'.$parcfield->field_key))) {
@@ -637,261 +643,262 @@ if ($action == 'delete') {
 // AFFICHAGE DES ONGLETS THIRDPARTY
 $head = societe_prepare_head($societe, $user);
 echo dol_get_fiche_head($head, 'gestionparc', $langs->trans("ThirdParty"), 0, 'company');
-?>
 
-<div class="gestionparc-full-wrapper">
+print '<div class="gestionparc-full-wrapper">';
 
-	<?php dol_banner_tab($societe, 'socid', '', ($user->socid?0:1), 'rowid', 'nom'); ?>
+	//
+	dol_banner_tab($societe, 'socid', '', ($user->socid ? 0 : 1), 'rowid', 'nom');
 
-	<?php // AFFICHAGE CODES CLIENT & FOURNISSEUR ?>
-	<div class="fichecenter">
-		<div class="underbanner clearboth"></div>
-		<table class="border centpercent tableforfield">
-			<?php if ($societe->client && !empty($societe->code_client)) : ?>
-				<tr>
-					<td class="titlefield"><?php echo $langs->trans('CustomerCode'); ?></td>
-					<td><?php echo $societe->code_client; ?>
-					<?php $tmpcheck = $societe->check_codeclient(); if ($tmpcheck != 0 && $tmpcheck != -5) : ?>
-						<font class="error">(<?php echo $langs->trans("WrongCustomerCode")?>)</font>
-					<?php endif; ?>
-					</td>
-				</tr>
-			<?php endif; ?>
-			<?php if ($societe->fournisseur && !empty($societe->code_fournisseur)) : ?>
-				<tr>
-					<td class="titlefield"><?php echo $langs->trans('SupplierCode'); ?></td>
-					<td><?php echo $societe->code_fournisseur; ?>
-					<?php $tmpcheck = $societe->check_codefournisseur(); if ($tmpcheck != 0 && $tmpcheck != -5) : ?>
-						<font class="error"><?php echo $langs->trans("WrongSupplierCode"); ?>)</font>
-					<?php endif; ?>
-					</td>
-				</tr>
-			<?php endif; ?>
-
-			<?php if ($last_intervention) : $ficheinter->fetch($last_intervention); ?>
-				<tr>
-					<td><?php echo $langs->trans('gp_client_lastverif'); ?></td>
-					<td><a href="<?php echo dol_buildpath('fichinter/card.php?id='.$ficheinter->id, 1); ?>"><?php echo $ficheinter->ref; ?></a></td>
-				</tr>
-			<?php endif; ?>
-			<?php if (getDolGlobalInt('MAIN_MODULE_GESTIONPARC_USEVERIF')) : ?>
-			<tr>
-				<td valign="middle"><?php echo $langs->trans('gp_client_verifmode'); ?></td>
-				<td>
-					<form enctype="multipart/form-data" action="<?php print $_SERVER["PHP_SELF"]; ?>?socid=<?php echo $societe->id; ?>&parctype=<?php echo $parctype; ?>" method="POST">
-
-						<input type="hidden" name="token" value="<?php echo $_SESSION['newtoken']; ?>">
-						<?php if ($is_mode_verif) : ?>
-
-							<input type="hidden" name="verif_id" value="<?php echo $id_mode_verif; ?>">
-
-							<?php if ($action == 'initclose_verif') : ?>
-
-								<?php if (!$conf->global->MAIN_MODULE_GESTIONPARC_VERIFUSETIME) : ?>
-									<div style="font-weight: bold;text-decoration: underline;margin-bottom: 3px"><?php echo $langs->trans('InterDuration'); ?><span class="required">*</span></div>
-									<div style="margin-bottom: 8px;"><?php echo $form->select_duration('duration', (!GETPOST('durationhour', 'int') && !GETPOST('durationmin', 'int')) ? 3600 : (60 * 60 * GETPOST('durationhour', 'int') + 60 * GETPOST('durationmin', 'int')), 0, 'select'); ?></div>
-								<?php else: ?>
-									<input type="hidden" name="durationhour" value="<?php echo $conf->global->MAIN_MODULE_GESTIONPARC_VERIFUSETIME; ?>">
-									<input type="hidden" name="durationmin" value="0">
-								<?php endif; ?>
-
-
-								<div style="font-weight: bold;text-decoration: underline;margin-bottom: 3px">
-									<?php echo $langs->trans('gp_verifcom'); ?>
-									<?php if ($verification->nb_verified != $verification->nb_total) : ?>
-										<span class="required">*</span>
-									<?php endif; ?>
-								</div>
-								<div><textarea name="intercom" class="minwidth400 minheight" style="min-height: 96px;"><?php echo GETPOST('intercom') ?></textarea></div>
-								<input type="hidden" name="action" value="close_verif">
-								<input type="submit" name="" value="<?php echo $langs->trans('gp_verif_close'); ?>" class="dolpgs-btn btn-primary btn-sm">
-							<?php else: ?>
-								<?php if ($verification->nb_verified == $verification->nb_total) : $class_sub = "dolpgs-btn btn-sm btn-primary"; else: $class_sub = "dolpgs-btn btn-sm btn-primary not-full";
-								endif; ?>
-								<input type="hidden" name="action" value="initclose_verif">
-								<input type="submit" name="close" value="<?php echo $langs->trans('gp_verif_close'); ?>" class="<?php echo $class_sub; ?>" style="margin: 8px 0;">
-								<input type="submit" name="cancel_verif" value="<?php echo $langs->trans('gp_verif_cancel'); ?>" class="dolpgs-btn btn-danger btn-sm" style="margin: 8px 0;">
-							<?php endif; ?>
-						<?php else: ?>
-							<input type="hidden" name="action" value="mode_verif">
-							<input type="submit" name="" value="<?php echo $langs->trans('gp_verif_open'); ?>" class="dolpgs-btn btn-secondary btn-sm" style="margin: 8px 0;">
-						<?php endif; ?>
-
-					</form>
-				</td>
-			</tr>
-			<?php endif; ?>
-
-		</table>
-		<div class="clearboth"></div>
-	</div>
-	<div style="border-top:1px solid rgb(215, 215, 215);margin-bottom:16px;"></div>
-
-	<div class="dolpgs-main-wrapper">
-
-		<?php // ON AFFICHE LES TABS
-		if (!empty($tabs)) {
-			echo dol_fiche_head($tabs, $parctype, '', 1, '', 0, '', '', 5);
-		} ?>
-		<div style="border-top:1px solid #bbb;margin-bottom:16px;"></div>
-
-		<?php
+	// AFFICHAGE CODES CLIENT & FOURNISSEUR
+	print '<div class="fichecenter">';
+		print '<div class="underbanner clearboth"></div>';
+		print '<table class="border centpercent tableforfield">';
+		if ($societe->client && !empty($societe->code_client)) {
+			print '<tr>';
+				print '<td class="titlefield">'.$langs->trans('CustomerCode').'</td>';
+				print '<td>';
+					print $societe->code_client;
+					$tmpcheck = $societe->check_codeclient();
+					if ($tmpcheck != 0 && $tmpcheck != -5){
+						print '<font class="error">('.$langs->trans("WrongCustomerCode").')</font>';
+					}
+				print '</td>';
+			print '</tr>';
+		}
+		if ($societe->fournisseur && !empty($societe->code_fournisseur)) {
+			print '<tr>';
+				print '<td class="titlefield">'.$langs->trans('SupplierCode').'</td>';
+				print '<td>';
+					print $societe->code_fournisseur;
+					$tmpcheck = $societe->check_codefournisseur();
+					if ($tmpcheck != 0 && $tmpcheck != -5) {
+						print '<font class="error">'.$langs->trans("WrongSupplierCode").')</font>';
+					}
+				print '</td>';
+			print '</tr>';
+		}
+		if ($last_intervention) {
+			$ficheinter->fetch($last_intervention);
+			print '<tr>';
+				print '<td>'.$langs->trans('gp_client_lastverif').'</td>';
+				print '<td><a href="'.dol_buildpath('fichinter/card.php?id='.$ficheinter->id, 1).'">'.$ficheinter->ref.'</a></td>';
+			print '</tr>';
+		}
 		if (getDolGlobalInt('MAIN_MODULE_GESTIONPARC_USEVERIF')) {
-			$nb_verified = 0;
-			if (!empty($parc_lines)) {
-				foreach($parc_lines as $lineid => $linecontent) {
-					if ($linecontent->verif): $nb_verified++; endif;
+			print '<tr>';
+				print '<td valign="middle">'.$langs->trans('gp_client_verifmode').'</td>';
+				print '<td>';
+				if ($is_mode_verif) {
+					print '<form action="'.$_SERVER["PHP_SELF"].'?socid='.$societe->id.'&parctype='.$parctype.'" method="POST">';
+						print '<input type="hidden" name="token" value="'.newToken().'">';
+						print '<input type="hidden" name="verif_id" value="'.$id_mode_verif.'">';
+						if ($action == 'initclose_verif') {
+
+							if (!$conf->global->MAIN_MODULE_GESTIONPARC_VERIFUSETIME) {
+								print '<div style="font-weight: bold;text-decoration: underline;margin-bottom: 3px">'.$langs->trans('InterDuration').'<span class="required">*</span></div>';
+								print '<div style="margin-bottom: 8px;">'.$form->select_duration('duration', (!GETPOST('durationhour', 'int') && !GETPOST('durationmin', 'int')) ? 3600 : (60 * 60 * GETPOST('durationhour', 'int') + 60 * GETPOST('durationmin', 'int')), 0, 'select').'</div>';
+							} else {
+								print '<input type="hidden" name="durationhour" value="'.$conf->global->MAIN_MODULE_GESTIONPARC_VERIFUSETIME.'">';
+								print '<input type="hidden" name="durationmin" value="0">';
+							}
+
+							print '<div style="font-weight: bold;text-decoration: underline;margin-bottom: 3px">';
+								print $langs->trans('gp_verifcom');
+								if ($verification->nb_verified != $verification->nb_total) {
+									print '<span class="required">*</span>';
+								}
+							print '</div>';
+
+							print '<div>';
+								print '<textarea name="intercom" class="minwidth400 minheight" style="min-height: 96px;">'.GETPOST('intercom').'</textarea>';
+							print '</div>';
+							print '<input type="hidden" name="action" value="close_verif">';
+							print '<input type="submit" name="close" value="'.$langs->trans('gp_verif_close').'" class="button smallpaddingimp small nomarginleft">';
+							print '<input type="submit" name="cancel" value="'.$langs->trans('Cancel').'" class="button butActionDelete cancel smallpaddingimp small nomarginleft" >';
+
+						} else {
+							print '<input type="hidden" name="action" value="initclose_verif">';
+							print '<input type="submit" name="close" value="'.$langs->trans('gp_verif_close').'" class="button smallpaddingimp small nomarginleft">';
+							print '<input type="submit" name="cancel_verif" value="'.$langs->trans('gp_verif_cancel').'" class="button butActionDelete cancel smallpaddingimp small nomarginleft" >';
+						}
+					print '</form>';
+				} else {
+					print '<a class="button smallpaddingimp small nomarginleft" href="'.$_SERVER["PHP_SELF"].'?socid='.$societe->id.'&parctype='.$parctype.'&action=mode_verif&token='.newToken().'">'.$langs->trans('gp_verif_open').'</a>';
 				}
+				print '</td>';
+			print '</tr>';
+		}
+
+		print '</table>';
+		print '<div class="clearboth"></div>';
+	print '</div>';
+	print '<div style="border-top:1px solid rgb(215, 215, 215);margin-bottom:16px;"></div>';
+
+
+	print '<div class="dolpgs-main-wrapper">';
+	if (!empty($tabs)) {
+		print dol_fiche_head($tabs, $parctype, '', 1, '', 0, '', '', 5);
+	}
+	print '<div style="border-top:1px solid #bbb;margin-bottom:16px;"></div>';
+
+	// Count verified lines
+	if (getDolGlobalInt('MAIN_MODULE_GESTIONPARC_USEVERIF')) {
+		$nb_verified = 0;
+		if (!empty($parc_lines)) {
+			foreach($parc_lines as $lineid => $linecontent) {
+				if ($linecontent->verif): $nb_verified++; endif;
 			}
 		}
-		?>
+	}
 
-		<?php if (!empty($parc->description)) : ?>
-			<div class="justify opacitymedium" style="margin-bottom: 16px;"><span class="fas fa-info-circle em088 opacityhigh" style=" vertical-align: middle;" title="Information"></span> <?php echo $parc->description; ?></div>
-		<?php endif; ?>
+	if (!empty($parc->description)) {
+		print '<div class="justify opacitymedium" style="margin-bottom: 16px;">';
+			print img_info('').' '.$parc->description;
+		print '</div>';
+	}
 
-		<?php if ($gestionparc->rowid > 0) : ?>
-		<form enctype="multipart/form-data" action="<?php print $_SERVER["PHP_SELF"]; ?>?socid=<?php echo $societe->id; ?>&parctype=<?php echo $parctype; ?>" method="POST" id="" >
+	if ((int) $gestionparc->rowid > 0) {
+		print '<form enctype="multipart/form-data" action="'.$_SERVER["PHP_SELF"].'?socid='.$societe->id.'&parctype='.$parctype.'" method="POST" id="">';
+			print '<input type="hidden" name="token" value="'.newToken().'">';
+			print '<input type="hidden" name="parcid" value="'.$parc->rowid.'">';
 
-			<input type="hidden" name="token" value="<?php echo $_SESSION['newtoken']; ?>">
-			<input type="hidden" name="parcid" value="<?php echo $parc->rowid; ?>">
+			if ($is_mode_verif && $user->admin && !empty($parc_lines) && $nb_verified < count($parc_lines)) {
+				print '<div class="gestionparc-verifall">';
+					print '<a class="reposition" href="'.$_SERVER['PHP_SELF'].'?socid='.$societe->id.'&parctype='.$parctype.'&parcid='.$parc->rowid.'&action=verifall&token='.newToken().'">'.img_picto($langs->trans("gp_verifall"), 'switch_off').'</a> <span class="veriftxt">'.$langs->trans('gp_verifall').'</span>';
+				print '</div>';
+			}
 
-			<?php if ($is_mode_verif && $user->admin && !empty($parc_lines)):
+			print '<table class="dolpgs-table gestionparc-table" style="border-top:none;" id="gestionparc-table-'.$gestionparc->rowid.'">';
+			print '<tbody>';
 
-				if ($nb_verified < count($parc_lines)): ?>
-					<div class="gestionparc-verifall">
-						<a class="reposition" href="<?php echo $_SERVER['PHP_SELF'].'?socid='.$societe->id.'&parctype='.$parctype.'&parcid='.$parc->rowid.'&action=verifall&token='.newToken(); ?>"><?php echo img_picto($langs->trans("gp_verifall"), 'switch_off'); ?></a> <span class="veriftxt"><?php echo $langs->trans('gp_verifall'); ?></span>
-					</div>
-				<?php endif; ?>
+				// Columns name
+				print '<tr class="dolpgs-thead noborderside">';
+				if ($is_mode_verif) {
+					print '<th>'.$langs->trans('gp_verif_label').'</th>';
+				}
+				foreach ($parc->fields as $parcfield_key => $parcfield) {
+					if ($parcfield->enabled) {
+						if ($parcfield->only_verif && !$is_mode_verif) {
+							continue;
+						}
+						print '<th>'.$parcfield->label.($parcfield->required ? ' <span class="required">*</span>' : '').'</th>';
+					}
+				}
+				print '<th class="right">';
+					if ($action != 'edit'){
+						print '<button class="dolpgs-btn btn-primary btn-sm gestionparc-add" onclick="event.preventDefault();"><i class="fas fa-plus"></i></button>';
+					}
+				print '</th>';
+				print '</tr>';
 
-			<?php endif; ?>
+				//
+				if ($action != 'edit') {
+					print '<tr class="dolpgs-tbody gestionparc-newline" '.(($action == "add" && $error && GETPOST('parcid') == $parc->rowid) ? 'style="display: table-row;"' : '').'>';
+					if ($is_mode_verif) {
+						print '<td></td>';
+					}
+					foreach ($parc->fields as $parcfield_key => $parcfield) {
+						if ($parcfield->enabled) {
+							if ($parcfield->only_verif && !$is_mode_verif) {
+								continue;
+							}
+						}
+						print '<td>'.$parcfield->construct_field($parc, $societe->id).'</td>';
+					}
+					print '<td class="right">';
+						print '<input type="hidden" name="action" value="add">';
+						print '<input type="submit" value="'.$langs->trans('Add').'" class="dolpgs-btn btn-secondary btn-sm">';
+					print '</td>';
+					print '</tr>';
+				}
 
-			<table class="dolpgs-table gestionparc-table" style="border-top:none;" id="gestionparc-table-<?php echo $gestionparc->rowid; ?>">
-				<tbody>
+				//
+				foreach($parc_lines as $lineid => $linecontent){
+					print '<tr class="dolpgs-tbody gestionparc-line '.(($is_mode_verif && $linecontent->verif) ? 'parcline-ok' : '').'">';
 
-					<?php // NOM DES COLONNES ?>
-					<tr class="dolpgs-thead noborderside">
-						<?php if ($is_mode_verif) : ?>
-							<th><?php echo $langs->trans('gp_verif_label'); ?></th>
-						<?php endif; ?>
-						<?php foreach($parc->fields as $parcfield_key => $parcfield): ?>
-							<?php if ($parcfield->enabled) : ?>
-								<?php if ($parcfield->only_verif && !$is_mode_verif) : continue;
-								endif; ?>
-								<th><?php echo $parcfield->label; if ($parcfield->required) : echo ' <span class="required">*</span>';
-							   endif; ?></th>
-							<?php endif; ?>
-						<?php endforeach; ?>
-						<th class="right">
-							<?php if ($action != 'edit') : ?>
-								<button class="dolpgs-btn btn-primary btn-sm gestionparc-add" onclick="event.preventDefault();"><i class="fas fa-plus"></i></button>
-							<?php endif; ?>
-						</th>
-					</tr>
+					if ($is_mode_verif) {
+						print '<td>';
+						if ($action != "edit" || $action == "edit" && $editItem_id != $linecontent->rowid) {
+							if ($linecontent->verif) {
+								echo img_picto($langs->trans("Activated"), 'check-square');
+							} else {
+								echo '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?socid='.$societe->id.'&parctype='.$parctype.'&itemid='.$linecontent->rowid.'&action=set_line_verify&parcid='.$parc->rowid.'&token='.newToken().'">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>';
+							}
+						}
+						print '</td>';
+					}
 
-					<?php // AJOUTER LIGNES ?>
-					<?php if ($action != 'edit') : ?>
-					<tr class="dolpgs-tbody gestionparc-newline" <?php if ($action == "add" && $error && GETPOST('parcid') == $parc->rowid) : echo 'style="display: table-row;"'; endif; ?>>
-						<?php if ($is_mode_verif) : ?><td></td><?php endif; ?>
-						<?php foreach($parc->fields as $parcfield_key => $parcfield): if ($parcfield->enabled) : ?>
-								<?php if ($parcfield->only_verif && !$is_mode_verif) : continue;
-								endif; ?>
-							<td><?php echo $parcfield->construct_field($parc, $societe->id); ?></td>
-						<?php endif;
-						endforeach; ?>
-						<td class="right">
-							<input type="hidden" name="action" value="add">
-							<input type="submit" value="<?php echo $langs->trans('Add') ?>" class="dolpgs-btn btn-secondary btn-sm">
-						</td>
-					</tr>
-					<?php endif; ?>
+					foreach($parc->fields as $parcfield_key => $parcfield){
+						if ($parcfield->enabled) {
+							if ($parcfield->only_verif && !$is_mode_verif) {
+								continue;
+							}
+							print '<td class="pgsz-optiontable-fielddesc">';
 
-					<?php foreach($parc_lines as $lineid => $linecontent): ?>
-					<tr class="dolpgs-tbody gestionparc-line <?php if ($is_mode_verif && $linecontent->verif) : echo 'parcline-ok'; endif; ?>">
-
-						<?php if ($is_mode_verif) : ?>
-							<td>
-								<?php if ($action != "edit" || $action == "edit" && $editItem_id != $linecontent->rowid) :
-									if ($linecontent->verif) : echo img_picto($langs->trans("Activated"), 'switch_on');
-									else: echo '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?socid='.$societe->id.'&parctype='.$parctype.'&itemid='.$linecontent->rowid.'&action=set_line_verify&parcid='.$parc->rowid.'&token='.newToken().'">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>';
-									endif;
-								endif; ?>
-							</td>
-						<?php endif; ?>
-
-						<?php foreach($parc->fields as $parcfield_key => $parcfield): if ($parcfield->enabled) : ?>
-
-							<?php if ($parcfield->only_verif && !$is_mode_verif) : continue; endif; ?>
-							<td class="pgsz-optiontable-fielddesc"><?php
-
-							// SI ON EST EN MODE EDITION
-							if ($action == 'edit' && $editItem_id == $linecontent->rowid) :
-
+							if ($action == 'edit' && $editItem_id == $linecontent->rowid) {
+								print '<span class="gp-infos-label">'.$parcfield->label.' : </span>';
+								if ($parcfield->type == 'autonumber') {
+									print $linecontent->{$parcfield->field_key};
+									print '<input type="hidden" name="gpfield_'.$parcfield->field_key.'" id="gpfield_'.$parcfield->field_key.'" value="'.$linecontent->{$parcfield->field_key}.'">';
+								} else {
+									print $parcfield->construct_field($parc, $societe->id, $linecontent->{$parcfield->field_key});
+								}
+							} else {
 								echo '<span class="gp-infos-label">'.$parcfield->label.' : </span>';
-
-								if ($parcfield->type == 'autonumber') :
-									echo $linecontent->{$parcfield->field_key};
-									echo '<input type="hidden" name="gpfield_'.$parcfield->field_key.'" id="gpfield_'.$parcfield->field_key.'" value="'.$linecontent->{$parcfield->field_key}.'">';
-								else: echo $parcfield->construct_field($parc, $societe->id, $linecontent->{$parcfield->field_key});
-								endif;
-
-							// MODE AFFICHAGE
-							else:
-
-								echo '<span class="gp-infos-label">'.$parcfield->label.' : </span>';
-
-								// SI ON DOIT RETROUVER UN PRODUIT
-								if ($parcfield->type == 'prodserv') :
-
-									if (!empty($linecontent->{$parcfield->field_key})) :
+								if ($parcfield->type == 'prodserv') {
+									if (!empty($linecontent->{$parcfield->field_key})) {
 										$prodserv = new Product($db);
 										$check_prodserv = $prodserv->fetch($linecontent->{$parcfield->field_key});
-										if ($check_prodserv) : echo '<a href="'.dol_buildpath('product/card.php?id='.$linecontent->{$parcfield->field_key}, 1).'" >'.$prodserv->label.'</a>';
-										else: echo $langs->trans('gp_product_unknown');
-										endif;
-									endif;
-
-									// SI DBLIST PERSO
-								elseif ($parcfield->type == 'dblist') :
-									if (!empty($linecontent->{$parcfield->field_key})) :
+										if ($check_prodserv) {
+											print '<a href="'.dol_buildpath('product/card.php?id='.$linecontent->{$parcfield->field_key}, 1).'" >'.$prodserv->label.'</a>';
+										} else {
+											print $langs->trans('gp_product_unknown');
+										}
+									}
+								} else if ($parcfield->type == 'dblist') {
+									if (!empty($linecontent->{$parcfield->field_key})) {
 										$l_content = $parc->getContentForDbList($linecontent->{$parcfield->field_key}, $parcfield->params);
-										if ($l_content) : echo $l_content;
-										endif;
-									endif;
-								elseif ($parcfield->type == 'date') :
-									if (!empty($linecontent->{$parcfield->field_key}) && $linecontent->{$parcfield->field_key} != '0000-00-00'):
-										echo dol_print_date($linecontent->{$parcfield->field_key},'%d/%m/%Y');
-									//else: echo '<span class="opacitymedium">--</span>';
-									endif;
+										if ($l_content) {
+											print $l_content;
+										}
+									}
+								} else if ($parcfield->type == 'date') {
+									if (!empty($linecontent->{$parcfield->field_key}) && $linecontent->{$parcfield->field_key} != '0000-00-00') {
+										print dol_print_date($linecontent->{$parcfield->field_key},'%d/%m/%Y');
+									}
 								// ON AFFICHE LA VALEUR DU CHAMP
-								else: echo $linecontent->{$parcfield->field_key};
-								endif;
-							endif; ?>
-							</td>
-						<?php endif;
-						endforeach; ?>
+								} else {
+									print $linecontent->{$parcfield->field_key};
+								}
+							}
+							print '</td>';
+						}
+					}
 
-						<td class="right">
-							<?php if ($action != "edit") : ?>
-								<div>
-								<?php echo '<a class="parclink gp-duplicate" href="'.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parc->parc_key.'&action=duplicate&itemid='.$linecontent->rowid.'&parcid='.$parc->rowid.'&token='.newToken().'"><i class="fas fa-clone"></i></a> &nbsp; '; ?>
-								<?php echo '<a class="parclink gp-edit paddingrightonly" href="'.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parc->parc_key.'&action=edit&itemid='.$linecontent->rowid.'&parcid='.$parc->rowid.'&token='.newToken().'"><i class="fas fa-pencil-alt"></i></a> &nbsp; '; ?>
-								<?php echo '<a class="parclink gp-trash paddingrightonly" href="'.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parc->parc_key.'&action=delete&itemid='.$linecontent->rowid.'&parcid='.$parc->rowid.'&token='.newToken().'"><i class="fas fa-trash-alt"></i></a>'; ?>
-							</div>
-							<?php elseif ($action == "edit" && GETPOST('itemid') == $linecontent->rowid) : ?>
-								<input type="hidden" name="action" value="edit_item">
-								<input type="hidden" name="itemid" value="<?php echo $linecontent->rowid; ?>">
-								<input type="button" class="dolpgs-btn btn-danger btn-sm" value="<?php echo $langs->trans('Cancel'); ?>" onClick="window.location='<?php echo $_SERVER['PHP_SELF']; ?>?socid=<?php echo $socid; ?>&parctype=<?php echo $parc->parc_key; ?>'">
-								<input type="submit" class="dolpgs-btn btn-primary btn-sm" value="<?php echo $langs->trans('Save'); ?>">
-							<?php endif; ?>
-						</td>
-					</tr>
-					<?php endforeach; ?>
-				</tbody>
-			</table>
-		</form>
-		<?php endif; ?>
-	</div>
-</div>
+					//
+					print '<td class="right">';
+					if ($action != "edit") {
+						print '<a class="parclink gp-duplicate" href="'.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parc->parc_key.'&action=duplicate&itemid='.$linecontent->rowid.'&parcid='.$parc->rowid.'&token='.newToken().'"><i class="fas fa-clone"></i></a> &nbsp; ';
+						print '<a class="parclink gp-edit paddingrightonly" href="'.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parc->parc_key.'&action=edit&itemid='.$linecontent->rowid.'&parcid='.$parc->rowid.'&token='.newToken().'"><i class="fas fa-pencil-alt"></i></a> &nbsp; ';
+						print '<a class="parclink gp-trash paddingrightonly" href="'.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parc->parc_key.'&action=delete&itemid='.$linecontent->rowid.'&parcid='.$parc->rowid.'&token='.newToken().'"><i class="fas fa-trash-alt"></i></a>';
+					} else if ($action == "edit" && GETPOST('itemid') == $linecontent->rowid) {
+						print '<input type="hidden" name="action" value="edit_item">';
+						print '<input type="hidden" name="itemid" value="'.$linecontent->rowid.'">';
+						print '<input type="button" class="dolpgs-btn btn-danger btn-sm" value="'.$langs->trans('Cancel').'" onClick="window.location=\''.urlencode($_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parc->parc_key).'\'">';
+						print '<input type="submit" class="dolpgs-btn btn-primary btn-sm" value="'.$langs->trans('Save').'">';
+					}
+					print '</td>';
+					print '</tr>';
+				}
 
-<?php llxFooter(); $db->close(); ?>
+			print '</tbody>';
+			print '</table>';
+		print '</form>';
+		print '</form>';
+	}
+	print '</div>';
+print '</div>';
+
+llxFooter();
+$db->close();
+?>
