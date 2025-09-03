@@ -26,6 +26,10 @@ class GestionParc
     public $author_maj;
     public $entity;
     public $fields;
+    public $error = '';
+    public $enabled;
+
+    // todo: public $lines
 
     public $forbidden_words = array(
         'ACCESSIBLE','ADD','ALL','ALTER','ANALYZE','AND','AS','ASC','ASENSITIVE','AUTO_INCREMENT',
@@ -103,6 +107,7 @@ class GestionParc
                  'author_maj'=> array('type'=>'int','value'=>'11','null'=>'NOT NULL','extra'=> 'DEFAULT 0'),
                  'date_creation' => array('type'=>'datetime','value'=>'','null'=>'NOT NULL','extra'=> 'DEFAULT CURRENT_TIMESTAMP'),
                  'tms' => array('type'=>'datetime','value'=>'','null'=>'NOT NULL','extra'=> 'DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP'),
+                 'position'=> array('type'=>'int','value'=>'11','null'=>'NOT NULL','extra'=> '', 'default' => 0),
                 );
 
                 // ON VERIFIE SI LE MODE VERIF EST ACTIF POUR CREER LA COLONNE
@@ -210,48 +215,63 @@ class GestionParc
     /*****************************************************************/
     // RECUPERER UN ELEMENT TYPE DE PARC
     /*****************************************************************/
-    public function fetch_parcType($rowid,$return_obj = false)
+    public function fetch_parcType($rowid = 0, $return_obj = false, $parckey = '')
     {
+        if ((int) $rowid <= 0 && empty($parckey)) {
+            return -1;
+        }
 
         global $conf, $user, $langs;
 
         $cat = new Categorie($this->db);
 
-        $sql = "SELECT * FROM ".MAIN_DB_PREFIX.$this->table_element." WHERE rowid = ".$rowid;
+        $sql = "SELECT * FROM ".MAIN_DB_PREFIX.$this->table_element;
+        if ((int) $rowid <= 0 && !empty($parckey)) {
+            $sql .= " WHERE parc_key = '".$this->db->escape($parckey)."'";
+        } else {
+            $sql .= " WHERE rowid = ".$rowid;
+        }
 
         $result = $this->db->query($sql);
         $item = $this->db->fetch_object($result);
 
-        if($result->num_rows == 0) : return -1;
-     else:
-         $this->rowid = $item->rowid;
-         $this->label = $item->label;
-         $this->parc_key = $item->parc_key;
-         $this->description = $item->description;
-         $this->position = intval($item->position);
-         $this->date_creation = $item->date_creation;
-         $this->date_modification = $item->tms;
-         $this->author = $item->author;
-         $this->author_maj = $item->author_maj;
-         $this->entity = $item->entity;
-         $this->enabled = $item->enabled;
+        if ($result->num_rows == 0) {
+            return -1;
+        }
 
-         // ON CONSTRUIT LE TABLEAU DES TAGS
-         if(empty($item->tags)) : $this->tags = '';
-      else:
-          $tags = json_decode($item->tags);
-          $tags_tab = array();
-          foreach ($tags as $tag_id): $cat->fetch($tag_id); $tags_tab[$tag_id] = $cat->label;
-          endforeach;
-          $this->tags = $tags_tab;
-      endif;
+        $this->rowid = $item->rowid;
+        $this->label = $item->label;
+        $this->parc_key = $item->parc_key;
+        $this->description = $item->description;
+        $this->position = intval($item->position);
+        $this->date_creation = $item->date_creation;
+        $this->date_modification = $item->tms;
+        $this->author = $item->author;
+        $this->author_maj = $item->author_maj;
+        $this->entity = $item->entity;
+        $this->enabled = $item->enabled;
 
-      // ON CONSTRUIT LE TABLEAU DES CHAMPS
-      $this->fields = $this->list_parcFields($this->rowid);
+        // ON CONSTRUIT LE TABLEAU DES TAGS
+        if(empty($item->tags)) {
+            $this->tags = '';
+        } else {
+            $tags = json_decode($item->tags);
+            $tags_tab = array();
+            foreach ($tags as $tag_id) {
+                $cat->fetch($tag_id);
+                $tags_tab[$tag_id] = $cat->label;
+            }
+            $this->tags = $tags_tab;
+        }
 
-      if(!$return_obj) : return $this->rowid; else: return $this;
-      endif;
-     endif;
+        // ON CONSTRUIT LE TABLEAU DES CHAMPS
+        $this->fields = $this->list_parcFields($this->rowid);
+
+        if(!$return_obj) {
+            return $this->rowid;
+        } else {
+            return $this;
+        }
     }
 
     /*****************************************************************/
@@ -345,7 +365,6 @@ class GestionParc
     /*****************************************************************/
     public function setParcStatus($parc_id, $status)
     {
-
         global $user;
 
         if($user->hasRight('gestionparc','parc','setup')) :
@@ -359,8 +378,6 @@ class GestionParc
 
      else: return false;
      endif;
-
-
     }
 
     /*****************************************************************/
@@ -458,16 +475,15 @@ class GestionParc
     /*****************************************************************/
     // GET CONTENT
     /*****************************************************************/
-    public function getSocParcContent($socid,$parc_key)
+    public function getSocParcContent(int $socid, $parc_key)
     {
-
         global $user;
 
         $soc_parclines = array();
 
         $sql = "SELECT * FROM ".MAIN_DB_PREFIX.$this->table_element.'__'.$parc_key;
         $sql .= " WHERE socid = '".$socid."'";
-        $sql .= " ORDER BY rowid ASC";
+        $sql .= " ORDER BY position ASC";
         $result = $this->db->query($sql);
 
         if($result) :
@@ -485,7 +501,7 @@ class GestionParc
      return $soc_parclines;
     }
 
-    public function getSocParcCount($socid,$parc_key,$isverif = false)
+    public function getSocParcCount($socid, $parc_key, $isverif = false)
     {
 
         $sql = "SELECT COUNT(*) as nb_items FROM ".MAIN_DB_PREFIX.$this->table_element.'__'.$parc_key;
@@ -498,6 +514,82 @@ class GestionParc
 
         $obj = $this->db->fetch_object($result);
         return $obj->nb_items;
+    }
+
+    public function setElementPosition($parckey, int $rowid, int $position)
+    {
+        $sqlup = "UPDATE ".MAIN_DB_PREFIX.$this->table_element.'__'.$this->db->escape($parckey);
+        $sqlup .= " SET position = ".$position;
+        $sqlup .= " WHERE rowid = ".$rowid;
+        $resup = $this->db->query($sqlup);
+        if(!$resup){
+            return 0;
+        }
+        return 1;
+    }
+
+    public function fetchElement($parckey, int $rowid)
+    {
+        $sql = "SELECT * FROM ".MAIN_DB_PREFIX.$this->table_element.'__'.$this->db->escape($parckey);
+        $sql .= " WHERE rowid = '".$rowid."'";
+        $res = $this->db->query($sql);
+        if (!$res) {
+            return -1;
+        }
+        if ($res->num_rows > 0) {
+            $obj = $this->db->fetch_object($res);
+            return $obj;
+        }
+        return 0;
+    }
+
+    public function cloneElement($parckey, int $rowid, $after = 1)
+    {
+        global $user;
+
+        $element = $this->fetchElement($parckey, $rowid);
+        if (!isset($element->rowid)) {
+            $this->error = 'ItemNotFound';
+            return -1;
+        }
+
+        $parkID = $this->fetch_parcType(0, 0, $parckey);
+
+        // Get Next position
+        if ($after) {
+            $position = (int) $element->position + 1;
+        } else {
+            $sqlpos = "SELECT MAX(position) as maxpos FROM ".MAIN_DB_PREFIX.$this->table_element.'__'.$this->db->escape($parckey);
+            $sqlpos .= " WHERE socid = ".(int) $element->socid;
+            $respos = $this->db->query($sqlpos);
+            $objpos = $this->db->fetch_object($respos);
+            $position = (int) $objpos->maxpos + 1;
+        }
+
+        $this->db->begin();
+
+        $sql = "INSERT INTO ".MAIN_DB_PREFIX.$this->table_element.'__'.$this->db->escape($parckey)." (socid, author, position";
+        foreach ($this->fields as $parcfield) {
+            $sql .= ", ".$parcfield->field_key;
+        }
+        $sql .= ") VALUES (";
+        $sql .= (int) $element->socid;
+        $sql .= ", ".(int) $user->id;
+        $sql .= ", ".(int) $position;
+        foreach ($this->fields as $parcfield) {
+            $sql .= ", '".$this->db->escape($element->{$parcfield->field_key})."'";
+        }
+        $sql .= ")";
+        $res = $this->db->query($sql);
+        if (!$res) {
+            $this->db->rollback();
+            $this->error = 'ErrorInsertNewItem';
+            return -1;
+        }
+
+        $newElementID = $this->db->last_insert_id(MAIN_DB_PREFIX.$this->table_element);
+        $this->db->commit();
+        return $newElementID;
     }
 
     /*****************************************************************/
@@ -742,6 +834,7 @@ class GestionParcField
     public $params;
     public $required;
     public $default_value;
+    public $enabled;
     public $position;
     public $statut;
     public $author;
@@ -792,14 +885,13 @@ class GestionParcField
     /*****************************************************************/
     public function add_parcField($user)
     {
-
         global $conf, $langs;
 
         if($user->hasRight('gestionparc','parc','setup')) :
 
             $this->field_key = $this->constructFieldKey($this->label);
 
-            $this->statut = 0;
+            $this->statut = 1;
             $this->author = $user->id;
 
             $sql = "INSERT INTO ".MAIN_DB_PREFIX.$this->table_element;
@@ -852,7 +944,6 @@ class GestionParcField
     /*****************************************************************/
     public function fetch_parcField($rowid)
     {
-
         global $conf, $user, $langs;
 
         $sql = "SELECT * FROM ".MAIN_DB_PREFIX.$this->table_element." WHERE rowid = ".$rowid;
@@ -887,7 +978,6 @@ class GestionParcField
     /*****************************************************************/
     public function getInfos_parcField($parc_id,$fieldkey)
     {
-
         global $conf, $user, $langs;
 
         $sql = "SELECT * FROM ".MAIN_DB_PREFIX.$this->table_element." WHERE parc_id = ".$parc_id." AND field_key = '".$fieldkey."'";
@@ -903,7 +993,6 @@ class GestionParcField
     /*****************************************************************/
     public function update_parcField($user)
     {
-
         global $conf, $langs;
 
         if($user->hasRight('gestionparc','parc','setup')) :
@@ -958,7 +1047,6 @@ class GestionParcField
     /*****************************************************************/
     public function constructFieldKey($fieldlabel)
     {
-
         $key = $fieldlabel;
         $key = strip_tags($key);
         $key = strtolower(strtr(utf8_decode($key), utf8_decode('àáâãäçèéêëìíîïñòóôõöùúûüýÿÀÁÂÃÄÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝ'), 'aaaaaceeeeiiiinooooouuuuyyAAAAACEEEEIIIINOOOOOUUUUY'));
@@ -983,7 +1071,6 @@ class GestionParcField
     /*****************************************************************/
     public function checkFieldKey($key,$parc_id)
     {
-
         // CHECK FORBIDDEN WORDS
         if(in_array(strtoupper($key), $this->forbidden_words)) : return false;
         endif;
@@ -1004,7 +1091,6 @@ class GestionParcField
     /*****************************************************************/
     public function remove_parcField($rowid,$user)
     {
-
         global $conf, $user, $langs;
 
         if($user->hasRight('gestionparc','parc','setup')) :
@@ -1037,7 +1123,6 @@ class GestionParcField
     /*****************************************************************/
     public function setStatus($status)
     {
-
         global $conf, $user, $langs;
 
         if($user->hasRight('gestionparc','parc','setup')) :
@@ -1059,7 +1144,6 @@ class GestionParcField
     /*****************************************************************/
     public function setViewExport($yesorno)
     {
-
         global $conf, $user, $langs;
 
         if($user->hasRight('gestionparc','parc','setup')) :
@@ -1078,7 +1162,6 @@ class GestionParcField
     /*****************************************************************/
     public function construct_field($gestionparc,$socid = '',$field_value = '',$additionnal_class = '')
     {
-
         $output_field = '';
 
         switch($this->type):
@@ -1118,12 +1201,14 @@ class GestionParcField
                         if(!empty($field_value)) : $compare_value = $field_value; endif;
                     endif;
 
-                    $output_field .= '<select class="gp-slct-simple" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->field_key.'" style="width:100%">';
-                    while($obj = $this->db->fetch_object($query_dblist)):
-                        $is_selected = ($obj->{$tmp[1]} == $compare_value )?'selected="selected"':'';
-                        $output_field .= '<option value="'.$obj->{$tmp[1]}.'" '.$is_selected.'>'.$obj->{$tmp[0]}.'</option>';
-                    endwhile;
-                    $output_field .= '</select>';
+                    $output_field .= '<div class="select-wrapper">';
+                        $output_field .= '<select class="gp-slct-simple" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->field_key.'" style="width:100%">';
+                        while($obj = $this->db->fetch_object($query_dblist)):
+                            $is_selected = ($obj->{$tmp[1]} == $compare_value )?'selected="selected"':'';
+                            $output_field .= '<option value="'.$obj->{$tmp[1]}.'" '.$is_selected.'>'.$obj->{$tmp[0]}.'</option>';
+                        endwhile;
+                        $output_field .= '</select>';
+                    $output_field .= '</div>';
                 endif;
             endif;
         break;
@@ -1185,12 +1270,14 @@ class GestionParcField
             else: $slct_class = 'gp-slct-simple';
             endif;
 
-            $output_field .= '<select class="'.$slct_class.'" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->parc_id.'_'.$this->field_key.'" style="width:100%">';
-            foreach($years as $year):
-                $is_selected = ($year == $compare_value )?'selected="selected"':'';
-                $output_field .= '<option value="'.$year.'" '.$is_selected.'>'.$year.'</option>';
-            endforeach;
-            $output_field .= '</select>';
+            $output_field .= '<div class="select-wrapper">';
+                $output_field .= '<select class="'.$slct_class.'" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->field_key.'" style="width:100%">';
+                foreach($years as $year):
+                    $is_selected = ($year == $compare_value )?'selected="selected"':'';
+                    $output_field .= '<option value="'.$year.'" '.$is_selected.'>'.$year.'</option>';
+                endforeach;
+                $output_field .= '</select>';
+            $output_field .= '</div>';
         break;
 
         // DATE
@@ -1246,15 +1333,17 @@ class GestionParcField
             else: $slct_class = 'gp-slct-simple';
             endif;
 
-            $output_field .= '<select class="'.$slct_class.'" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->parc_id.'_'.$this->field_key.'" style="width:100%">';
-            // $this->default_value
-            foreach($param_listvalues as $lv):
-                //var_dump($lv);
-                $is_selected = ($lv == $compare_value )?'selected="selected"':'';
-                //var_dump($is_selected);
-                $output_field .= '<option value="'.$lv.'" '.$is_selected.'>'.$lv.'</option>';
-            endforeach;
-            $output_field .= '</select>';
+            $output_field .= '<div class="select-wrapper">';
+                $output_field .= '<select class="'.$slct_class.'" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->field_key.'" style="width:100%">';
+                // $this->default_value
+                foreach($param_listvalues as $lv):
+                    //var_dump($lv);
+                    $is_selected = ($lv == $compare_value )?'selected="selected"':'';
+                    //var_dump($is_selected);
+                    $output_field .= '<option value="'.$lv.'" '.$is_selected.'>'.$lv.'</option>';
+                endforeach;
+                $output_field .= '</select>';
+            $output_field .= '</div>';
         break;
 
         // PRODUITS / SERVICES
@@ -1270,12 +1359,14 @@ class GestionParcField
                 endif;
             endif;
 
-            $output_field .= '<select class="gp-slct-simple" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->parc_id.'_'.$this->field_key.'" style="width:100%">';
-            foreach($list_prodserv as $kps => $ps):
-                $is_selected = ($kps == $compare_value )?'selected="selected"':'';
-                $output_field .= '<option value="'.$kps.'" '.$is_selected.'>'.$ps.'</option>';
-            endforeach;
-            $output_field .= '</select>';
+            $output_field .= '<div class="select-wrapper">';
+                $output_field .= '<select class="gp-slct-simple" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->field_key.'" style="width:100%">';
+                foreach($list_prodserv as $kps => $ps):
+                    $is_selected = ($kps == $compare_value )?'selected="selected"':'';
+                    $output_field .= '<option value="'.$kps.'" '.$is_selected.'>'.$ps.'</option>';
+                endforeach;
+                $output_field .= '</select>';
+            $output_field .= '</div>';
         break;
 
         // CHAMP TEXTE
@@ -1291,6 +1382,9 @@ class GestionParcField
         return $output_field;
     }
 
+    /*****************************************************************/
+    // Prochain numéro auto
+    /*****************************************************************/
     public function getNextAutoNumber(int $socid, $parc_key, $field_key)
     {
         $sql = "SELECT rowid, ".$field_key." FROM ".MAIN_DB_PREFIX.$this->parent_table_element."__".$this->db->escape($parc_key);
@@ -1320,6 +1414,21 @@ class GestionParcField
         }
 
         return $numero;
+    }
+
+    /*****************************************************************/
+    // Check if defined value exist
+    /*****************************************************************/
+    public function checkAutoNumber(int $socid, $parc_key, $field_key, int $fieldvalue)
+    {
+        $sql = "SELECT rowid FROM ".MAIN_DB_PREFIX."gestionparc__".$parc_key;
+        $sql .= " WHERE ".$field_key." = ".$fieldvalue;
+        $sql .= " AND socid=".$socid;
+        $res = $this->db->query($sql);
+        if ($res->num_rows > 0) {
+            return false;
+        }
+        return true;
     }
 
     /*****************************************************************/

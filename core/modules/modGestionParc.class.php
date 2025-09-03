@@ -67,7 +67,7 @@ class modGestionParc extends DolibarrModules
         $this->editor_url = 'https://progiseize.fr';
 
         // Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-        $this->version = '1.7.4';
+        $this->version = '1.8.0';
         //$this->url_last_version ="https://progiseize.fr/modules_info/lastversion.php?module=".$this->numero;
 
         // Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
@@ -107,7 +107,7 @@ class modGestionParc extends DolibarrModules
             'theme' => 0,
             'tpl' => 0,
             'barcode' => 0,
-            'models' => 1,
+            'models' => 0,
             'css' => array(),
             'js' => array(),
             'hooks' => array('all'),
@@ -219,17 +219,45 @@ class modGestionParc extends DolibarrModules
         $r=0;
 
         $this->rights[$r][0] = $this->numero . sprintf("%02d", $r + 1);
-        $this->rights[$r][1] = 'Configuration des parcs';   // Permission label
-        $this->rights[$r][3] = 0;                   // Permission by default for new user (0/1)
-        $this->rights[$r][4] = 'parc';        // In php code, permission will be checked by test
-        $this->rights[$r][5] = 'setup';              // In php code, permission will be checked by test if ($user->rights->module->thirdt->delete)
+        $this->rights[$r][1] = 'Configuration des parcs';
+        $this->rights[$r][3] = 0;
+        $this->rights[$r][4] = 'parc';
+        $this->rights[$r][5] = 'setup';
         $r++;
 
         $this->rights[$r][0] = $this->numero . sprintf("%02d", $r + 1);
-        $this->rights[$r][1] = 'Lire les parcs';   // Permission label
-        $this->rights[$r][3] = 0;                   // Permission by default for new user (0/1)
-        $this->rights[$r][4] = 'parc';        // In php code, permission will be checked by test
-        $this->rights[$r][5] = 'read';              // In php code, permission will be checked by test if ($user->rights->module->thirdt->delete)
+        $this->rights[$r][1] = 'Lire les parcs';
+        $this->rights[$r][3] = 0;
+        $this->rights[$r][4] = 'parc';
+        $this->rights[$r][5] = 'read';
+        $r++;
+
+        $this->rights[$r][0] = $this->numero . sprintf("%02d", $r + 1);
+        $this->rights[$r][1] = 'Ajouter / modifier les élements de parc';
+        $this->rights[$r][3] = 0;
+        $this->rights[$r][4] = 'parc';
+        $this->rights[$r][5] = 'write';
+        $r++;
+
+        $this->rights[$r][0] = $this->numero . sprintf("%02d", $r + 1);
+        $this->rights[$r][1] = 'Supprimer les élements de parc';
+        $this->rights[$r][3] = 0;
+        $this->rights[$r][4] = 'parc';
+        $this->rights[$r][5] = 'delete';
+        $r++;
+
+        $this->rights[$r][0] = $this->numero . sprintf("%02d", $r + 1);
+        $this->rights[$r][1] = 'Faire une vérification';
+        $this->rights[$r][3] = 0;
+        $this->rights[$r][4] = 'parc';
+        $this->rights[$r][5] = 'verif';
+        $r++;
+
+        $this->rights[$r][0] = $this->numero . sprintf("%02d", $r + 1);
+        $this->rights[$r][1] = 'Vérifier tous les items d\'un parc en une seule fois';
+        $this->rights[$r][3] = 0;
+        $this->rights[$r][4] = 'parc';
+        $this->rights[$r][5] = 'verifall';
         $r++;
 
         // Add here list of permission defined by an id, a label, a boolean and two constant strings.

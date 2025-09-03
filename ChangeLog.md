@@ -4,9 +4,17 @@
 [comment]: <> (Modele pdf)
 [comment]: <> (Harmoniser les constantes du module)
 
-### Unreleased
+
+### 1.8.0
 - MAJ: Limit tabs to 5
 - FIX: Undefined variable $nb_val
+- FIX: Auto number even if field is disabled
+- MAJ: Module tab by actions, not by descriptor
+- MAJ: Add more complex rights
+- MAJ: New field active by default
+- FIX: DEPRECATED Creation of dynamic property ActionsGestionParc
+- NEW: New Cards view for items and ajax calls
+- NEW: en_US language (made with automatic traduction)
 
 ### 1.7.4
 - FIX: Remove verif warning

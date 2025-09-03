@@ -44,6 +44,9 @@ gp_verif_close=Clôturer vérification
 gp_verif_cancel=Annuler vérification
 gp_verif_label=Vérification
 gp_product_unknown=Produit inconnu
+gp_empty_parclist_message=Il semblerait qu'aucun parc ne soit actif pour ce tiers
+GestionParcCardView=Vue Cartes
+GestionParcListView=Vue Liste
 
 # VERIFS
 gp_verif_error_twice=Deux instances de vérifications sont ouvertes pour ce tiers.
@@ -111,7 +114,7 @@ gp_fieldtype_dblist=Liste issue d'une table
 gp_fieldtype_customlist=Liste personnalisée
 gp_fieldtype_unknown=Type de champ inconnu
 gp_fieldtype_textfield=Champ texte
-gp_fieldtype_prodserv=Liste de produits/services 
+gp_fieldtype_prodserv=Liste de produits/services
 gp_fieldtype_autonumber=Numérotation automatique
 gp_fieldtype_date=Date
 
@@ -160,7 +163,7 @@ gp_error_needTypeId=Type de parc non identifié
 gp_error_needActionConfirm=Action non confirmée
 gp_setup_saved=Configuration sauvegardée
 
-# MANAGER 
+# MANAGER
 gp_addnewparc_error=Une erreur est survenue lors de la création du parc
 gp_addnewparc_success=Parc Ajouté
 gp_deleteparc_needId=Aucun identifiant défini
@@ -187,6 +190,8 @@ gp_newparcfieldType=Choisir le type de champ à ajouter
 gp_parcfield_on_onlyverif= Uniquement vérification
 gp_parcfield_viewexcel=Export Excel
 gp_parcfield_keyfield=Clé du champ
+gp_parcfield_addItem=Ajouter un élément
+gp_CloneAtEnd=Cloner à la fin
 
 # FUSION TIERS
 gp_mergeParcSuccess=%s élément(s) de parcs ont été déplacés vers le nouveau tiers.

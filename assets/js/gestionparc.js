@@ -1,6 +1,11 @@
 jQuery(document).ready(function(){
 
-	// TOGGLE VIEW EMPTY PARCS
+	// SELECT 2
+	jQuery('.gp-slct-simple').each(function(e){jQuery(this).select2({placeholder: 'Choisir dans la liste',language: {noResults: function(){return "Aucun résultat";}}});});
+	jQuery('.gp-slct-simple-tags').each(function(e){jQuery(this).select2({placeholder: 'Choisir dans la liste',tags : true,language: {noResults: function(){return "Aucun résultat";}}});});
+	jQuery('.gp-slct-multi-tags').each(function(e){jQuery(this).select2({placeholder: 'Saisir les valeurs séparés par des ,',tags : true,tokenSeparators: [','],language: {noResults: function(){return "Saisir les valeurs séparés par des ,";}}});});
+
+	/*// TOGGLE VIEW EMPTY PARCS
 	jQuery('input[name="view_empty_parc"]').on('change',function(e){ parentForm = jQuery(this).parent('form'); parentForm.submit(); });
 
 	//
@@ -22,12 +27,6 @@ jQuery(document).ready(function(){
 
 	// SHOW NEW LINE
 	jQuery('.gestionparc-table .gestionparc-add').on('click',function(e){jQuery(this).closest('.gestionparc-table').find('.gestionparc-newline').toggle();});
-	
-	// SELECT 2
-	jQuery('.gp-slct-simple').each(function(e){jQuery(this).select2({placeholder: 'Choisir dans la liste',language: {noResults: function(){return "Aucun résultat";}}});});
-	jQuery('.gp-slct-simple-tags').each(function(e){jQuery(this).select2({placeholder: 'Choisir dans la liste',tags : true,language: {noResults: function(){return "Aucun résultat";}}});});
-	jQuery('.gp-slct-multi-tags').each(function(e){jQuery(this).select2({placeholder: 'Saisir les valeurs séparés par des ,',tags : true,tokenSeparators: [','],language: {noResults: function(){return "Saisir les valeurs séparés par des ,";}}});});
-
-
+	*/
 
 });

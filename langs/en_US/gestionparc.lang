@@ -17,150 +17,196 @@
 
 # Dolibarr language file - fr_FR - gestionparc
 
-Module300320Name = Gestion Parc Client
+Module300320Name=Customer Asset Management
 
-gestionparc_desc = Gestion de parc client
-gestionparc_desclong = Gestion de parc client. Assignez et modéliser des données relatives aux tiers et à votre production.
+gestionparc_desc=Customer Asset Management
+gestionparc_desclong=Customer Asset Management. Assign and model data related to third parties and your production
+
+# MODELE
+gp_model_desc=Model supporting asset management verifications
+gp_extrafieldFichInter_isverif=Verification identifier
 
 # BOX
-gp_boxNb_title = Gestion des parcs clients
-gp_boxNb_parcType = Nom du parc
-gp_boxNb_countItems = Nombre d'éléments
-gp_boxNb_countParcs = Clients possédant un parc
-gp_boxNb_lastEntry = Dernier parc modifié
+gp_boxNb_title=Customer Base Management
+gp_boxNb_parcType=Base Name
+gp_boxNb_countItems=Number of Items
+gp_boxNb_countParcs=Customers with a Base
+gp_boxNb_lastEntry=Last Base Modified
 
 # ONGLETS TIERS
-gp_clientparc = Parc Client
-gp_showEmptyParcs = Afficher les parcs vides
-gp_client_verifmode = Mode vérification
-gp_client_lastverif = Dernière vérification
-gp_verifcom = Ajouter un commentaire sur l'intervention
-gp_verif_open = Activer vérification
-gp_verif_close = Clôturer vérification
-gp_verif_cancel = Annuler vérification
+gp_clientparc=Customer Base
+gp_showEmptyParcs=Show empty bases
+gp_client_verifmode=Verification mode
+gp_client_lastverif=Last verification
+gp_verifcom=Add a comment on the intervention
+gp_verif_open=Activate verification
+gp_verif_close=Close verification
+gp_verif_cancel=Cancel verification
+gp_verif_label=Verification
+gp_product_unknown=Unknown product
+gp_empty_parclist_message=It appears that no bases are active for this third party
+GestionParcCardView=Card view
+GestionParcListView=List view
 
 # VERIFS
-gp_verif_error_twice = Deux instances de vérifications sont ouvertes pour ce tiers.
-gp_verif_error_needIntercom = Vous devez saisir une raison de clôture
-gp_verif_error_needDuration = Vous devez saisir une duree d'intervention
-gp_verif_error_onclose = Erreur lors de la clôture de la vérification.
-gp_verif_success_onclose = Intervention "%s" validée
-gp_verif_success_oncancel = Intervention annulée
-gp_verifline_success = Item vérifié
-gp_verifall = Marquer tous les éléments de ce parc comme vérifiés
-gp_confirmVerifAll = Merci de confirmer votre action
+gp_verif_error_twice=Two verification instances are open for this third party.
+gp_verif_error_needIntercom=You must enter a reason for closure.
+gp_verif_error_needDuration=You must enter an intervention duration.
+gp_verif_error_onclose=Error closing the verification.
+gp_verif_success_onclose=Intervention "%s" validated.
+gp_verifline_success=Item verified.
+gp_verifall=Mark all items in this portfolio as verified.
+gp_confirmVerifAll=Please confirm your action.
 
 # FIELDS
-gp_error_autonumber_exist = Ce numéro est déjà attribué
-gp_duplicate_success = La ligne a été copiée
-gp_field_delete_success = Enregistrement supprimé
+gp_error_autonumber_exist=This number is already assigned
+gp_duplicate_success=The line has been copied
+gp_field_delete_success=Record deleted
 
 # ONGLETS OPTIONS
-gp_options_tab_setup = Configuration
-gp_options_tab_manager = Gestion des parcs
+gp_options_tab_setup=Configuration
+gp_options_tab_manager=Customer Base Management
 
 # LISTE OPTIONS
-gp_options_setup_pagetitle = Configuration module
-gp_setup_title = Configurer GestionParc
-gp_setup_desc = Options du module GestionParc
-gp_setup_verif = Activer les vérifications ?
-gp_setup_verif_desc = Cette option permet de créér une vérification des éléments d'un parc tiers et de créer des interventions. Le module "Interventions" doit être activé.
-gp_setup_verifmodel = Détails parc sur les interventions
-gp_setup_verifmodel_desc = Détermine si les informations sur vos parcs sont renseignées sur les fiches d'interventions.
-gp_setup_verif_redirect = Redirection vers intervention
-gp_setup_verif_redirect_desc = A la validation d'une vérification, vous serez redirigé automatiquement vers la fiche d'intervention créée
-gp_setup_useAdvancedExport=Exports avancés
-gp_setup_useAdvancedExportDesc=Utiliser les exports avancés au format Excel
+gp_options_setup_pagetitle=Module Configuration
+gp_setup_title=Configure Asset Management
+gp_setup_desc=Asset Management Module Options
+gp_setup_verif=Enable Checks?
+gp_setup_verif_desc=This option allows you to create a check of third-party asset assets and create interventions. The "Interventions" module will be enabled and one extra field will be created.
+gp_setup_verifmodel=Asset Details on Interventions
+gp_setup_verifmodel_desc=Determines whether information about your assets is entered on intervention sheets.
+gp_setup_verif_redirect=Redirection to Intervention
+gp_setup_verif_redirect_desc=When a check is validated, you will be automatically redirected to the created intervention sheet.
+gp_setup_verif_usetime=Intervention duration
+gp_setup_verif_usetime_desc=In hours. If 0, the time can be defined by the user.
+gp_setup_verif_details=Intervention details
+gp_setup_verif_details_desc=Display details on intervention sheets.
+gp_setup_useAdvancedExport=Advanced Exports
+gp_setup_useAdvancedExportDesc=Use advanced exports in Excel format
+gp_setup_AdvancedExportLineSet=Row Groups
+gp_setup_AdvancedExportLineSetDesc=Separate your data into groups of x rows (0 = all rows)
 
 # PARC MANAGER
-gp_manager_pagetitle = Gestion des types de parc
-gp_manager_pagedescription = Sur cette page vous pouvez ajouter / modifier / supprimer des types de parcs client.
-gp_manager_newparclabel = Nom du type de parc (ou clé de traduction)
-gp_manager_newparcdescription = Description de votre parc
-gp_manager_newparctags = Assigner à la catégorie de tiers
-gp_manager_newparctags_help = Si aucune catégorie n'est sélectionnée, le parc sera visible sur l'ensemble des tiers clients.
-gp_manager_newparcposition = Position
-gp_manager_newparcposition_help = Permet de déterminer l'ordre d'affichage des parcs
-gp_manager_newparcNb = Nombre de champs
-gp_manager_allsocs = Tout les clients
+gp_manager_pagetitle=Asset Type Management
+gp_manager_pagedescription=On this page, you can add, edit, or delete client asset types.
+gp_manager_newparclabel=Asset Type Name (or Translation Key)
+gp_manager_newparcdescription=Description of Your Asset
+gp_manager_newparctags=Assign to Third-Party Category
+gp_manager_newparctags_help=If no category is selected, the asset will be visible to all client third-parties.
+gp_manager_newparcposition=Position
+gp_manager_newparcposition_help=Determines the display order of the assets
+gp_manager_newparcNb=Number of Fields
+gp_manager_allsocs=All Clients
 
 # GESTION DES CHAMPS
-gp_parc_titlepage = Champs du parc: "%s"
-gp_parc_col_fieldpreview_help = Aperçu du champ avec les paramètres que vous avez appliqué.
-gp_parc_addfieldtitle = Ajouter un champ "%s"
-gp_parc_editfieldtitle = Editer le champ "%s"
+gp_parc_titlepage=Fleet fields: "%s"
+gp_parc_col_fieldpreview_help=Preview of the field with the settings you applied.
+gp_parc_addfieldtitle=Add field "%s"
+gp_parc_editfieldtitle=Edit field "%s"
 
 # GROUPES DE CHAMPS (POUR OPTGROUP SELECT)
-gp_fieldtype_group_doldata = Données issues de Dolibarr
-gp_fieldtype_group_customdata = Données personnalisées
+gp_fieldtype_group_doldata=Data from Dolibarr
+gp_fieldtype_group_customdata=Custom data
 
 # TYPES DE CHAMPS
-gp_fieldtype_yearlist = Liste de sélection d'une année
-gp_fieldtype_dblist = Liste issue d'une table
-gp_fieldtype_customlist = Liste personnalisée
-gp_fieldtype_unknown = Type de champ inconnu
-gp_fieldtype_textfield = Champ texte
-gp_fieldtype_prodserv = Liste de produits/services 
-gp_fieldtype_autonumber = Numérotation automatique
+gp_fieldtype_yearlist=Yearly Selection List
+gp_fieldtype_dblist=List from a Table
+gp_fieldtype_customlist=Custom List
+gp_fieldtype_unknown=Unknown Field Type
+gp_fieldtype_textfield=Text Field
+gp_fieldtype_prodserv=List of Products/Services
+gp_fieldtype_autonumber=Automatic Numbering
+gp_fieldtype_date=Date
 
 # CHAMPS
-gp_field_uniquekey = Identifiant unique
-gp_field_uniquekey_desc = Cette valeur ne doit pas contenir d'espace, ni de caractères spéciaux. ( Caractères autorisés : az AZ 09 _ )
-gp_field_yearstart = Début de la plage de date
-gp_field_yearstop = Fin de la plage de date
-gp_field_yearstart_desc = Année la plus petite à utiliser. Voir les infos pour aide à la saisie.
-gp_field_yearstop_desc = Année la plus grande à utiliser. Voir les infos pour aide à la saisie.
-gp_field_year_help = Plusieurs possibilités de saisie:<li>Date saisie manuellement (Ex: 2014)</li><li>Y => Année en cours</li><li>Y+x => Année en cours + x années</li><li>Y-x => Année en cours - x années</li>
-gp_field_default_desc = Valeur sélectionnée / affichée par défaut.
-gp_field_proddefault_desc = Valeur sélectionnée / affichée par défaut. Saisir l'identifiant produit (ID).
-gp_field_sort = Ordre d'affichage
-gp_field_sort_desc = Détermine le tri et l'affichage des valeurs
-gp_field_customvalue = Autoriser la saisie manuelle ?
-gp_field_customvalue_desc = En cochant cette case, il sera possible de saisir une donnée manuellement dans le formulaire
-gp_field_position_desc = Ce nombre détermine la position du champ par rapport aux autres dans le formulaire
-gp_field_required_desc = Ce champ est-il obligatoire ?
-gp_field_OrderByAsc = Tri Croissant
-gp_field_OrderByDesc = Tri Décroissant
-gp_field_customlist = Valeurs personnalisées
-gp_field_customlist_desc = Séparer les valeurs par des virgules (,)
-gp_field_tagslist = Catégories à utiliser
-gp_field_tagslist_desc = Liste des catégories. Si aucune n'est sélectionnée, toutes les catégories seront prises en compte.
-gp_field_showprodservref = Afficher la référence
-gp_field_showprodservref_desc = Permet d'afficher la référence du produit/service dans le libellé.
+gp_field_uniquekey=Unique identifier
+gp_field_uniquekey_desc=This value must not contain spaces or special characters. (Allowed characters: az AZ 09 _ )
+gp_field_yearstart=Start of date range
+gp_field_yearstop=End of date range
+gp_field_yearstart_desc=Smallest year to use. See information for input help.
+gp_field_yearstop_desc=Largest year to use. See information for input help.
+gp_field_year_help=Several entry options: <li>Manually entered date (e.g., 2014)</li><li>Y => Current year</li><li>Y+x => Current year + x years</li><li>Y-x => Current year - x years</li>
+gp_field_default_desc=Value selected / displayed by default.
+gp_field_proddefault_desc=Value selected / displayed by default. Enter the product identifier (ID).
+gp_field_sort=Display order
+gp_field_sort_desc=Determines the sorting and display of values.
+gp_field_customvalue=Allow manual entry?
+gp_field_customvalue_desc=Checking this box will allow manual entry of data in the form.
+gp_field_position_desc=This number determines the position of the field relative to others in the form.
+gp_field_required_desc=Is this field required?
+gp_field_OrderByAsc=Sort in ascending order
+gp_field_OrderByDesc=Sort in descending order
+gp_field_customlist=Custom values
+gp_field_customlist_desc=Separate values ​​with commas (,)
+gp_field_tagslist=Categories to use
+gp_field_tagslist_desc=List of categories. If none are selected, all categories will be considered.
+gp_field_showprodservref=Show reference
+gp_field_showprodservref_desc=Displays the product/service reference in the label.
+gp_field_dblist=Table
+gp_field_dblist_desc=Database table name
+gp_field_dblist_keyval=Value:Key pair
+gp_field_dblist_keyval_desc=Fill in as follows: value:key, where value is the value to display and key is the primary key
+gp_field_dblist_filter=Filter
+gp_field_dblist_filter_desc=Fill in as follows: fieldname=value, where fieldname is the name of the field to test
+gp_field_onlyverif=Verification mode
+gp_field_onlyverif_desc=This field will only be visible in verification mode. If it is required, it will only apply in this mode.
+gp_field_date_help=FR or US format / dd/mm/YYYY or YYYY_mm_dd for today's date
 
 # RETOURS / ERREURS
-gp_error = Une erreur est survenue
-gp_modFicheInterEnabled = Le module Intervention a été activé
-gp_error_creafolder = Impossible de créer le dossier Documents/gestionparc
-gp_error_needId = Identifiant inconnu
-gp_error_needSocId = Tiers inconnu
-gp_error_needItemId = Identifiant de la ligne inconnu
-gp_error_needTypeId = Type de parc non identifié
-gp_error_needActionConfirm = Action non confirmée
+gp_error=An error has occurred
+gp_modFicheInterEnabled=The Intervention module has been activated
+gp_error_creafolder=Unable to create the Documents/FleetManagement folder
+gp_error_needId=Unknown identifier
+gp_error_needSocId=Unknown third party
+gp_error_needItemId=Unknown line identifier
+gp_error_needTypeId=Unidentified fleet type
+gp_error_needActionConfirm=Unconfirmed action
+gp_setup_saved=Configuration saved
 
-# MANAGER 
-gp_addnewparc_error = Une erreur est survenue lors de la création du parc
-gp_addnewparc_success = Parc Ajouté
-gp_deleteparc_needId = Aucun identifiant défini
-gp_deleteparc_needRights = Suppression impossible, veuillez vérifiez vos droits
-gp_deleteparc_success = Parc supprimé
-gp_updateparctype_error = Une erreur est survenue lors de la mise à jour du parc
-gp_updateparctype_success = Le parc a été mis à jour
-gp_confirm = Êtes-vous sûr(e) ?
-gp_confirmDeleteParc_xItems = <b>Ce type de parc contient %s champs.</b> Les données de ce type de parc seront supprimées. Êtes vous sûr(e) de vouloir le supprimer ?
+# MANAGER
+gp_addnewparc_error=An error occurred while creating the asset
+gp_addnewparc_success=Asset Added
+gp_deleteparc_needId=No identifier defined
+gp_deleteparc_needRights=Deletion not possible, please check your rights
+gp_deleteparc_success=Asset Deleted
+gp_updateparctype_error=An error occurred while updating the asset
+gp_updateparctype_success=Asset has been updated
+gp_confirm=Are you sure?
+gp_confirmDeleteParc_xItems=<b>This asset type contains %s fields.</b> The data for this asset type will be deleted. Are you sure you want to delete it?
+gp_parc_activated=Asset Enabled
+gp_parc_disactivated=Asset Disabled
+gp_confirmDeleteTitle=Are you sure?
+gp_confirmDelete=Are you sure you want to delete this item?
 
 # PARC
-gp_parcfield_activated = Champ activé
-gp_parcfield_disactivated = Champ désactivé
-gp_parcfield_delete_success = Champ supprimé
-gp_parcfield_new_needType = Vous devez choisir un type de champ
-gp_addparcfield_success = Le nouveau champ a été ajouté
-gp_updateparcfield_success = Champ modifié
-gp_confirmDeleteParcField = Êtes vous sûr de vouloir supprimer ce champ ? Les données enregistrées seront supprimées.
-gp_newparcfieldType = Choisir le type de champ à ajouter
+gp_parcfield_activated=Field enabled
+gp_parcfield_disactivated=Field disabled
+gp_parcfield_delete_success=Field deleted
+gp_parcfield_new_needType=You must choose a field type
+gp_addparcfield_success=New field added
+gp_updateparcfield_success=Field modified
+gp_confirmDeleteParcField=Are you sure you want to delete this field? The saved data will be deleted.
+gp_newparcfieldType=Choose the field type to add
+gp_parcfield_on_onlyverif= Verification only
+gp_parcfield_viewexcel=Excel export
+gp_parcfield_keyfield=Field key
+gp_parcfield_addItem=Add item
+gp_CloneAtEnd=Clone at end
+
+# FUSION TIERS
+gp_mergeParcSuccess=%s fleet items have been moved to the new tier.
+gp_mergeVerifSuccess=%s verifications have been moved to the new tier.
+gp_mergeError=An error occurred while merging the fleets
 
 # REPAIR
-gp_repairTitle=Réparation - GestionParc
-gp_repairText=Cliquez sur ce bouton pour réparer les tables.
-gp_repairButton=Réparer
-gp_repairSuccessMsg=Réparation complète
+gp_repairTitle=Repair - Fleet Management
+gp_repairText=Click this button to repair the tables.
+gp_repairButton=Repair
+gp_repairSuccessMsg=Full Repair
+
+# EXPORT
+gp_advexp_title=VERIFICATION REPORT
+gp_advexp_datevisit=Date of Inspection
+gp_advexp_user=Technician's Name
+gp_advexp_commercial=Sales Representative's Name
+gp_advexp_parctype=Component Type

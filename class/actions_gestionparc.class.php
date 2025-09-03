@@ -8,6 +8,11 @@ dol_include_once('/gestionparc/class/gestionparc.class.php');
 class ActionsGestionParc
 {
 
+    public $error;
+    public $errors;
+    public $results = array();
+    public $resprints = '';
+
     /**
      * Execute action completeTabsHead
      *
