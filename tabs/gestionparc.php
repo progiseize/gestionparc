@@ -80,6 +80,13 @@ switch ($action):
 		if (GETPOSTISSET('cancel_verif') && GETPOSTISSET('verif_id') && !$error) {
 			if ($verification->cancelVerif(GETPOST('verif_id', 'int'))) {
 				setEventMessages($langs->trans('gp_verif_success_oncancel'), null, 'mesgs'); $action=''; $isModeVerif = false;
+				// Redirect to first item
+				$gestionparc->fetch_parcType(0, 0, $parctype);
+				$firstLines = $gestionparc->getSocParcContent($socid, $parctype);
+				$firstItemId = !empty($firstLines) ? reset($firstLines)->rowid : '';
+				$anchor = $firstItemId ? '#item-'.$firstItemId : '';
+				header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&view='.$view.$anchor);
+				exit;
 			}
 		}
 		break;
@@ -124,6 +131,14 @@ switch ($action):
 					setEventMessages($langs->trans('gp_verif_success_onclose', $ficheinter->ref), null, 'mesgs');
 					if ($conf->global->MAIN_MODULE_GESTIONPARC_VERIFREDIRECT) {
 						header('Location: '.dol_buildpath('fichinter/card.php?id='.$id_intervention, 1));
+					} else {
+						// Redirect to first item if not redirecting to intervention
+						$gestionparc->fetch_parcType(0, 0, $parctype);
+						$firstLines = $gestionparc->getSocParcContent($socid, $parctype);
+						$firstItemId = !empty($firstLines) ? reset($firstLines)->rowid : '';
+						$anchor = $firstItemId ? '#item-'.$firstItemId : '';
+						header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&view='.$view.$anchor);
+						exit;
 					}
 				} else {
 					setEventMessages($langs->trans('gp_verif_error_onclose'), null, 'errors');
@@ -148,6 +163,13 @@ switch ($action):
 		if (!$error) {
 			if ($verif_id = $verification->openVerif($socid)) {
 				$modeVerifID = $verif_id;
+				// Get first item ID to anchor
+				$gestionparc->fetch_parcType(0, 0, $parctype);
+				$firstLines = $gestionparc->getSocParcContent($socid, $parctype);
+				$firstItemId = !empty($firstLines) ? reset($firstLines)->rowid : '';
+				$anchor = $firstItemId ? '#item-'.$firstItemId : '';
+				header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&view='.$view.$anchor);
+				exit;
 				$isModeVerif = true;
 				$verification->fetch($verif_id);
 			}
@@ -175,6 +197,12 @@ switch ($action):
 		if (!$error) {
 			$gestionparc->fetch_parcType(GETPOST('parcid'));
 			$verification->setParcCheck($socid,$gestionparc->parc_key,1,$verification->rowid);
+			// Get first item ID to anchor
+			$firstLines = $gestionparc->getSocParcContent($socid, $gestionparc->parc_key);
+			$firstItemId = !empty($firstLines) ? reset($firstLines)->rowid : '';
+			$anchor = $firstItemId ? '#item-'.$firstItemId : '';
+			header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&view='.$view.$anchor);
+			exit;
 		}
 		break;
 
@@ -198,6 +226,9 @@ switch ($action):
 			$gestionparc->fetch_parcType(GETPOST('parcid'));
 			if ($verification->setLineCheck($socid, $gestionparc->parc_key, GETPOST('itemid'), 1, $verification->rowid)) {
 				setEventMessages($langs->trans('gp_verifline_success'), null, 'mesgs');
+				// Redirect to keep position
+				header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&view='.$view.'#item-'.GETPOST('itemid'));
+				exit;
 			} else {
 				$error++; setEventMessages($langs->trans('gp_error'), null, 'warnings');
 			}
@@ -318,9 +349,10 @@ switch ($action):
 				$result_insert = $db->query($sql_insert);
 
 				if ($result_insert) {
+					$newItemId = $db->last_insert_id(MAIN_DB_PREFIX."gestionparc__".$gestionparc->parc_key);
 					$db->commit();
 					setEventMessages($langs->trans('RecordSaved'), null, 'mesgs');
-					header('Location:'.dol_buildpath('/gestionparc/tabs/gestionparc.php?socid='.$object->id.'&parctype='.$parctype.'&view='.$view, 1));
+					header('Location:'.dol_buildpath('/gestionparc/tabs/gestionparc.php?socid='.$object->id.'&parctype='.$parctype.'&view='.$view.'#item-'.$newItemId, 1));
 					exit;
 				} else {
 					$error++; setEventMessages($langs->trans('gp_error'), null, 'warnings');
@@ -361,6 +393,9 @@ switch ($action):
 			$newElementID = $gestionparc->cloneElement($gestionparc->parc_key, GETPOSTINT('itemid'), $after);
 			if ($newElementID > 0) {
 				setEventMessages($langs->trans('gp_duplicate_success'), null, 'mesgs');
+				// Redirect to new cloned element
+				header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&view='.$view.'#item-'.$newElementID);
+				exit;
 			} else {
 				$error++;
 				setEventMessages($langs->trans('gp_error'), null, 'warnings');
@@ -408,6 +443,9 @@ switch ($action):
 			} else {
 				setEventMessages($langs->trans('gp_field_delete_success'), null, 'mesgs');
 				$db->commit();
+				// Redirect after delete (without anchor)
+				header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&view='.$view);
+				exit;
 			}
 		}
 		break;
@@ -507,6 +545,9 @@ switch ($action):
 				foreach ($gestionparc->fields as $parcfield) {
 					unset($_POST['gpfield_'.$parcfield->field_key]);
 				}
+				// Redirect to keep position
+				header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&view='.$view.'#item-'.GETPOST('itemid'));
+				exit;
 			} else {
 				$error++; setEventMessages($langs->trans('gp_error'), null, 'warnings');
 				$db->rollback();
@@ -581,16 +622,15 @@ if (!empty($list_parctypes)) {
 				$label_count = $nb_lines;
 			}
 
-			// ON AJOUTE LE LIEN
-			$tabs[$nb_tabs][0] = $_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype_infos['key'].'&view='.$view; //dol_buildpath("/gestionparc/admin/manager.php", 1);
-			$tabs[$nb_tabs][1] = $parctype_infos['label'].' <span class="badge marginleftonlyshort '.$color_class.'">'.$label_count.'</span>'; // $langs->trans("gp_options_tab_manager");
-			$tabs[$nb_tabs][2] = $parctype_infos['key']; // key
-			$nb_tabs++;
-		}
+
+		// ON AJOUTE LE LIEN
+		$tabs[$nb_tabs][0] = $_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype_infos['key'].'&view='.$view.'#parc-content'; //dol_buildpath("/gestionparc/admin/manager.php", 1);
+		$tabs[$nb_tabs][1] = $parctype_infos['label'].' <span class="badge marginleftonlyshort '.$color_class.'">'.$label_count.'</span>'; // $langs->trans("gp_options_tab_manager");
+		$tabs[$nb_tabs][2] = $parctype_infos['key']; // key
+		$nb_tabs++;
 	}
 }
-
-if ($keyparc) {
+}if ($keyparc) {
 	$parc = $gestionparc->fetch_parcType($keyparc, true);
 	$parcLines = $gestionparc->getSocParcContent($object->id, $parc->parc_key);
 }
@@ -666,7 +706,6 @@ if ($action == 'additem') {
 		}
 	}
 	$urlformconfirm = $_SERVER["PHP_SELF"].'?socid='.$object->id.'&parctype='.$parctype.'&view='.$view;
-	var_dump($urlformconfirm);
 	$formconfirm = $form->formconfirm($urlformconfirm, $langs->transnoentities('gp_parcfield_addItem'), '', 'add', $formarray, '', 1, $formheight, 500, 0, $langs->transnoentities('Add'), $langs->transnoentities('Cancel'));
 }
 print $formconfirm;
@@ -764,21 +803,22 @@ print '<div class="park-main-wrapper">';
 	// Tabs
 	if (!empty($tabs)) {
 		$limit = 5;
-		$typeview = dolGetButtonTitle($langs->trans('GestionParcListView'), '', 'fas fa-bars', $_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&view=list', '', ($view == 'list') ? 2 : 1);
-		$typeview .= dolGetButtonTitle($langs->trans('GestionParcCardView'), '', 'fas fa-th-large', $_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&view=cards', '', ($view == 'cards') ? 2 : 1);
+		$typeview = dolGetButtonTitle($langs->trans('GestionParcListView'), '', 'fas fa-bars', $_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&view=list#parc-content', '', ($view == 'list') ? 2 : 1);
+		$typeview .= dolGetButtonTitle($langs->trans('GestionParcCardView'), '', 'fas fa-th-large', $_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&view=cards#parc-content', '', ($view == 'cards') ? 2 : 1);
 		print dol_fiche_head($tabs, $parctype, '', -1, '', 0, $typeview, '', $limit);
-	} else {
-		print '<div class="warning">'.$langs->trans('gp_empty_parclist_message').'</div>';
-	}
+} else {
+	print '<div class="warning">'.$langs->trans('gp_empty_parclist_message').'</div>';
+}
 
-	if ((int) $gestionparc->rowid > 0) {
+if ((int) $gestionparc->rowid > 0) {
 
-		// New item
-		print '<div id="park-add-item">';
-			print '<a href="'.$_SERVER['PHP_SELF'].'?socid='.$object->id.'&parctype='.$parctype.'&view='.$view.'&action=additem&token='.newToken().'"><span class="fas fa-plus"></span></a>';
-		print '</div>';
+	// Anchor point for tab navigation
+	print '<div id="parc-content"></div>';
 
-		// Count verified lines
+	// New item
+	print '<div id="park-add-item">';
+		print '<a href="'.$_SERVER['PHP_SELF'].'?socid='.$object->id.'&parctype='.$parctype.'&view='.$view.'&action=additem&token='.newToken().'"><span class="fas fa-plus"></span></a>';
+	print '</div>';		// Count verified lines
 		if (getDolGlobalInt('MAIN_MODULE_GESTIONPARC_USEVERIF') && isModEnabled('intervention') && $isModeVerif) {
 			$nb_verified = 0;
 			if (!empty($parcLines)) {
@@ -804,7 +844,7 @@ print '<div class="park-main-wrapper">';
 			print '<div class="park-item-wrapper">';
 			foreach ($parcLines as $lineid => $linecontent) {
 				// Item
-				$parkItemClass = 'park-item';
+				$parkItemClass = 'park-item item-open'; // Open by default
 				if ($isModeVerif) {
 					$parkItemClass .= ($linecontent->verif ? ' verified' : ' unverified');
 				}
@@ -887,14 +927,14 @@ print '<div class="park-main-wrapper">';
 					// Buttons
 					if ($action == 'edit' && $editItem_id == $linecontent->rowid) {
 						print '<div class="button-sets">';
-							print '<a class="button-edit button-cancel" href="'.$_SERVER["PHP_SELF"].'?socid='.$object->id.'&parctype='.$parctype.'"><span class="fas fa-times"></span></a>';
+							print '<a class="button-edit button-cancel" href="'.$_SERVER["PHP_SELF"].'?socid='.$object->id.'&parctype='.$parctype.'&view='.$view.'#item-'.$linecontent->rowid.'"><span class="fas fa-times"></span></a>';
 							print '<button class="button-edit button-valid" type="submit"><span class="fas fa-check"></span></button>';
 						print '</div>';
 						print '</form>';
 					} else if ($isModeVerif && $linecontent->verif) {
 						print '<div class="button-verify verified" >Élement vérifié</div>';
 					} else if ($isModeVerif && !$linecontent->verif) {
-						$verifLink = $_SERVER["PHP_SELF"].'?socid='.$object->id.'&parctype='.$parctype.'&itemid='.$linecontent->rowid.'&action=set_line_verify&parcid='.$parc->rowid.'&token='.newToken();
+						$verifLink = $_SERVER["PHP_SELF"].'?socid='.$object->id.'&parctype='.$parctype.'&itemid='.$linecontent->rowid.'&action=set_line_verify&parcid='.$parc->rowid.'&token='.newToken().'#item-'.$linecontent->rowid;
 						print '<a class="button-verify unverified" href="'.$verifLink.'" >Vérifier</a>';
 					}
 					print '</div>';
@@ -937,7 +977,7 @@ print '<div class="park-main-wrapper">';
 								if ($linecontent->verif) {
 									echo img_picto($langs->trans("Activated"), 'check-square');
 								} else {
-									echo '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?socid='.$object->id.'&parctype='.$parctype.'&view='.$view.'&itemid='.$linecontent->rowid.'&action=set_line_verify&parcid='.$parc->rowid.'&token='.newToken().'">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>';
+									echo '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?socid='.$object->id.'&parctype='.$parctype.'&view='.$view.'&itemid='.$linecontent->rowid.'&action=set_line_verify&parcid='.$parc->rowid.'&token='.newToken().'#item-'.$linecontent->rowid.'">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>';
 								}
 							}
 							print '</td>';
@@ -1017,6 +1057,55 @@ print '</div>';
 <script nonce="<?php echo getNonce(); ?>" type="text/javascript">
 $(function() {
 
+	// Scroll to anchor on page load (smooth scroll to element after actions)
+	if (window.location.hash) {
+		var hash = window.location.hash;
+		if ($(hash).length) {
+			setTimeout(function() {
+				$([document.documentElement, document.body]).animate({
+					scrollTop: $(hash).offset().top - 100
+				}, 300);
+			}, 100);
+		}
+	}
+
+	// Restore card states from localStorage
+	var storageKey = 'gestionparc_card_states_<?php echo $socid; ?>_<?php echo $parctype; ?>';
+	var savedStates = localStorage.getItem(storageKey);
+	if (savedStates) {
+		try {
+			var states = JSON.parse(savedStates);
+			$.each(states, function(itemId, isOpen) {
+				var $item = $('#item-' + itemId);
+				if ($item.length) {
+					if (isOpen) {
+						$item.addClass('item-open');
+					} else {
+						$item.removeClass('item-open');
+					}
+				}
+			});
+		} catch(e) {
+			console.error('Error restoring card states:', e);
+		}
+	}
+
+	// Save card state to localStorage
+	function saveCardState(itemId, isOpen) {
+		var storageKey = 'gestionparc_card_states_<?php echo $socid; ?>_<?php echo $parctype; ?>';
+		var states = {};
+		try {
+			var saved = localStorage.getItem(storageKey);
+			if (saved) {
+				states = JSON.parse(saved);
+			}
+		} catch(e) {
+			states = {};
+		}
+		states[itemId] = isOpen;
+		localStorage.setItem(storageKey, JSON.stringify(states));
+	}
+
 	// LongPress
 	/*$(document).on('long-press', '.park-item', function(e) {
 		if (!$(e.target).closest('.grabbable').length) {
@@ -1033,7 +1122,12 @@ $(function() {
 			!$(e.target).closest('.action-cancel').length &&
 			!$(e.target).closest('.park-submenu-actions *').length)
 		{
-	        $(this).parents('.park-item').toggleClass('item-open');
+			var $item = $(this).parents('.park-item');
+			$item.toggleClass('item-open');
+			// Save state
+			var itemId = $item.data('itemid');
+			var isOpen = $item.hasClass('item-open');
+			saveCardState(itemId, isOpen);
 	    }
 	});
 
@@ -1080,6 +1174,8 @@ $(function() {
                 		itemHeader.find('.action-progress-bar').stop().remove();
 						itemActions.html(contentBefore);
 						itemHeader.removeClass('menu-open');
+						// Save new card as open by default
+						saveCardState(response.newElementID, true);
 						// Scroll to new element
 						$([document.documentElement, document.body]).animate({
 					        scrollTop: $("#item-" + response.newElementID).offset().top

@@ -54,6 +54,7 @@ gp_verif_error_needIntercom=You must enter a reason for closure.
 gp_verif_error_needDuration=You must enter an intervention duration.
 gp_verif_error_onclose=Error closing the verification.
 gp_verif_success_onclose=Intervention "%s" validated.
+gp_verif_success_oncancel=Verification successfully cancelled
 gp_verifline_success=Item verified.
 gp_verifall=Mark all items in this portfolio as verified.
 gp_confirmVerifAll=Please confirm your action.

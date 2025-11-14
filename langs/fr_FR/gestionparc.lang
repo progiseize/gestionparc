@@ -54,6 +54,7 @@ gp_verif_error_needIntercom=Vous devez saisir une raison de clôture
 gp_verif_error_needDuration=Vous devez saisir une duree d'intervention
 gp_verif_error_onclose=Erreur lors de la clôture de la vérification.
 gp_verif_success_onclose=Intervention "%s" validée
+gp_verif_success_oncancel=Verification annulée avec succès
 gp_verifline_success=Item vérifié
 gp_verifall=Marquer tous les éléments de ce parc comme vérifiés
 gp_confirmVerifAll=Merci de confirmer votre action

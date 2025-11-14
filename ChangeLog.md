@@ -5,6 +5,13 @@
 [comment]: <> (Harmoniser les constantes du module)
 
 
+### 1.8.1
+- FIX : Alter existing llx_gestionparc__* tables to add missing position column
+- MAJ : Add anchor system on tabs/gestionparc.php to prevent the page from scrolling back to the top on each reload when a JavaScript action is performed
+- FIX : Add missing gp_verif_success_oncancel translation key
+- MAJ : UX enhancements on responsive version (mobile) of tabs/gestionparc.php (bigger clicking areas on card buttons)
+- FIX : Cards are now open by default in tabs/gestionparc.php, fixing the need to click on each one to open.
+
 ### 1.8.0
 - MAJ: Limit tabs to 5
 - FIX: Undefined variable $nb_val
