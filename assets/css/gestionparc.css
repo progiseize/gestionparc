@@ -195,6 +195,9 @@
     .park-item-wrapper .park-item {width: calc((100% / 5) - 32px + (32px / 5));}
 }
 
-
+/* Fix Select2 dropdown in jQuery UI dialogs */
+.select2-container--open .select2-dropdown {
+    z-index: 9999 !important;
+}
 
 

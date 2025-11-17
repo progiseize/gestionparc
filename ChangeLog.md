@@ -6,11 +6,15 @@
 
 
 ### 1.8.1
-- FIX : Alter existing llx_gestionparc__* tables to add missing position column
+- FIX : Alter existing llx_gestionparc__* tables to add missing 'position' column
 - MAJ : Add anchor system on tabs/gestionparc.php to prevent the page from scrolling back to the top on each reload when a JavaScript action is performed
-- FIX : Add missing gp_verif_success_oncancel translation key
+- FIX : Add missing 'gp_verif_success_oncancel' translation key
 - MAJ : UX enhancements on responsive version (mobile) of tabs/gestionparc.php (bigger clicking areas on card buttons)
-- FIX : Cards are now open by default in tabs/gestionparc.php, fixing the need to click on each one to open.
+- FIX : Cards are now open by default in tabs/gestionparc.php, fixing the need to click on each one to open
+- FIX : Fix for a bug that, in certain cases, prevented the 'Parc client' tab from being displayed on third-party page
+- FIX : Fix Select2 search bars not working in formconfirm dialogs (add item popup)
+- MAJ : Improved the verification process with an AJAX workflow to avoid reloading the page on each item verification
+
 
 ### 1.8.0
 - MAJ: Limit tabs to 5

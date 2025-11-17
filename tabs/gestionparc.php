@@ -934,8 +934,7 @@ if ((int) $gestionparc->rowid > 0) {
 					} else if ($isModeVerif && $linecontent->verif) {
 						print '<div class="button-verify verified" >Élement vérifié</div>';
 					} else if ($isModeVerif && !$linecontent->verif) {
-						$verifLink = $_SERVER["PHP_SELF"].'?socid='.$object->id.'&parctype='.$parctype.'&itemid='.$linecontent->rowid.'&action=set_line_verify&parcid='.$parc->rowid.'&token='.newToken().'#item-'.$linecontent->rowid;
-						print '<a class="button-verify unverified" href="'.$verifLink.'" >Vérifier</a>';
+						print '<a class="button-verify unverified js-verify-item" href="#" data-itemid="'.$linecontent->rowid.'" data-parcid="'.$parc->rowid.'" data-socid="'.$object->id.'" data-parctype="'.$parctype.'">Vérifier</a>';
 					}
 					print '</div>';
 					// Item footer
@@ -969,15 +968,15 @@ if ((int) $gestionparc->rowid > 0) {
 
 					//
 					foreach($parcLines as $lineid => $linecontent){
-						print '<tr class="dolpgs-tbody gestionparc-line '.(($isModeVerif && $linecontent->verif) ? 'parcline-ok' : '').'">';
+						print '<tr id="item-'.$linecontent->rowid.'" class="dolpgs-tbody gestionparc-line '.(($isModeVerif && $linecontent->verif) ? 'parcline-ok' : '').'" data-itemid="'.$linecontent->rowid.'">';
 
 						if ($isModeVerif) {
-							print '<td>';
+							print '<td class="verify-cell">';
 							if ($action != "edit" || $action == "edit" && $editItem_id != $linecontent->rowid) {
 								if ($linecontent->verif) {
 									echo img_picto($langs->trans("Activated"), 'check-square');
 								} else {
-									echo '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?socid='.$object->id.'&parctype='.$parctype.'&view='.$view.'&itemid='.$linecontent->rowid.'&action=set_line_verify&parcid='.$parc->rowid.'&token='.newToken().'#item-'.$linecontent->rowid.'">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>';
+									echo '<a class="reposition js-verify-item-list" href="#" data-itemid="'.$linecontent->rowid.'" data-parcid="'.$parc->rowid.'" data-socid="'.$object->id.'" data-parctype="'.$parctype.'">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>';
 								}
 							}
 							print '</td>';
@@ -1055,18 +1054,32 @@ print '</div>';
 
 ?>
 <script nonce="<?php echo getNonce(); ?>" type="text/javascript">
+// Empêcher le scroll automatique AVANT le chargement de la page
+(function() {
+	if (window.location.hash) {
+		window.scrollTo(0, 0);
+		setTimeout(function() { window.scrollTo(0, 0); }, 1);
+	}
+})();
+
 $(function() {
 
-	// Scroll to anchor on page load (smooth scroll to element after actions)
+	// Gérer le scroll vers l'ancre de manière contrôlée
 	if (window.location.hash) {
 		var hash = window.location.hash;
-		if ($(hash).length) {
-			setTimeout(function() {
-				$([document.documentElement, document.body]).animate({
-					scrollTop: $(hash).offset().top - 100
-				}, 300);
-			}, 100);
-		}
+		
+		setTimeout(function() {
+			var $target = $(hash);
+			if ($target.length) {
+				var targetTop = $target.offset().top;
+				var currentScroll = $(window).scrollTop();
+				
+				// Ne scroller que si on n'est pas déjà au bon endroit (avec marge de 150px)
+				if (Math.abs(currentScroll - (targetTop - 120)) > 150) {
+					$('html, body').scrollTop(targetTop - 120);
+				}
+			}
+		}, 100);
 	}
 
 	// Restore card states from localStorage
@@ -1106,6 +1119,11 @@ $(function() {
 		localStorage.setItem(storageKey, JSON.stringify(states));
 	}
 
+	// Empêcher le scroll vers le haut lors du clic sur le bouton moretab
+	$('.tab.moretab').on('click', function(e) {
+		e.preventDefault();
+	});
+
 	// LongPress
 	/*$(document).on('long-press', '.park-item', function(e) {
 		if (!$(e.target).closest('.grabbable').length) {
@@ -1135,6 +1153,104 @@ $(function() {
 	$(document).on('click', '.park-item .icon-submenu', function(e) {
 		let itemHeader = $(this).parents('.park-item').find('.park-item-header');
 		itemHeader.toggleClass('menu-open');
+	});
+
+	// Vérifier un élément en AJAX (vue cards)
+	$(document).on('click', '.js-verify-item', function(e) {
+		e.preventDefault();
+		
+		var $btn = $(this);
+		var itemId = $btn.data('itemid');
+		var parcId = $btn.data('parcid');
+		var socId = $btn.data('socid');
+		var parcType = $btn.data('parctype');
+		
+		// Désactiver le bouton pendant le traitement
+		$btn.prop('disabled', true).text('Vérification...');
+		
+		$.ajax({
+			url: '<?php echo dol_buildpath('/gestionparc/ajax/verify-items.php', 1); ?>',
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				action: 'set_line_verify',
+				itemid: itemId,
+				parcid: parcId,
+				socid: socId,
+				parctype: parcType,
+				token: '<?php echo newToken(); ?>'
+			},
+			success: function(response) {
+				if (response.success) {
+					// Remplacer le bouton par le statut vérifié
+					$btn.replaceWith('<div class="button-verify verified">Élement vérifié</div>');
+					
+					// Mettre à jour l'icône dans le header de la carte
+					var $item = $('#item-' + itemId);
+					$item.removeClass('unverified').addClass('verified');
+					
+					// Changer l'icône de warning à check
+					var $icon = $item.find('.park-item-header .fa-exclamation-circle');
+					if ($icon.length) {
+						$icon.removeClass('fa-exclamation-circle text-warning')
+							.addClass('fa-check-circle text-success');
+					}
+				} else {
+					$btn.prop('disabled', false).text('Vérifier');
+					console.error('Erreur:', response.error);
+				}
+			},
+			error: function(xhr, status, error) {
+				$btn.prop('disabled', false).text('Vérifier');
+				console.error('Erreur AJAX:', error);
+			}
+		});
+	});
+
+	// Vérifier un élément en AJAX (vue liste)
+	$(document).on('click', '.js-verify-item-list', function(e) {
+		e.preventDefault();
+		
+		var $link = $(this);
+		var itemId = $link.data('itemid');
+		var parcId = $link.data('parcid');
+		var socId = $link.data('socid');
+		var parcType = $link.data('parctype');
+		
+		// Désactiver le lien pendant le traitement
+		$link.css('pointer-events', 'none').css('opacity', '0.5');
+		
+		$.ajax({
+			url: '<?php echo dol_buildpath('/gestionparc/ajax/verify-items.php', 1); ?>',
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				action: 'set_line_verify',
+				itemid: itemId,
+				parcid: parcId,
+				socid: socId,
+				parctype: parcType,
+				token: '<?php echo newToken(); ?>'
+			},
+			success: function(response) {
+				if (response.success) {
+					// Remplacer l'icône par check-square
+					var $cell = $link.closest('.verify-cell');
+					$cell.html('<?php echo img_picto($langs->trans("Activated"), "check-square"); ?>');
+					
+					// Ajouter la classe parcline-ok à la ligne
+					var $row = $('#item-' + itemId);
+					$row.addClass('parcline-ok');
+				} else {
+					$link.css('pointer-events', 'auto').css('opacity', '1');
+					console.error('Erreur:', response.error);
+				}
+			},
+			error: function(xhr, status, error) {
+				$link.css('pointer-events', 'auto').css('opacity', '1');
+				console.error('Erreur AJAX:', error);
+			}
+		});
 	});
 
 	// Clone element
