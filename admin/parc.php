@@ -240,6 +240,9 @@ switch ($action):
             if(GETPOSTISSET($fieldname.'_onlyverif') && GETPOST($fieldname.'_onlyverif', 'aZ09') == 'on') : $gpf->only_verif = 1;
             else: $gpf->only_verif = 0;
             endif;
+            if(GETPOSTISSET($fieldname.'_required_manual_verif') && GETPOST($fieldname.'_required_manual_verif', 'aZ09') == 'on') : $gpf->required_manual_verif = 1;
+            else: $gpf->required_manual_verif = 0;
+            endif;
 
             switch ($field_type):
 
@@ -481,6 +484,15 @@ endif;
                        endif; ?>></td>
                     </tr>
 
+                    <?php if(getDolGlobalInt('MAIN_MODULE_GESTIONPARC_USEVERIF') && getDolGlobalString('GESTIONPARC_VERIF_MODE') == 'manual') : ?>
+                    <tr class="dolpgs-tbody">
+                        <td class="bold pgsz-optiontable-fieldname"><?php echo $langs->trans('gp_field_required_manual_verif'); ?></td>
+                        <td class="pgsz-optiontable-fielddesc"><?php echo $langs->trans('gp_field_required_manual_verif_desc'); ?></td>
+                        <td class="right pgsz-optiontable-field"><input type="checkbox" name="newfield_required_manual_verif" <?php if(GETPOST('newfield_required_manual_verif')) : echo 'checked="checked"';
+                       endif; ?>></td>
+                    </tr>
+                    <?php endif; ?>
+
                 </tbody>
             </table>
             <div class="right">
@@ -535,6 +547,15 @@ endif;
                         <td class="right pgsz-optiontable-field"><input type="checkbox" name="editfield_onlyverif" <?php if(GETPOST('editfield_onlyverif') || $field_to_update->only_verif) : echo 'checked="checked"';
                        endif; ?>></td>
                     </tr>
+
+                    <?php if(getDolGlobalInt('MAIN_MODULE_GESTIONPARC_USEVERIF') && getDolGlobalString('GESTIONPARC_VERIF_MODE') == 'manual') : ?>
+                    <tr class="dolpgs-tbody">
+                        <td class="bold pgsz-optiontable-fieldname"><?php echo $langs->trans('gp_field_required_manual_verif'); ?></td>
+                        <td class="pgsz-optiontable-fielddesc"><?php echo $langs->trans('gp_field_required_manual_verif_desc'); ?></td>
+                        <td class="right pgsz-optiontable-field"><input type="checkbox" name="editfield_required_manual_verif" <?php if(GETPOST('editfield_required_manual_verif') || $field_to_update->required_manual_verif) : echo 'checked="checked"';
+                       endif; ?>></td>
+                    </tr>
+                    <?php endif; ?>
 
                 </tbody>
             </table>

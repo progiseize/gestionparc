@@ -19,7 +19,8 @@ dol_include_once('./gestionparc/class/gestionparc.class.php');
 dol_include_once('./gestionparc/lib/gestionparc.lib.php');
 
 // ON CHARGE LA LANGUE DU MODULE
-$langs->load("gestionparc@gestionparc");
+$langs->loadLangs(array("gestionparc@gestionparc"));
+$langs->load("gestionparc@gestionparc"); // Force reload
 
 // Protection if external user
 if ($user->socid > 0) : accessforbidden();
@@ -48,6 +49,8 @@ if ($action == 'set_options') :
 
         dolibarr_set_const($db, "MAIN_MODULE_GESTIONPARC_VERIFUSETIME", GETPOST('gp-verifusetime'), 'chaine', 0, '', $conf->entity);
         dolibarr_set_const($db, "GESTIONPARC_ADVANCED_EXPORT_LINESPLIT", GETPOST('GESTIONPARC_ADVANCED_EXPORT_LINESPLIT','int'), 'chaine', 0, '', $conf->entity);
+        dolibarr_set_const($db, "GESTIONPARC_DEFAULT_VIEW", GETPOST('gp-default-view', 'alpha'), 'chaine', 0, '', $conf->entity);
+        dolibarr_set_const($db, "GESTIONPARC_VERIF_MODE", GETPOST('gp-verif-mode', 'alpha'), 'chaine', 0, '', $conf->entity);
 
         // Si l'option en cochée
         if(GETPOSTISSET('gp-use-verif')) :
@@ -131,6 +134,17 @@ llxHeader('', $langs->transnoentities('Setup').' :: '.$langs->transnoentities('M
                     </tr>
 
                     <tr class="dolpgs-tbody">
+                        <td class="bold pgsz-optiontable-fieldname" valign="top"><?php echo $langs->trans('gp_setup_verif_mode'); ?></td>
+                        <td class="pgsz-optiontable-fielddesc "><?php echo $langs->transnoentities('gp_setup_verif_mode_desc'); ?></td>
+                        <td class="right pgsz-optiontable-field ">
+                            <select name="gp-verif-mode" class="flat">
+                                <option value="instant" <?php echo (getDolGlobalString('GESTIONPARC_VERIF_MODE') == 'instant' || !getDolGlobalString('GESTIONPARC_VERIF_MODE')) ? 'selected' : ''; ?>><?php echo $langs->trans('gp_setup_verif_mode_instant'); ?></option>
+                                <option value="manual" <?php echo (getDolGlobalString('GESTIONPARC_VERIF_MODE') == 'manual') ? 'selected' : ''; ?>><?php echo $langs->trans('gp_setup_verif_mode_manual'); ?></option>
+                            </select>
+                        </td>
+                    </tr>
+
+                    <tr class="dolpgs-tbody">
                         <td class="bold pgsz-optiontable-fieldname" valign="top"><?php echo $langs->trans('gp_setup_verif_usetime'); ?></td>
                         <td class="pgsz-optiontable-fielddesc "><?php echo $langs->transnoentities('gp_setup_verif_usetime_desc'); ?></td>
                         <td class="right pgsz-optiontable-field ">
@@ -150,6 +164,25 @@ llxHeader('', $langs->transnoentities('Setup').' :: '.$langs->transnoentities('M
                         <td class="pgsz-optiontable-fielddesc "><?php echo $langs->transnoentities('gp_setup_verif_details_desc'); ?></td>
                         <td class="right pgsz-optiontable-field ">
                             <?php echo ajax_constantonoff('MAIN_MODULE_GESTIONPARC_VERIFDETAILS'); ?>
+                        </td>
+                    </tr>
+                    <?php if(getDolGlobalInt('MAIN_MODULE_GESTIONPARC_USEVERIF')): ?>
+                    <tr class="dolpgs-tbody">
+                        <td class="bold pgsz-optiontable-fieldname" valign="top"><?php echo $langs->trans('gp_setup_verif_allow_verifall'); ?></td>
+                        <td class="pgsz-optiontable-fielddesc "><?php echo $langs->transnoentities('gp_setup_verif_allow_verifall_desc'); ?></td>
+                        <td class="right pgsz-optiontable-field ">
+                            <?php echo ajax_constantonoff('GESTIONPARC_VERIF_ALLOW_VERIFALL'); ?>
+                        </td>
+                    </tr>
+                    <?php endif; ?>
+                    <tr class="dolpgs-tbody">
+                        <td class="bold pgsz-optiontable-fieldname" valign="top"><?php echo $langs->trans('gp_setup_default_view'); ?></td>
+                        <td class="pgsz-optiontable-fielddesc "><?php echo $langs->transnoentities('gp_setup_default_view_desc'); ?></td>
+                        <td class="right pgsz-optiontable-field ">
+                            <select name="gp-default-view" class="flat">
+                                <option value="cards" <?php echo (getDolGlobalString('GESTIONPARC_DEFAULT_VIEW') == 'cards' || !getDolGlobalString('GESTIONPARC_DEFAULT_VIEW')) ? 'selected' : ''; ?>><?php echo $langs->trans('GestionParcCardView'); ?></option>
+                                <option value="list" <?php echo (getDolGlobalString('GESTIONPARC_DEFAULT_VIEW') == 'list') ? 'selected' : ''; ?>><?php echo $langs->trans('GestionParcListView'); ?></option>
+                            </select>
                         </td>
                     </tr>
                     <tr class="dolpgs-tbody">

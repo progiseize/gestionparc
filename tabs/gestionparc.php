@@ -38,7 +38,7 @@ $object->fetch($socid);
 $gestionparc = new GestionParc($db);
 $list_parctypes = $gestionparc->list_parcType(1, 1, $object->getCategoriesCommon('customer'));
 $parctype = GETPOSTISSET('parctype') ? GETPOST('parctype', 'alphanohtml'): (!empty($list_parctypes) ? (reset($list_parctypes))['key'] : '');
-$view = GETPOSTISSET('view') ? GETPOST('view', 'alpha') : 'cards';
+$view = getDolGlobalString('GESTIONPARC_DEFAULT_VIEW') ? getDolGlobalString('GESTIONPARC_DEFAULT_VIEW') : 'cards';
 
 $form = new Form($db);
 if (isModEnabled('intervention')) {
@@ -85,7 +85,7 @@ switch ($action):
 				$firstLines = $gestionparc->getSocParcContent($socid, $parctype);
 				$firstItemId = !empty($firstLines) ? reset($firstLines)->rowid : '';
 				$anchor = $firstItemId ? '#item-'.$firstItemId : '';
-				header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&view='.$view.$anchor);
+				header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.$anchor);
 				exit;
 			}
 		}
@@ -137,7 +137,7 @@ switch ($action):
 						$firstLines = $gestionparc->getSocParcContent($socid, $parctype);
 						$firstItemId = !empty($firstLines) ? reset($firstLines)->rowid : '';
 						$anchor = $firstItemId ? '#item-'.$firstItemId : '';
-						header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&view='.$view.$anchor);
+						header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.$anchor);
 						exit;
 					}
 				} else {
@@ -168,7 +168,7 @@ switch ($action):
 				$firstLines = $gestionparc->getSocParcContent($socid, $parctype);
 				$firstItemId = !empty($firstLines) ? reset($firstLines)->rowid : '';
 				$anchor = $firstItemId ? '#item-'.$firstItemId : '';
-				header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&view='.$view.$anchor);
+				header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.$anchor);
 				exit;
 				$isModeVerif = true;
 				$verification->fetch($verif_id);
@@ -201,7 +201,7 @@ switch ($action):
 			$firstLines = $gestionparc->getSocParcContent($socid, $gestionparc->parc_key);
 			$firstItemId = !empty($firstLines) ? reset($firstLines)->rowid : '';
 			$anchor = $firstItemId ? '#item-'.$firstItemId : '';
-			header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&view='.$view.$anchor);
+			header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.$anchor);
 			exit;
 		}
 		break;
@@ -227,7 +227,7 @@ switch ($action):
 			if ($verification->setLineCheck($socid, $gestionparc->parc_key, GETPOST('itemid'), 1, $verification->rowid)) {
 				setEventMessages($langs->trans('gp_verifline_success'), null, 'mesgs');
 				// Redirect to keep position
-				header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&view='.$view.'#item-'.GETPOST('itemid'));
+				header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'#item-'.GETPOST('itemid'));
 				exit;
 			} else {
 				$error++; setEventMessages($langs->trans('gp_error'), null, 'warnings');
@@ -352,7 +352,7 @@ switch ($action):
 					$newItemId = $db->last_insert_id(MAIN_DB_PREFIX."gestionparc__".$gestionparc->parc_key);
 					$db->commit();
 					setEventMessages($langs->trans('RecordSaved'), null, 'mesgs');
-					header('Location:'.dol_buildpath('/gestionparc/tabs/gestionparc.php?socid='.$object->id.'&parctype='.$parctype.'&view='.$view.'#item-'.$newItemId, 1));
+					header('Location:'.dol_buildpath('/gestionparc/tabs/gestionparc.php?socid='.$object->id.'&parctype='.$parctype.'#item-'.$newItemId, 1));
 					exit;
 				} else {
 					$error++; setEventMessages($langs->trans('gp_error'), null, 'warnings');
@@ -394,7 +394,7 @@ switch ($action):
 			if ($newElementID > 0) {
 				setEventMessages($langs->trans('gp_duplicate_success'), null, 'mesgs');
 				// Redirect to new cloned element
-				header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&view='.$view.'#item-'.$newElementID);
+				header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'#item-'.$newElementID);
 				exit;
 			} else {
 				$error++;
@@ -444,7 +444,7 @@ switch ($action):
 				setEventMessages($langs->trans('gp_field_delete_success'), null, 'mesgs');
 				$db->commit();
 				// Redirect after delete (without anchor)
-				header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&view='.$view);
+				header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype);
 				exit;
 			}
 		}
@@ -455,6 +455,7 @@ switch ($action):
 
 		$editItem_id = 0;
 		$error = 0;
+		$isFromVerif = GETPOSTINT('fromverif');
 
 		// ON VERIFIE LES CHAMPS
 		if (GETPOST('token') != $_SESSION['token']) {
@@ -483,6 +484,7 @@ switch ($action):
 	case 'edit_item':
 
 		$error = 0;
+		$isFromVerif = GETPOSTINT('fromverif');
 
 		if (GETPOST('token') != $_SESSION['token']) {
 			$error++;
@@ -503,17 +505,26 @@ switch ($action):
 
 		if (!$error) :
 			$gestionparc->fetch_parcType(GETPOST('parcid'));
+			$fieldsWithError = array(); // Pour stocker les champs en erreur
 
 			// ON VERIFIE LES CHAMPS DYNAMIQUES
 			foreach ($gestionparc->fields as $parcfield) {
 				if ($parcfield->enabled) {
-					//
-					if ($parcfield->only_verif && $parcfield->required) {
+					// VERIFICATION DES CHAMPS OBLIGATOIRES EN MODE VERIFICATION MANUELLE (prioritaire)
+					if ($isModeVerif && $isFromVerif && getDolGlobalString('GESTIONPARC_VERIF_MODE') == 'manual' && $parcfield->required_manual_verif) {
+						$fieldValue = GETPOST('gpfield_'.$parcfield->field_key);
+						if (empty($fieldValue) || $fieldValue === '0' || $fieldValue === 0) {
+							$error++;
+							$fieldsWithError[] = $parcfield->field_key; // Marquer le champ comme en erreur
+							setEventMessages($langs->trans('ErrorFieldRequired', $parcfield->label), null, 'errors');
+						}
+					}
+					// ON VERIFIE SI LES CHAMPS OBLIGATOIRES SONT REMPLIS (sauf si déjà vérifié en required_manual_verif)
+					else if ($parcfield->only_verif && $parcfield->required) {
 						if ($isModeVerif  && empty(GETPOST('gpfield_'.$parcfield->field_key))) {
 							$error++;
 							setEventMessages($langs->trans('ErrorFieldRequired', $parcfield->label), null, 'warnings');
 						}
-					// ON VERIFIE SI LES CHAMPS OBLIGATOIRES SONT REMPLIS
 					} else if ($parcfield->required && empty(GETPOST('gpfield_'.$parcfield->field_key))) {
 						$error++;
 						setEventMessages($langs->trans('ErrorFieldRequired', $parcfield->label), null, 'warnings');
@@ -526,6 +537,10 @@ switch ($action):
 		if ($error) {
 			$action = 'edit';
 			$editItem_id = GETPOST('itemid');
+			// Stocker les champs en erreur dans une variable de session ou GET pour le CSS
+			if (isset($fieldsWithError) && !empty($fieldsWithError)) {
+				$_GET['fields_error'] = implode(',', $fieldsWithError);
+			}
 		} else {
 			$db->begin();
 
@@ -540,13 +555,23 @@ switch ($action):
 
 			$result = $db->query($sql_update);
 			if ($result) {
+				// Si on est en mode vérification manuelle et qu'on vient d'une vérification, on marque l'élément comme vérifié
+				if ($isModeVerif && $isFromVerif && getDolGlobalString('GESTIONPARC_VERIF_MODE') == 'manual') {
+					if ($verification->setLineCheck($socid, $gestionparc->parc_key, GETPOST('itemid'), 1, $verification->rowid)) {
+						setEventMessages($langs->trans('RecordSaved').' - '.$langs->trans('gp_verifline_success'), null, 'mesgs');
+					} else {
+						setEventMessages($langs->trans('RecordSaved'), null, 'mesgs');
+					}
+				} else {
+					setEventMessages($langs->trans('RecordSaved'), null, 'mesgs');
+				}
+				
 				$db->commit(); $action = '';
-				setEventMessages($langs->trans('RecordSaved'), null, 'mesgs');
 				foreach ($gestionparc->fields as $parcfield) {
 					unset($_POST['gpfield_'.$parcfield->field_key]);
 				}
 				// Redirect to keep position
-				header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&view='.$view.'#item-'.GETPOST('itemid'));
+				header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'#item-'.GETPOST('itemid'));
 				exit;
 			} else {
 				$error++; setEventMessages($langs->trans('gp_error'), null, 'warnings');
@@ -624,7 +649,7 @@ if (!empty($list_parctypes)) {
 
 
 		// ON AJOUTE LE LIEN
-		$tabs[$nb_tabs][0] = $_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype_infos['key'].'&view='.$view.'#parc-content'; //dol_buildpath("/gestionparc/admin/manager.php", 1);
+		$tabs[$nb_tabs][0] = $_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype_infos['key'].'#parc-content'; //dol_buildpath("/gestionparc/admin/manager.php", 1);
 		$tabs[$nb_tabs][1] = $parctype_infos['label'].' <span class="badge marginleftonlyshort '.$color_class.'">'.$label_count.'</span>'; // $langs->trans("gp_options_tab_manager");
 		$tabs[$nb_tabs][2] = $parctype_infos['key']; // key
 		$nb_tabs++;
@@ -680,14 +705,14 @@ if ($action == 'initclose_verif') {
 
 	$formarray[] = array('type'=> 'onecolumn', 'name'=> 'intercom', 'value' => $formComment);
 
-	$urlformconfirm = $_SERVER["PHP_SELF"].'?socid='.$object->id.'&parctype='.$parctype.'&view='.$view;
+	$urlformconfirm = $_SERVER["PHP_SELF"].'?socid='.$object->id.'&parctype='.$parctype;
 	$formconfirm = $form->formconfirm($urlformconfirm, $langs->transnoentities('gp_verif_close'), '', 'close_verif', $formarray, '', 1, 500, 500, 0, $langs->transnoentities('gp_verif_close'), $langs->transnoentities('Cancel'));
 }
 if ($action == 'delete') {
-	$formconfirm = $form->formconfirm($_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&view='.$view.'&itemid='.GETPOST('itemid').'&parcid='.GETPOST('parcid'), $langs->trans('gp_confirmDeleteTitle'), $langs->trans('gp_confirmDelete'), 'confirm_delete', '', '', 1, 0, 500, 0);
+	$formconfirm = $form->formconfirm($_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&itemid='.GETPOST('itemid').'&parcid='.GETPOST('parcid'), $langs->trans('gp_confirmDeleteTitle'), $langs->trans('gp_confirmDelete'), 'confirm_delete', '', '', 1, 0, 500, 0);
 }
 if ($action == 'verifall') {
-	$formconfirm = $form->formconfirm($_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&view='.$view.'&parcid='.GETPOST('parcid'), $langs->trans('gp_verifall'), $langs->trans('gp_confirmVerifAll'), 'verifall_confirm', '', '', 1, 0, 500, 0);
+	$formconfirm = $form->formconfirm($_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&parcid='.GETPOST('parcid'), $langs->trans('gp_verifall'), $langs->trans('gp_confirmVerifAll'), 'verifall_confirm', '', '', 1, 0, 500, 0);
 }
 if ($action == 'additem') {
 
@@ -705,7 +730,7 @@ if ($action == 'additem') {
 			$formarray[] = array('type'=> 'onecolumn', 'name'=> 'gpfield_'.$parcfield->field_key, 'value' => $outputform);
 		}
 	}
-	$urlformconfirm = $_SERVER["PHP_SELF"].'?socid='.$object->id.'&parctype='.$parctype.'&view='.$view;
+	$urlformconfirm = $_SERVER["PHP_SELF"].'?socid='.$object->id.'&parctype='.$parctype;
 	$formconfirm = $form->formconfirm($urlformconfirm, $langs->transnoentities('gp_parcfield_addItem'), '', 'add', $formarray, '', 1, $formheight, 500, 0, $langs->transnoentities('Add'), $langs->transnoentities('Cancel'));
 }
 print $formconfirm;
@@ -782,12 +807,11 @@ print '<div class="park-main-wrapper">';
 									print '<input type="hidden" name="token" value="'.newToken().'">';
 									print '<input type="hidden" name="verif_id" value="'.$modeVerifID.'">';
 									print '<input type="hidden" name="action" value="initclose_verif">';
-									print '<input type="hidden" name="view" value="'.$view.'">';
 									print '<input type="submit" name="close" value="'.$langs->trans('gp_verif_close').'" class="button smallpaddingimp small nomarginleft">';
 									print '<input type="submit" name="cancel_verif" value="'.$langs->trans('gp_verif_cancel').'" class="button butActionDelete cancel smallpaddingimp small nomarginleft" >';
 								print '</form>';
 							} else {
-								print '<a class="button smallpaddingimp small nomarginleft" href="'.$_SERVER["PHP_SELF"].'?socid='.$object->id.'&parctype='.$parctype.'&view='.$view.'&action=mode_verif&token='.newToken().'">'.$langs->trans('gp_verif_open').'</a>';
+								print '<a class="button smallpaddingimp small nomarginleft" href="'.$_SERVER["PHP_SELF"].'?socid='.$object->id.'&parctype='.$parctype.'&action=mode_verif&token='.newToken().'">'.$langs->trans('gp_verif_open').'</a>';
 							}
 							print '</td>';
 						print '</tr>';
@@ -803,9 +827,7 @@ print '<div class="park-main-wrapper">';
 	// Tabs
 	if (!empty($tabs)) {
 		$limit = 5;
-		$typeview = dolGetButtonTitle($langs->trans('GestionParcListView'), '', 'fas fa-bars', $_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&view=list#parc-content', '', ($view == 'list') ? 2 : 1);
-		$typeview .= dolGetButtonTitle($langs->trans('GestionParcCardView'), '', 'fas fa-th-large', $_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&view=cards#parc-content', '', ($view == 'cards') ? 2 : 1);
-		print dol_fiche_head($tabs, $parctype, '', -1, '', 0, $typeview, '', $limit);
+		print dol_fiche_head($tabs, $parctype, '', -1, '', 0, '', '', $limit);
 } else {
 	print '<div class="warning">'.$langs->trans('gp_empty_parclist_message').'</div>';
 }
@@ -817,7 +839,7 @@ if ((int) $gestionparc->rowid > 0) {
 
 	// New item
 	print '<div id="park-add-item">';
-		print '<a href="'.$_SERVER['PHP_SELF'].'?socid='.$object->id.'&parctype='.$parctype.'&view='.$view.'&action=additem&token='.newToken().'"><span class="fas fa-plus"></span></a>';
+		print '<a href="'.$_SERVER['PHP_SELF'].'?socid='.$object->id.'&parctype='.$parctype.'&action=additem&token='.newToken().'"><span class="fas fa-plus"></span></a>';
 	print '</div>';		// Count verified lines
 		if (getDolGlobalInt('MAIN_MODULE_GESTIONPARC_USEVERIF') && isModEnabled('intervention') && $isModeVerif) {
 			$nb_verified = 0;
@@ -834,9 +856,9 @@ if ((int) $gestionparc->rowid > 0) {
 			print '</div>';
 		}
 
-		if ($isModeVerif && ($user->hasRight('gestionparc', 'parc', 'verifall') || $user->admin) && !empty($parcLines) && $nb_verified < count($parcLines)) {
+		if ($isModeVerif && getDolGlobalInt('GESTIONPARC_VERIF_ALLOW_VERIFALL') && ($user->hasRight('gestionparc', 'parc', 'verifall') || $user->admin) && !empty($parcLines) && $nb_verified < count($parcLines)) {
 			print '<div class="gestionparc-verifall">';
-				print '<a class="reposition" href="'.$_SERVER['PHP_SELF'].'?socid='.$object->id.'&parctype='.$parctype.'&parcid='.$parc->rowid.'&view='.$view.'&action=verifall&token='.newToken().'">'.img_picto($langs->trans("gp_verifall"), 'switch_off').'</a> <span class="veriftxt">'.$langs->trans('gp_verifall').'</span>';
+				print '<a class="reposition" href="'.$_SERVER['PHP_SELF'].'?socid='.$object->id.'&parctype='.$parctype.'&parcid='.$parc->rowid.'&action=verifall&token='.newToken().'">'.img_picto($langs->trans("gp_verifall"), 'switch_off').'</a> <span class="veriftxt">'.$langs->trans('gp_verifall').'</span>';
 			print '</div>';
 		}
 
@@ -887,17 +909,44 @@ if ((int) $gestionparc->rowid > 0) {
 						print '<input type="hidden" name="token" value="'.newToken().'">';
 						print '<input type="hidden" name="parcid" value="'.$parc->rowid.'">';
 						print '<input type="hidden" name="itemid" value="'.$linecontent->rowid.'">';
+						if ($isFromVerif) {
+							print '<input type="hidden" name="fromverif" value="1">';
+						}
 					}
 					foreach($parc->fields as $parcfield_key => $parcfield){
 						if ($parcfield->enabled) {
 							if ($parcfield->only_verif && !$isModeVerif) {
 								continue;
 							}
-							print '<div class="park-field">';
+							// Vérifier si ce champ est en erreur
+							$fieldErrorClass = '';
+							if (isset($_GET['fields_error']) && strpos($_GET['fields_error'], $parcfield->field_key) !== false) {
+								$fieldErrorClass = ' field-error';
+							}
+							print '<div class="park-field'.$fieldErrorClass.'">';
 								print '<div class="park-field-label">'.$parcfield->label.'</div>';
 								print '<div class="park-field-value">';
 								if ($action == 'edit' && $editItem_id == $linecontent->rowid) {
-									print $parcfield->construct_field($parc, $object->id, $linecontent->{$parcfield->field_key});
+									// Si on est en mode vérification manuelle et que le champ est obligatoire en vérif manuelle, on le vide
+									// Si GETPOST existe (même vide), on l'utilise pour préserver la valeur après erreur
+									if (GETPOSTISSET('gpfield_'.$parcfield->field_key)) {
+										$fieldValue = GETPOST('gpfield_'.$parcfield->field_key);
+									} else {
+										$fieldValue = $linecontent->{$parcfield->field_key};
+										if ($isFromVerif && getDolGlobalString('GESTIONPARC_VERIF_MODE') == 'manual' && $parcfield->required_manual_verif) {
+											$fieldValue = '';
+										}
+									}
+									$fieldHtml = $parcfield->construct_field($parc, $object->id, $fieldValue);
+									// Ajouter la classe field-error aux inputs/selects si le champ est en erreur
+									if ($fieldErrorClass) {
+										// Ajouter la classe au select-wrapper
+										$fieldHtml = str_replace('<div class="select-wrapper">', '<div class="select-wrapper field-error-wrapper">', $fieldHtml);
+										// Ajouter la classe aux inputs
+										$fieldHtml = str_replace('name="gpfield_'.$parcfield->field_key.'"', 'name="gpfield_'.$parcfield->field_key.'" class="field-error-input"', $fieldHtml);
+										$fieldHtml = str_replace('id="gpfield_'.$parcfield->field_key.'"', 'id="gpfield_'.$parcfield->field_key.'" class="field-error-input"', $fieldHtml);
+									}
+									print $fieldHtml;
 								} else {
 									if (!empty($linecontent->{$parcfield->field_key})) {
 										if ($parcfield->type == 'prodserv') {
@@ -927,14 +976,21 @@ if ((int) $gestionparc->rowid > 0) {
 					// Buttons
 					if ($action == 'edit' && $editItem_id == $linecontent->rowid) {
 						print '<div class="button-sets">';
-							print '<a class="button-edit button-cancel" href="'.$_SERVER["PHP_SELF"].'?socid='.$object->id.'&parctype='.$parctype.'&view='.$view.'#item-'.$linecontent->rowid.'"><span class="fas fa-times"></span></a>';
+							print '<a class="button-edit button-cancel" href="'.$_SERVER["PHP_SELF"].'?socid='.$object->id.'&parctype='.$parctype.'#item-'.$linecontent->rowid.'"><span class="fas fa-times"></span></a>';
 							print '<button class="button-edit button-valid" type="submit"><span class="fas fa-check"></span></button>';
 						print '</div>';
 						print '</form>';
 					} else if ($isModeVerif && $linecontent->verif) {
 						print '<div class="button-verify verified" >Élement vérifié</div>';
 					} else if ($isModeVerif && !$linecontent->verif) {
-						print '<a class="button-verify unverified js-verify-item" href="#" data-itemid="'.$linecontent->rowid.'" data-parcid="'.$parc->rowid.'" data-socid="'.$object->id.'" data-parctype="'.$parctype.'">Vérifier</a>';
+						// Mode de vérification : manuel ou instantané
+						if (getDolGlobalString('GESTIONPARC_VERIF_MODE') == 'manual') {
+							// Mode manuel : redirection vers la page d'édition
+							print '<a class="button-verify unverified" href="'.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parc->parc_key.'&action=edit&itemid='.$linecontent->rowid.'&parcid='.$parc->rowid.'&fromverif=1&token='.newToken().'#item-'.$linecontent->rowid.'">Vérifier</a>';
+						} else {
+							// Mode instantané : AJAX
+							print '<a class="button-verify unverified js-verify-item" href="#" data-itemid="'.$linecontent->rowid.'" data-parcid="'.$parc->rowid.'" data-socid="'.$object->id.'" data-parctype="'.$parctype.'">Vérifier</a>';
+						}
 					}
 					print '</div>';
 					// Item footer
@@ -946,7 +1002,6 @@ if ((int) $gestionparc->rowid > 0) {
 			print '<form enctype="multipart/form-data" action="'.$_SERVER["PHP_SELF"].'?socid='.$object->id.'&parctype='.$parctype.'" method="POST" id="">';
 				print '<input type="hidden" name="token" value="'.newToken().'">';
 				print '<input type="hidden" name="parcid" value="'.$parc->rowid.'">';
-				print '<input type="hidden" name="view" value="'.$view.'">';
 				print '<table class="dolpgs-table gestionparc-table" style="border-top:none;" id="gestionparc-table-'.$gestionparc->rowid.'">';
 				print '<tbody>';
 
@@ -976,7 +1031,14 @@ if ((int) $gestionparc->rowid > 0) {
 								if ($linecontent->verif) {
 									echo img_picto($langs->trans("Activated"), 'check-square');
 								} else {
-									echo '<a class="reposition js-verify-item-list" href="#" data-itemid="'.$linecontent->rowid.'" data-parcid="'.$parc->rowid.'" data-socid="'.$object->id.'" data-parctype="'.$parctype.'">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>';
+									// Mode de vérification : manuel ou instantané
+									if (getDolGlobalString('GESTIONPARC_VERIF_MODE') == 'manual') {
+										// Mode manuel : redirection vers la page d'édition
+										echo '<a class="reposition" href="'.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parc->parc_key.'&action=edit&itemid='.$linecontent->rowid.'&parcid='.$parc->rowid.'&fromverif=1&token='.newToken().'#item-'.$linecontent->rowid.'">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>';
+									} else {
+										// Mode instantané : AJAX
+										echo '<a class="reposition js-verify-item-list" href="#" data-itemid="'.$linecontent->rowid.'" data-parcid="'.$parc->rowid.'" data-socid="'.$object->id.'" data-parctype="'.$parctype.'">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>';
+									}
 								}
 							}
 							print '</td>';
@@ -987,7 +1049,12 @@ if ((int) $gestionparc->rowid > 0) {
 								if ($parcfield->only_verif && !$isModeVerif) {
 									continue;
 								}
-								print '<td class="pgsz-optiontable-fielddesc">';
+								// Vérifier si ce champ est en erreur
+								$fieldErrorClass = '';
+								if (isset($_GET['fields_error']) && strpos($_GET['fields_error'], $parcfield->field_key) !== false) {
+									$fieldErrorClass = ' field-error';
+								}
+								print '<td class="pgsz-optiontable-fielddesc'.$fieldErrorClass.'">';
 
 								if ($action == 'edit' && $editItem_id == $linecontent->rowid) {
 									print '<span class="gp-infos-label">'.$parcfield->label.' : </span>';
@@ -995,7 +1062,25 @@ if ((int) $gestionparc->rowid > 0) {
 										print $linecontent->{$parcfield->field_key};
 										print '<input type="hidden" name="gpfield_'.$parcfield->field_key.'" id="gpfield_'.$parcfield->field_key.'" value="'.$linecontent->{$parcfield->field_key}.'">';
 									} else {
-										print $parcfield->construct_field($parc, $societe->id, $linecontent->{$parcfield->field_key});
+										// Si GETPOST existe (même vide), on l'utilise pour préserver la valeur après erreur
+										if (GETPOSTISSET('gpfield_'.$parcfield->field_key)) {
+											$fieldValue = GETPOST('gpfield_'.$parcfield->field_key);
+										} else {
+											$fieldValue = $linecontent->{$parcfield->field_key};
+											if ($isFromVerif && getDolGlobalString('GESTIONPARC_VERIF_MODE') == 'manual' && $parcfield->required_manual_verif) {
+												$fieldValue = '';
+											}
+										}
+										$fieldHtml = $parcfield->construct_field($parc, $societe->id, $fieldValue);
+										// Ajouter la classe field-error aux inputs/selects si le champ est en erreur
+										if ($fieldErrorClass) {
+											// Ajouter la classe au select-wrapper
+											$fieldHtml = str_replace('<div class="select-wrapper">', '<div class="select-wrapper field-error-wrapper">', $fieldHtml);
+											// Ajouter la classe aux inputs
+											$fieldHtml = str_replace('name="gpfield_'.$parcfield->field_key.'"', 'name="gpfield_'.$parcfield->field_key.'" class="field-error-input"', $fieldHtml);
+											$fieldHtml = str_replace('id="gpfield_'.$parcfield->field_key.'"', 'id="gpfield_'.$parcfield->field_key.'" class="field-error-input"', $fieldHtml);
+										}
+										print $fieldHtml;
 									}
 								} else {
 									echo '<span class="gp-infos-label">'.$parcfield->label.' : </span>';
@@ -1033,13 +1118,16 @@ if ((int) $gestionparc->rowid > 0) {
 						//
 						print '<td class="right">';
 						if ($action != "edit") {
-							print '<a class="parclink gp-duplicate" href="'.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parc->parc_key.'&view='.$view.'&action=duplicate&itemid='.$linecontent->rowid.'&parcid='.$parc->rowid.'&token='.newToken().'"><i class="fas fa-clone"></i></a> &nbsp; ';
-							print '<a class="parclink gp-edit paddingrightonly" href="'.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parc->parc_key.'&view='.$view.'&action=edit&itemid='.$linecontent->rowid.'&parcid='.$parc->rowid.'&token='.newToken().'"><i class="fas fa-pencil-alt"></i></a> &nbsp; ';
-							print '<a class="parclink gp-trash paddingrightonly" href="'.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parc->parc_key.'&view='.$view.'&action=delete&itemid='.$linecontent->rowid.'&parcid='.$parc->rowid.'&token='.newToken().'"><i class="fas fa-trash-alt"></i></a>';
+							print '<a class="parclink gp-duplicate" href="'.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parc->parc_key.'&action=duplicate&itemid='.$linecontent->rowid.'&parcid='.$parc->rowid.'&token='.newToken().'"><i class="fas fa-clone"></i></a> &nbsp; ';
+							print '<a class="parclink gp-edit paddingrightonly" href="'.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parc->parc_key.'&action=edit&itemid='.$linecontent->rowid.'&parcid='.$parc->rowid.'&token='.newToken().'"><i class="fas fa-pencil-alt"></i></a> &nbsp; ';
+							print '<a class="parclink gp-trash paddingrightonly" href="'.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parc->parc_key.'&action=delete&itemid='.$linecontent->rowid.'&parcid='.$parc->rowid.'&token='.newToken().'"><i class="fas fa-trash-alt"></i></a>';
 						} else if ($action == "edit" && GETPOST('itemid') == $linecontent->rowid) {
 							print '<input type="hidden" name="action" value="edit_item">';
 							print '<input type="hidden" name="itemid" value="'.$linecontent->rowid.'">';
-							print '<a href="'.dol_buildpath('/gestionparc/tabs/gestionparc.php?socid='.$socid.'&parctype='.$parc->parc_key.'&view='.$view, 1).'" class="dolpgs-btn btn-danger btn-sm">'.$langs->trans('Cancel').'</a>';
+							if ($isFromVerif) {
+								print '<input type="hidden" name="fromverif" value="1">';
+							}
+							print '<a href="'.dol_buildpath('/gestionparc/tabs/gestionparc.php?socid='.$socid.'&parctype='.$parc->parc_key, 1).'" class="dolpgs-btn btn-danger btn-sm">'.$langs->trans('Cancel').'</a>';
 							print '<input type="submit" class="dolpgs-btn btn-primary btn-sm" value="'.$langs->trans('Save').'">';
 						}
 						print '</td>';

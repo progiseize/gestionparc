@@ -94,8 +94,8 @@
 .mod-gestionparc .select-wrapper .select2 {flex:1;}
 
 
-.mod-gestionparc input[type=text] {width:100%;border: 1px solid rgb(226, 232, 240);border-radius: 4px; padding: 13px;margin-top:6px;box-sizing: border-box;font-family: 'Roboto', sans-serif;font-weight: 500;color:#ababab;}
-.mod-gestionparc input[type=number] {width:100%;border: 1px solid rgb(226, 232, 240);border-radius: 4px; padding: 13px;margin-top:6px;box-sizing: border-box;font-family: 'Roboto', sans-serif;font-weight: 500;color:#ababab;}
+.mod-gestionparc input[type=text] {width:100%;border: 1px solid rgb(226, 232, 240);border-radius: 4px; padding: 13px;margin-top:6px;box-sizing: border-box;font-family: 'Roboto', sans-serif;font-weight: 500;color:#424242;}
+.mod-gestionparc input[type=number] {width:100%;border: 1px solid rgb(226, 232, 240);border-radius: 4px; padding: 13px;margin-top:6px;box-sizing: border-box;font-family: 'Roboto', sans-serif;font-weight: 500;color:#424242;}
 
 
 .action-progress-bar {background:#ccc;height:2px;position:absolute;top:100%;left:0;width:0;}
@@ -198,6 +198,47 @@
 /* Fix Select2 dropdown in jQuery UI dialogs */
 .select2-container--open .select2-dropdown {
     z-index: 9999 !important;
+}
+
+/* Champs en erreur - contour rouge */
+.mod-gestionparc .park-field.field-error .park-field-label,
+.mod-gestionparc td.field-error .gp-infos-label {
+    color: var(--gp-error-color) !important;
+    font-weight: 600;
+}
+
+.mod-gestionparc .park-field.field-error input[type="text"],
+.mod-gestionparc .park-field.field-error input[type="number"],
+.mod-gestionparc .park-field.field-error input[type="date"],
+.mod-gestionparc .park-field.field-error .select-wrapper,
+.mod-gestionparc .field-error-input,
+.mod-gestionparc .field-error-input + .select-wrapper,
+.mod-gestionparc .select-wrapper:has(.field-error-input),
+.mod-gestionparc .field-error-wrapper,
+.mod-gestionparc td.field-error input[type="text"],
+.mod-gestionparc td.field-error input[type="number"],
+.mod-gestionparc td.field-error input[type="date"],
+.mod-gestionparc td.field-error .select-wrapper {
+    border-color: var(--gp-error-color) !important;
+    border-width: 2px !important;
+}
+
+.mod-gestionparc .park-field.field-error .select2-container--default .select2-selection--single,
+.mod-gestionparc .select-wrapper:has(.field-error-input) .select2-container--default .select2-selection--single,
+.mod-gestionparc .field-error-wrapper .select2-container--default .select2-selection--single,
+.mod-gestionparc td.field-error .select2-container--default .select2-selection--single {
+    border-color: var(--gp-error-color) !important;
+    border-width: 2px !important;
+}
+
+/* Messages d'erreur en rouge */
+.mod-gestionparc .mesgs .error,
+.mod-gestionparc .mesgs .errors,
+div.mesgs div.error,
+div.mesgs div.errors {
+    background-color: #fad4da !important;
+    border-left: 4px solid var(--gp-error-color) !important;
+    color: var(--gp-error-color) !important;
 }
 
 
