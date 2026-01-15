@@ -13,6 +13,7 @@
   - **Manual**: Items must be manually opened in edit mode and validated, ensuring all required data is checked before verification.
 - NEW: Added an option in module configuration to enable or disable the "Verify All" button during a verification session.
 - NEW: Added a "Mandatory in manual verification" option for fields: when designing verification fields, you can now specify if a field must be completed when in manual verification mode (even if it's only visible during verification). This ensures critical information is collected during manual control processes.
+- FIX : Fix crash during verification validation when Excel export is enabled and no items have Excel export enabled on the verification.
 
 
 ### 1.8.1

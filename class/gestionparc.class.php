@@ -1451,10 +1451,10 @@ class GestionParcField
     /*****************************************************************/
     // Check if defined value exist
     /*****************************************************************/
-    public function checkAutoNumber(int $socid, $parc_key, $field_key, int $fieldvalue)
+    public function checkAutoNumber(int $socid, $parc_key, $field_key, $fieldvalue)
     {
         $sql = "SELECT rowid FROM ".MAIN_DB_PREFIX."gestionparc__".$parc_key;
-        $sql .= " WHERE ".$field_key." = ".$fieldvalue;
+        $sql .= " WHERE ".$field_key." = '".$this->db->escape($fieldvalue)."'";
         $sql .= " AND socid=".$socid;
         $res = $this->db->query($sql);
         if ($res->num_rows > 0) {
@@ -2128,6 +2128,7 @@ class GestionParcVerif
                 endif;
 
                 // PARCSET BORDER
+                if ($addtosheetfile && !empty($rowbeforeheader)) :
                 $parcset_lastletterkey = $e_key;
                 $check_lastletterkey = $nb_excel_fields - 1;
                 if($check_lastletterkey > $parcset_lastletterkey):
@@ -2135,7 +2136,8 @@ class GestionParcVerif
                 endif;
                 $parcset_lastrow = $row - 1;
                 $sheet->getStyle('A'.$rowbeforeheader.':'.$letters_array[$parcset_lastletterkey].$parcset_lastrow)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM);
-
+                endif;
+                
             endforeach;
 
             if($letterkey > $e_key):
