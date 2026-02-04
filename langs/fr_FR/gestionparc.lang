@@ -161,6 +161,8 @@ gp_field_onlyverif=Mode vérification
 gp_field_onlyverif_desc=Ce champ sera visible uniquement en mode vérification. S'il est obligatoire, cela ne s'appliquera que dans ce mode.
 gp_field_required_manual_verif=Obligatoire en vérification manuelle
 gp_field_required_manual_verif_desc=En mode vérification manuelle, ce champ devra être obligatoirement rempli pour valider la vérification de l'élément
+gp_field_force_default_on_verif=Forcer la valeur par défaut à chaque vérification
+gp_field_force_default_on_verif_desc=Lors de l'ouverture d'une nouvelle vérification, ce champ sera automatiquement remis à sa valeur par défaut
 gp_field_date_help=Format FR ou US / dd/mm/YYYY ou YYYY_mm_dd pour la date du jour
 
 # RETOURS / ERREURS
@@ -200,6 +202,7 @@ gp_updateparcfield_success=Champ modifié
 gp_confirmDeleteParcField=Êtes vous sûr de vouloir supprimer ce champ ? Les données enregistrées seront supprimées.
 gp_newparcfieldType=Choisir le type de champ à ajouter
 gp_parcfield_on_onlyverif= Uniquement vérification
+gp_parcfield_force_default_on_verif=Forcer déf. vérif
 gp_parcfield_viewexcel=Export Excel
 gp_parcfield_keyfield=Clé du champ
 gp_parcfield_addItem=Ajouter un élément

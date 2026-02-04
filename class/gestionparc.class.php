@@ -845,6 +845,7 @@ class GestionParcField
     public $only_verif = 0;
     public $view_excel = 0;
     public $required_manual_verif = 0;
+    public $force_default_on_verif = 0;
 
     public $forbidden_words = array(
     'ACCESSIBLE','ADD','ALL','ALTER','ANALYZE','AND','AS','ASC','ASENSITIVE','AUTO_INCREMENT',
@@ -896,7 +897,7 @@ class GestionParcField
             $this->author = $user->id;
 
             $sql = "INSERT INTO ".MAIN_DB_PREFIX.$this->table_element;
-            $sql.= " (parc_id,label,field_key,type,params,required,default_value,enabled,position,author,only_verif,view_excel)";
+            $sql.= " (parc_id,label,field_key,type,params,required,default_value,enabled,position,author,only_verif,view_excel,required_manual_verif,force_default_on_verif)";
             $sql.= " VALUES (";
             $sql.= " ".$this->parc_id;
             $sql.= ", '".$this->db->escape($this->label)."'";
@@ -910,6 +911,8 @@ class GestionParcField
             $sql.= ", ".$this->author;
             $sql.= ", '".((int) $this->only_verif)."'";
             $sql.= ", '".((int) $this->view_excel)."'";
+            $sql.= ", '".((int) $this->required_manual_verif)."'";
+            $sql.= ", '".((int) $this->force_default_on_verif)."'";
             $sql.= ")";
 
             $result = $this->db->query($sql);
@@ -970,6 +973,7 @@ class GestionParcField
          $this->only_verif = intval($item->only_verif);
          $this->view_excel = intval($item->view_excel);
          $this->required_manual_verif = intval($item->required_manual_verif);
+         $this->force_default_on_verif = intval($item->force_default_on_verif);
 
          return $this->rowid;
      endif;
@@ -1021,6 +1025,7 @@ class GestionParcField
             $sql .= ",only_verif  = '".$this->only_verif."'";
             $sql .= ",view_excel  = '".$this->view_excel."'";
             $sql .= ",required_manual_verif  = '".$this->required_manual_verif."'";
+            $sql .= ",force_default_on_verif  = '".$this->force_default_on_verif."'";
             $sql .= " WHERE rowid = ".$this->rowid;
 
             $result = $this->db->query($sql);
@@ -1575,6 +1580,17 @@ class GestionParcVerif
 
             foreach($parc_lines as $parcline):
                 $this->setLineCheck($socid, $parctype_infos['key'], $parcline->rowid, 0);
+
+                // Reset fields with force_default_on_verif to their default value
+                $fields = $gestionparc->list_parcFields($parctype_key);
+                foreach($fields as $field):
+                    if($field->force_default_on_verif && !empty($field->default_value)):
+                        $sql_reset = "UPDATE ".MAIN_DB_PREFIX.$this->parent_table_element."__".$parctype_infos['key'];
+                        $sql_reset .= " SET `".$field->field_key."` = '".$this->db->escape($field->default_value)."'";
+                        $sql_reset .= " WHERE rowid = '".$parcline->rowid."' AND socid = '".$socid."'";
+                        $res_reset = $this->db->query($sql_reset);
+                    endif;
+                endforeach;
             endforeach;
 
         endforeach;

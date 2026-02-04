@@ -4,6 +4,8 @@
 [comment]: <> (Modele pdf)
 [comment]: <> (Harmoniser les constantes du module)
 
+### 1.8.3
+- NEW: Added 'Force default value on verification' option for parc fields to automatically reset specified fields to their default value when opening a new verification session 
 
 ### 1.8.2
 - MAJ: The "Numero" field now supports both text and numbers, instead of only numbers. This provides more flexibility for entering custom identifiers or alphanumeric codes for park items.
