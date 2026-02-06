@@ -1268,10 +1268,9 @@ class GestionParcField
             // ON VERIFIE LES VARIABLES POST OU GET
             if(GETPOSTISSET('gpfield_'.$this->field_key)) :
                 $postValue = GETPOST('gpfield_'.$this->field_key);
-                // Si la valeur POST est vide, on la traite comme null pour forcer l'option vide
                 $compare_value = ($postValue === '' || $postValue === null) ? null : $postValue;
             else:
-                if($field_value !== '') : $compare_value = $field_value;
+                if($field_value !== '' && $field_value !== null) : $compare_value = $field_value;
                 else: $compare_value = ($param_yeardefault ? $param_yeardefault : null); endif;
             endif;
 
@@ -1291,10 +1290,13 @@ class GestionParcField
 
             $output_field .= '<div class="select-wrapper">';
                 $output_field .= '<select class="'.$slct_class.'" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->field_key.'" style="width:100%">';
-                // Option vide si aucune valeur sélectionnée
-                if($compare_value === null || $compare_value === '') :
+                // Option vide si aucune valeur sélectionnée (nouvel élément)
+                if($compare_value === null) :
                     $output_field .= '<option value="" selected="selected"></option>';
                 endif;
+                // Option N/C
+                $nc_selected = ($compare_value === 'N/C') ? 'selected="selected"' : '';
+                $output_field .= '<option value="N/C" '.$nc_selected.'>N/C</option>';
                 foreach($years as $year):
                     $is_selected = ($year == $compare_value )?'selected="selected"':'';
                     $output_field .= '<option value="'.$year.'" '.$is_selected.'>'.$year.'</option>';
