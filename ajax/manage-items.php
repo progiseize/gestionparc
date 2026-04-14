@@ -95,7 +95,7 @@ if ($action == 'cloneitem') {
 		$parkUrl = dol_buildpath('/gestionparc/tabs/gestionparc.php', 1);
 
 		// Write tpl
-		$parkItemClass = 'park-item';
+		$parkItemClass = 'park-item item-open'; // Open by default
 		if ($isModeVerif) {
 			$parkItemClass .= ' unverified';
 		}

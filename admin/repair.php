@@ -59,6 +59,13 @@ if($res->num_rows == 0) : $array_repair[] = "ALTER TABLE llx_gestionparc_fields 
 else: $array_repair[] = "ALTER TABLE llx_gestionparc_fields CHANGE only_verif only_verif BOOLEAN NOT NULL DEFAULT 0";
 endif;
 
+// Force default on verif
+$sql = "SHOW COLUMNS FROM llx_gestionparc_fields LIKE 'force_default_on_verif'";
+$res = $db->query($sql);
+if($res->num_rows == 0) : $array_repair[] = "ALTER TABLE llx_gestionparc_fields ADD force_default_on_verif BOOLEAN NOT NULL DEFAULT 0";
+else: $array_repair[] = "ALTER TABLE llx_gestionparc_fields CHANGE force_default_on_verif force_default_on_verif BOOLEAN NOT NULL DEFAULT 0";
+endif;
+
 
 /**
 *

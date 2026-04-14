@@ -51,8 +51,11 @@ class ActionsGestionParc
             $newtab[1] = $langs->trans('gp_clientparc').' <span class="badge marginleftonlyshort">'.$nbItems.'</span>';
             $newtab[2] = 'gestionparc';
 
-            //
-            $parameters['head'][] = $newtab;
+            // On stocke le head modifié dans $this->results et on retourne 1
+            $this->results = $parameters['head'];
+            $this->results[] = $newtab;
+            
+            return 1;
         }
         return 0;
     }

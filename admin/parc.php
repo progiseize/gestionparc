@@ -240,6 +240,12 @@ switch ($action):
             if(GETPOSTISSET($fieldname.'_onlyverif') && GETPOST($fieldname.'_onlyverif', 'aZ09') == 'on') : $gpf->only_verif = 1;
             else: $gpf->only_verif = 0;
             endif;
+            if(GETPOSTISSET($fieldname.'_required_manual_verif') && GETPOST($fieldname.'_required_manual_verif', 'aZ09') == 'on') : $gpf->required_manual_verif = 1;
+            else: $gpf->required_manual_verif = 0;
+            endif;
+            if(GETPOSTISSET($fieldname.'_force_default_on_verif') && GETPOST($fieldname.'_force_default_on_verif', 'aZ09') == 'on') : $gpf->force_default_on_verif = 1;
+            else: $gpf->force_default_on_verif = 0;
+            endif;
 
             switch ($field_type):
 
@@ -384,6 +390,7 @@ endif;
                     <th class="right"><?php echo $form->textwithpicto($langs->trans('Preview'), $langs->trans('gp_parc_col_fieldpreview_help')); ?></th>
                     <th class="right"><?php echo $langs->trans('Required'); ?></th>
                     <th class="right"><?php echo $langs->trans('gp_parcfield_on_onlyverif'); ?></th>
+                    <th class="right"><?php echo $langs->trans('gp_parcfield_force_default_on_verif'); ?></th>
                     <th class="right"><?php echo $langs->trans('Position'); ?></th>
                     <th class="center"><?php echo $langs->trans('Statut'); ?></th>
                     <?php if(getDolGlobalInt('GESTIONPARC_ADVANCED_EXPORT')): ?>
@@ -407,6 +414,7 @@ endif;
                         <td class="right pgsz-optiontable-field"><?php echo $field->construct_field($gestionparc); ?></td>
                         <td class="right"><?php echo ($field->required)?$langs->trans('Yes'):$langs->trans('No'); ?></td>
                         <td class="right"><?php echo $field->only_verif?$langs->trans('Yes'):$langs->trans('No'); ?></td>
+                        <td class="right"><?php echo $field->force_default_on_verif?$langs->trans('Yes'):$langs->trans('No'); ?></td>
                         <td class="right"><?php echo $field->position; ?></td>
                         <td class="center">
                             <?php if($field->enabled) : echo '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?id='.$gestionparc->rowid.'&field_id='.$field->rowid.'&action=disable_field&token='.newToken().'">'.img_picto($langs->trans("Activated"), 'switch_on').'</a>';
@@ -481,6 +489,21 @@ endif;
                        endif; ?>></td>
                     </tr>
 
+                    <?php if(getDolGlobalInt('MAIN_MODULE_GESTIONPARC_USEVERIF') && getDolGlobalString('GESTIONPARC_VERIF_MODE') == 'manual') : ?>
+                    <tr class="dolpgs-tbody">
+                        <td class="bold pgsz-optiontable-fieldname"><?php echo $langs->trans('gp_field_required_manual_verif'); ?></td>
+                        <td class="pgsz-optiontable-fielddesc"><?php echo $langs->trans('gp_field_required_manual_verif_desc'); ?></td>
+                        <td class="right pgsz-optiontable-field"><input type="checkbox" name="newfield_required_manual_verif" <?php if(GETPOST('newfield_required_manual_verif')) : echo 'checked="checked"';
+                       endif; ?>></td>
+                    </tr>
+                    <tr class="dolpgs-tbody">
+                        <td class="bold pgsz-optiontable-fieldname"><?php echo $langs->trans('gp_field_force_default_on_verif'); ?></td>
+                        <td class="pgsz-optiontable-fielddesc"><?php echo $langs->trans('gp_field_force_default_on_verif_desc'); ?></td>
+                        <td class="right pgsz-optiontable-field"><input type="checkbox" name="newfield_force_default_on_verif" <?php if(GETPOST('newfield_force_default_on_verif')) : echo 'checked="checked"';
+                       endif; ?>></td>
+                    </tr>
+                    <?php endif; ?>
+
                 </tbody>
             </table>
             <div class="right">
@@ -535,6 +558,21 @@ endif;
                         <td class="right pgsz-optiontable-field"><input type="checkbox" name="editfield_onlyverif" <?php if(GETPOST('editfield_onlyverif') || $field_to_update->only_verif) : echo 'checked="checked"';
                        endif; ?>></td>
                     </tr>
+
+                    <?php if(getDolGlobalInt('MAIN_MODULE_GESTIONPARC_USEVERIF') && getDolGlobalString('GESTIONPARC_VERIF_MODE') == 'manual') : ?>
+                    <tr class="dolpgs-tbody">
+                        <td class="bold pgsz-optiontable-fieldname"><?php echo $langs->trans('gp_field_required_manual_verif'); ?></td>
+                        <td class="pgsz-optiontable-fielddesc"><?php echo $langs->trans('gp_field_required_manual_verif_desc'); ?></td>
+                        <td class="right pgsz-optiontable-field"><input type="checkbox" name="editfield_required_manual_verif" <?php if(GETPOST('editfield_required_manual_verif') || $field_to_update->required_manual_verif) : echo 'checked="checked"';
+                       endif; ?>></td>
+                    </tr>
+                    <tr class="dolpgs-tbody">
+                        <td class="bold pgsz-optiontable-fieldname"><?php echo $langs->trans('gp_field_force_default_on_verif'); ?></td>
+                        <td class="pgsz-optiontable-fielddesc"><?php echo $langs->trans('gp_field_force_default_on_verif_desc'); ?></td>
+                        <td class="right pgsz-optiontable-field"><input type="checkbox" name="editfield_force_default_on_verif" <?php if(GETPOST('editfield_force_default_on_verif') || $field_to_update->force_default_on_verif) : echo 'checked="checked"';
+                       endif; ?>></td>
+                    </tr>
+                    <?php endif; ?>
 
                 </tbody>
             </table>
