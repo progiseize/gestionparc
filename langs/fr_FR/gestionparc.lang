@@ -54,6 +54,7 @@ gp_verif_error_needIntercom=Vous devez saisir une raison de clôture
 gp_verif_error_needDuration=Vous devez saisir une duree d'intervention
 gp_verif_error_onclose=Erreur lors de la clôture de la vérification.
 gp_verif_success_onclose=Intervention "%s" validée
+gp_verif_success_oncancel=Verification annulée avec succès
 gp_verifline_success=Item vérifié
 gp_verifall=Marquer tous les éléments de ce parc comme vérifiés
 gp_confirmVerifAll=Merci de confirmer votre action
@@ -77,10 +78,18 @@ gp_setup_verifmodel=Détails parc sur les interventions
 gp_setup_verifmodel_desc=Détermine si les informations sur vos parcs sont renseignées sur les fiches d'interventions.
 gp_setup_verif_redirect=Redirection vers intervention
 gp_setup_verif_redirect_desc=A la validation d'une vérification, vous serez redirigé automatiquement vers la fiche d'intervention créée
+gp_setup_verif_mode=Mode de vérification
+gp_setup_verif_mode_desc=Choisissez le mode de vérification : instantanée (validation immédiate) ou manuelle (ouverture de la fiche d'édition)
+gp_setup_verif_mode_instant=Vérification instantanée
+gp_setup_verif_mode_manual=Vérification manuelle
 gp_setup_verif_usetime=Durée interventions
 gp_setup_verif_usetime_desc=En heures. Si 0, le temps peut être défini par l'utilisateur
 gp_setup_verif_details=Détails interventions
 gp_setup_verif_details_desc=Afficher les détails sur les fiches d'interventions
+gp_setup_verif_allow_verifall=Autoriser "Vérifier tout"
+gp_setup_verif_allow_verifall_desc=Active ou désactive l'option "Vérifier tout" qui permet de marquer tous les éléments d'un parc comme vérifiés en une seule action
+gp_setup_default_view=Vue par défaut
+gp_setup_default_view_desc=Définit la vue par défaut pour l'affichage des parcs (cartes ou liste)
 gp_setup_useAdvancedExport=Exports avancés
 gp_setup_useAdvancedExportDesc=Utiliser les exports avancés au format Excel
 gp_setup_AdvancedExportLineSet=Groupes de lignes
@@ -150,6 +159,10 @@ gp_field_dblist_filter=Filtre
 gp_field_dblist_filter_desc=Remplir comme ceci fieldname=value où fieldname est le nom du champ à tester
 gp_field_onlyverif=Mode vérification
 gp_field_onlyverif_desc=Ce champ sera visible uniquement en mode vérification. S'il est obligatoire, cela ne s'appliquera que dans ce mode.
+gp_field_required_manual_verif=Obligatoire en vérification manuelle
+gp_field_required_manual_verif_desc=En mode vérification manuelle, ce champ devra être obligatoirement rempli pour valider la vérification de l'élément
+gp_field_force_default_on_verif=Forcer la valeur par défaut à chaque vérification
+gp_field_force_default_on_verif_desc=Lors de l'ouverture d'une nouvelle vérification, ce champ sera automatiquement remis à sa valeur par défaut
 gp_field_date_help=Format FR ou US / dd/mm/YYYY ou YYYY_mm_dd pour la date du jour
 
 # RETOURS / ERREURS
@@ -161,6 +174,7 @@ gp_error_needSocId=Tiers inconnu
 gp_error_needItemId=Identifiant de la ligne inconnu
 gp_error_needTypeId=Type de parc non identifié
 gp_error_needActionConfirm=Action non confirmée
+gp_error_required_manual_verif=En mode vérification manuelle, les champs obligatoires doivent être remplis
 gp_setup_saved=Configuration sauvegardée
 
 # MANAGER
@@ -188,6 +202,7 @@ gp_updateparcfield_success=Champ modifié
 gp_confirmDeleteParcField=Êtes vous sûr de vouloir supprimer ce champ ? Les données enregistrées seront supprimées.
 gp_newparcfieldType=Choisir le type de champ à ajouter
 gp_parcfield_on_onlyverif= Uniquement vérification
+gp_parcfield_force_default_on_verif=Forcer déf. vérif
 gp_parcfield_viewexcel=Export Excel
 gp_parcfield_keyfield=Clé du champ
 gp_parcfield_addItem=Ajouter un élément

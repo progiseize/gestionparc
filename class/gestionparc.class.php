@@ -844,6 +844,8 @@ class GestionParcField
 
     public $only_verif = 0;
     public $view_excel = 0;
+    public $required_manual_verif = 0;
+    public $force_default_on_verif = 0;
 
     public $forbidden_words = array(
     'ACCESSIBLE','ADD','ALL','ALTER','ANALYZE','AND','AS','ASC','ASENSITIVE','AUTO_INCREMENT',
@@ -895,7 +897,7 @@ class GestionParcField
             $this->author = $user->id;
 
             $sql = "INSERT INTO ".MAIN_DB_PREFIX.$this->table_element;
-            $sql.= " (parc_id,label,field_key,type,params,required,default_value,enabled,position,author,only_verif,view_excel)";
+            $sql.= " (parc_id,label,field_key,type,params,required,default_value,enabled,position,author,only_verif,view_excel,required_manual_verif,force_default_on_verif)";
             $sql.= " VALUES (";
             $sql.= " ".$this->parc_id;
             $sql.= ", '".$this->db->escape($this->label)."'";
@@ -909,6 +911,8 @@ class GestionParcField
             $sql.= ", ".$this->author;
             $sql.= ", '".((int) $this->only_verif)."'";
             $sql.= ", '".((int) $this->view_excel)."'";
+            $sql.= ", '".((int) $this->required_manual_verif)."'";
+            $sql.= ", '".((int) $this->force_default_on_verif)."'";
             $sql.= ")";
 
             $result = $this->db->query($sql);
@@ -968,6 +972,8 @@ class GestionParcField
          $this->author = $item->author;
          $this->only_verif = intval($item->only_verif);
          $this->view_excel = intval($item->view_excel);
+         $this->required_manual_verif = intval($item->required_manual_verif);
+         $this->force_default_on_verif = intval($item->force_default_on_verif);
 
          return $this->rowid;
      endif;
@@ -1018,6 +1024,8 @@ class GestionParcField
             $sql .= ",author_maj  = '".$this->author_maj."'";
             $sql .= ",only_verif  = '".$this->only_verif."'";
             $sql .= ",view_excel  = '".$this->view_excel."'";
+            $sql .= ",required_manual_verif  = '".$this->required_manual_verif."'";
+            $sql .= ",force_default_on_verif  = '".$this->force_default_on_verif."'";
             $sql .= " WHERE rowid = ".$this->rowid;
 
             $result = $this->db->query($sql);
@@ -1196,13 +1204,21 @@ class GestionParcField
 
                     // ON VERIFIE LES VARIABLES POST OU GET
                     if(GETPOSTISSET('gpfield_'.$this->field_key)) :
-                        $compare_value = GETPOST('gpfield_'.$this->field_key);
+                        $postValue = GETPOST('gpfield_'.$this->field_key);
+                        // Si la valeur POST est vide, on la traite comme null pour forcer l'option vide
+                        $compare_value = ($postValue === '' || $postValue === null) ? null : $postValue;
                     else:
-                        if(!empty($field_value)) : $compare_value = $field_value; endif;
+                        if($field_value !== '') : $compare_value = $field_value;
+                        else: $compare_value = null;
+                        endif;
                     endif;
 
                     $output_field .= '<div class="select-wrapper">';
                         $output_field .= '<select class="gp-slct-simple" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->field_key.'" style="width:100%">';
+                        // Option vide si aucune valeur sélectionnée
+                        if($compare_value === null || $compare_value === '') :
+                            $output_field .= '<option value="" selected="selected"></option>';
+                        endif;
                         while($obj = $this->db->fetch_object($query_dblist)):
                             $is_selected = ($obj->{$tmp[1]} == $compare_value )?'selected="selected"':'';
                             $output_field .= '<option value="'.$obj->{$tmp[1]}.'" '.$is_selected.'>'.$obj->{$tmp[0]}.'</option>';
@@ -1223,7 +1239,7 @@ class GestionParcField
             else :
                 $nb_val = $this->getNextAutoNumber($socid, $gestionparc->parc_key, $this->field_key);
             endif;
-            $output_field = '<input type="number" min="1" step="1" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->field_key.'" value="'.$nb_val.'" />';
+            $output_field = '<input type="text" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->field_key.'" value="'.$nb_val.'" />';
         break;
 
         // LISTE ANNEE
@@ -1250,10 +1266,12 @@ class GestionParcField
             endif;
 
             // ON VERIFIE LES VARIABLES POST OU GET
-            if(GETPOSTISSET('gpfield_'.$this->field_key)) : $compare_value = GETPOST('gpfield_'.$this->field_key);
+            if(GETPOSTISSET('gpfield_'.$this->field_key)) :
+                $postValue = GETPOST('gpfield_'.$this->field_key);
+                $compare_value = ($postValue === '' || $postValue === null) ? null : $postValue;
             else:
-                if(!empty($field_value)) : $compare_value = $field_value;
-                else: $compare_value = $param_yeardefault; endif;
+                if($field_value !== '' && $field_value !== null) : $compare_value = $field_value;
+                else: $compare_value = ($param_yeardefault ? $param_yeardefault : null); endif;
             endif;
 
             // ON DETERMINE LA VALEUR LA PLUS GRANDE ETLA PLUS PETITE
@@ -1272,6 +1290,13 @@ class GestionParcField
 
             $output_field .= '<div class="select-wrapper">';
                 $output_field .= '<select class="'.$slct_class.'" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->field_key.'" style="width:100%">';
+                // Option vide si aucune valeur sélectionnée (nouvel élément)
+                if($compare_value === null) :
+                    $output_field .= '<option value="" selected="selected"></option>';
+                endif;
+                // Option N/C
+                $nc_selected = ($compare_value === 'N/C') ? 'selected="selected"' : '';
+                $output_field .= '<option value="N/C" '.$nc_selected.'>N/C</option>';
                 foreach($years as $year):
                     $is_selected = ($year == $compare_value )?'selected="selected"':'';
                     $output_field .= '<option value="'.$year.'" '.$is_selected.'>'.$year.'</option>';
@@ -1321,10 +1346,13 @@ class GestionParcField
             endswitch;
 
             // ON VERIFIE LES VARIABLES POST OU GET
-            if(GETPOSTISSET('gpfield_'.$this->field_key)) : $compare_value = GETPOST('gpfield_'.$this->field_key);
+            if(GETPOSTISSET('gpfield_'.$this->field_key)) :
+                $postValue = GETPOST('gpfield_'.$this->field_key);
+                // Si la valeur POST est vide, on la traite comme null pour forcer l'option vide
+                $compare_value = ($postValue === '' || $postValue === null) ? null : $postValue;
             else:
-                if(!empty($field_value)) : $compare_value = $field_value;
-                else: $compare_value = $param_default;
+                if($field_value !== '') : $compare_value = $field_value;
+                else: $compare_value = ($param_default ? $param_default : null);
                 endif;
             endif;
 
@@ -1335,6 +1363,10 @@ class GestionParcField
 
             $output_field .= '<div class="select-wrapper">';
                 $output_field .= '<select class="'.$slct_class.'" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->field_key.'" style="width:100%">';
+                // Option vide si aucune valeur sélectionnée
+                if($compare_value === null || $compare_value === '') :
+                    $output_field .= '<option value="" selected="selected"></option>';
+                endif;
                 // $this->default_value
                 foreach($param_listvalues as $lv):
                     //var_dump($lv);
@@ -1352,15 +1384,22 @@ class GestionParcField
             $list_prodserv = GestionParcGetListProdServ($this->params->prodservtags, $this->params->prodservref);
 
             // ON VERIFIE LES VARIABLES POST OU GET
-            if(GETPOSTISSET('gpfield_'.$this->field_key)) : $compare_value = GETPOST('gpfield_'.$this->field_key);
+            if(GETPOSTISSET('gpfield_'.$this->field_key)) :
+                $postValue = GETPOST('gpfield_'.$this->field_key);
+                // Si la valeur POST est vide, on la traite comme null pour forcer l'option vide
+                $compare_value = ($postValue === '' || $postValue === null) ? null : $postValue;
             else:
-                if(!empty($field_value)) : $compare_value = $field_value;
-                else: $compare_value = $this->default_value;
+                if($field_value !== '') : $compare_value = $field_value;
+                else: $compare_value = ($this->default_value ? $this->default_value : null);
                 endif;
             endif;
 
             $output_field .= '<div class="select-wrapper">';
                 $output_field .= '<select class="gp-slct-simple" name="gpfield_'.$this->field_key.'" id="gpfield_'.$this->field_key.'" style="width:100%">';
+                // Option vide si aucune valeur sélectionnée
+                if($compare_value === null || $compare_value === '') :
+                    $output_field .= '<option value="" selected="selected"></option>';
+                endif;
                 foreach($list_prodserv as $kps => $ps):
                     $is_selected = ($kps == $compare_value )?'selected="selected"':'';
                     $output_field .= '<option value="'.$kps.'" '.$is_selected.'>'.$ps.'</option>';
@@ -1419,10 +1458,10 @@ class GestionParcField
     /*****************************************************************/
     // Check if defined value exist
     /*****************************************************************/
-    public function checkAutoNumber(int $socid, $parc_key, $field_key, int $fieldvalue)
+    public function checkAutoNumber(int $socid, $parc_key, $field_key, $fieldvalue)
     {
         $sql = "SELECT rowid FROM ".MAIN_DB_PREFIX."gestionparc__".$parc_key;
-        $sql .= " WHERE ".$field_key." = ".$fieldvalue;
+        $sql .= " WHERE ".$field_key." = '".$this->db->escape($fieldvalue)."'";
         $sql .= " AND socid=".$socid;
         $res = $this->db->query($sql);
         if ($res->num_rows > 0) {
@@ -1543,6 +1582,17 @@ class GestionParcVerif
 
             foreach($parc_lines as $parcline):
                 $this->setLineCheck($socid, $parctype_infos['key'], $parcline->rowid, 0);
+
+                // Reset fields with force_default_on_verif to their default value
+                $fields = $gestionparc->list_parcFields($parctype_key);
+                foreach($fields as $field):
+                    if($field->force_default_on_verif && !empty($field->default_value)):
+                        $sql_reset = "UPDATE ".MAIN_DB_PREFIX.$this->parent_table_element."__".$parctype_infos['key'];
+                        $sql_reset .= " SET `".$field->field_key."` = '".$this->db->escape($field->default_value)."'";
+                        $sql_reset .= " WHERE rowid = '".$parcline->rowid."' AND socid = '".$socid."'";
+                        $res_reset = $this->db->query($sql_reset);
+                    endif;
+                endforeach;
             endforeach;
 
         endforeach;
@@ -2096,6 +2146,7 @@ class GestionParcVerif
                 endif;
 
                 // PARCSET BORDER
+                if ($addtosheetfile && !empty($rowbeforeheader)) :
                 $parcset_lastletterkey = $e_key;
                 $check_lastletterkey = $nb_excel_fields - 1;
                 if($check_lastletterkey > $parcset_lastletterkey):
@@ -2103,7 +2154,8 @@ class GestionParcVerif
                 endif;
                 $parcset_lastrow = $row - 1;
                 $sheet->getStyle('A'.$rowbeforeheader.':'.$letters_array[$parcset_lastletterkey].$parcset_lastrow)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM);
-
+                endif;
+                
             endforeach;
 
             if($letterkey > $e_key):

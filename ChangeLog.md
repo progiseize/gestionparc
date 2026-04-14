@@ -4,6 +4,31 @@
 [comment]: <> (Modele pdf)
 [comment]: <> (Harmoniser les constantes du module)
 
+### 1.8.3
+- NEW: Added 'Force default value on verification' option for parc fields to automatically reset specified fields to their default value when opening a new verification session
+- NEW : Added option "N/C" to the year selection list field
+
+### 1.8.2
+- MAJ: The "Numero" field now supports both text and numbers, instead of only numbers. This provides more flexibility for entering custom identifiers or alphanumeric codes for park items.
+- MAJ: The default view (card or list) for displaying parks on third parties is now configurable at the module level. The selected view is enforced for all users, improving consistency.
+- NEW: Added a "Verification mode" configuration setting, allowing admins to choose between two verification workflow options:
+  - **Instant**: Items are verified instantly upon clicking.
+  - **Manual**: Items must be manually opened in edit mode and validated, ensuring all required data is checked before verification.
+- NEW: Added an option in module configuration to enable or disable the "Verify All" button during a verification session.
+- NEW: Added a "Mandatory in manual verification" option for fields: when designing verification fields, you can now specify if a field must be completed when in manual verification mode (even if it's only visible during verification). This ensures critical information is collected during manual control processes.
+- FIX : Fix crash during verification validation when Excel export is enabled and no items have Excel export enabled on the verification.
+
+
+### 1.8.1
+- FIX : Alter existing llx_gestionparc__* tables to add missing 'position' column
+- MAJ : Add anchor system on tabs/gestionparc.php to prevent the page from scrolling back to the top on each reload when a JavaScript action is performed
+- FIX : Add missing 'gp_verif_success_oncancel' translation key
+- MAJ : UX enhancements on responsive version (mobile) of tabs/gestionparc.php (bigger clicking areas on card buttons)
+- FIX : Cards are now open by default in tabs/gestionparc.php, fixing the need to click on each one to open
+- FIX : Fix for a bug that, in certain cases, prevented the 'Parc client' tab from being displayed on third-party page
+- FIX : Fix Select2 search bars not working in formconfirm dialogs (add item popup)
+- MAJ : Improved the verification process with an AJAX workflow to avoid reloading the page on each item verification
+
 
 ### 1.8.0
 - MAJ: Limit tabs to 5
