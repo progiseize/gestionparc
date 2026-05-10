@@ -580,6 +580,64 @@ switch ($action):
 		}
 		break;
 
+	// GENERATE EXCEL EXPORT
+	case 'generate_export_excel':
+		$id_inter = GETPOST('id_inter', 'int');
+		if ($id_inter > 0) {
+			$file_path = $verification->generateExcelExport($id_inter);
+			if ($file_path && file_exists($file_path)) {
+				// Native download for compatibility with all versions (including v23+)
+				header('Content-Description: File Transfer');
+				header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+				header('Content-Disposition: attachment; filename="'.basename($file_path).'"');
+				header('Content-Transfer-Encoding: binary');
+				header('Expires: 0');
+				header('Cache-Control: must-revalidate');
+				header('Pragma: public');
+				header('Content-Length: ' . filesize($file_path));
+				
+				// Clear buffer to avoid corruption
+				if (ob_get_level()) ob_end_clean();
+				
+				readfile($file_path);
+				exit;
+
+
+				exit;
+			} else {
+				setEventMessages($langs->trans('gp_error'), null, 'errors');
+			}
+		}
+		break;
+
+	// GENERATE PDF EXPORT
+	case 'generate_export_pdf':
+		$id_inter = GETPOST('id_inter', 'int');
+		if ($id_inter > 0) {
+			$file_path = $verification->generatePDFExport($id_inter);
+			if ($file_path && file_exists($file_path)) {
+				// Native download for compatibility
+				header('Content-Description: File Transfer');
+				header('Content-Type: application/pdf');
+				header('Content-Disposition: attachment; filename="'.basename($file_path).'"');
+				header('Content-Transfer-Encoding: binary');
+				header('Expires: 0');
+				header('Cache-Control: must-revalidate');
+				header('Pragma: public');
+				header('Content-Length: ' . filesize($file_path));
+				
+				// Clear buffer to avoid corruption
+				if (ob_get_level()) ob_end_clean();
+				
+				readfile($file_path);
+				exit;
+			} else {
+				setEventMessages($langs->trans('gp_error'), null, 'errors');
+			}
+		}
+		break;
+
+
 endswitch;
 
 
@@ -714,6 +772,7 @@ if ($action == 'delete') {
 if ($action == 'verifall') {
 	$formconfirm = $form->formconfirm($_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&parcid='.GETPOST('parcid'), $langs->trans('gp_verifall'), $langs->trans('gp_confirmVerifAll'), 'verifall_confirm', '', '', 1, 0, 500, 0);
 }
+
 if ($action == 'additem') {
 
 	$formarray = array();
@@ -794,7 +853,13 @@ print '<div class="park-main-wrapper">';
 						$ficheinter->fetch($last_intervention);
 						print '<tr>';
 							print '<td>'.$langs->trans('gp_client_lastverif').'</td>';
-							print '<td><a href="'.dol_buildpath('fichinter/card.php?id='.$ficheinter->id, 1).'">'.$ficheinter->ref.'</a></td>';
+							print '<td>';
+								print '<a href="'.dol_buildpath('fichinter/card.php?id='.$ficheinter->id, 1).'">'.$ficheinter->ref.'</a>';
+								// Export Button
+								print ' <a href="javascript:void(0)" class="button smallpaddingimp small gp-btn-export gp-open-export-modal" data-id="'.$ficheinter->id.'">';
+								print '   <i class="fa fa-download"></i> ' . $langs->trans('Export');
+								print ' </a>';
+							print '</td>';
 						print '</tr>';
 					}
 					//
@@ -892,7 +957,7 @@ if ((int) $gestionparc->rowid > 0) {
 								print '<li><a class="item-action action-clone" data-cloneafter="1" href="'.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parc->parc_key.'&action=duplicate&after=1&itemid='.$linecontent->rowid.'&parcid='.$parc->rowid.'&token='.newToken().'"><span class="fas fa-clone paddingright"></span> '.$langs->trans('ToClone').'</a></li>';
 								print '<li><a class="item-action action-clone" data-cloneafter="0" href="'.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parc->parc_key.'&action=duplicate&after=0&itemid='.$linecontent->rowid.'&parcid='.$parc->rowid.'&token='.newToken().'"><span class="far fa-clone paddingright"></span> '.$langs->trans('gp_CloneAtEnd').'</a></li>';
 								print '<li class="separator"></li>';
-								print '<li><a class="item-action" href="'.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parc->parc_key.'&action=edit&itemid='.$linecontent->rowid.'&parcid='.$parc->rowid.'&token='.newToken().'#item-'.$linecontent->rowid.'"><span class="fas fa-pencil-alt paddingright"></span> '.$langs->trans('Edit').'</a></li>';
+								print '<li><a class="item-action action-edit" href="#"><span class="fas fa-pencil-alt paddingright"></span> '.$langs->trans('Edit').'</a></li>';
 								if ($user->hasRight('gestionparc', 'parc', 'delete') || $user->admin) {
 									print '<li><a class="item-action action-delete" href="'.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parc->parc_key.'&action=delete&itemid='.$linecontent->rowid.'&parcid='.$parc->rowid.'&token='.newToken().'"><span class="fas fa-trash-alt paddingright"></span> '.$langs->trans('Delete').'</a></li>';
 								}
@@ -1341,6 +1406,52 @@ $(function() {
 		});
 	});
 
+	// Open item edit form via AJAX
+	function openItemEditForm(item, fromVerif) {
+		$.ajax({
+			url: "<?php echo dol_buildpath('/gestionparc/ajax/manage-items.php', 1); ?>",
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				action: 'getitemform',
+				parckey: '<?php echo $parc->parc_key; ?>',
+				itemid: item.data('itemid'),
+				socid: <?php echo $socid; ?>,
+				ismodeverif: item.data('ismodeverif'),
+				fromverif: fromVerif ? 1 : 0,
+				token: '<?php echo newToken(); ?>',
+			},
+			success: function(response) {
+				if (response.success) {
+					item.replaceWith(response.formHtml);
+					let newItem = $('#item-' + response.itemID);
+					initGestionParcSelect2(newItem, true);
+					$([document.documentElement, document.body]).animate({
+						scrollTop: newItem.offset().top
+					}, 200);
+				} else {
+					console.error(response.error);
+				}
+			},
+			error: function(xhr, status, error) {
+				console.error(error);
+			}
+		});
+	}
+
+	// Edit element
+	$(document).on('click', 'a.action-edit', function(e) {
+		e.preventDefault();
+		let item = $(this).parents('.park-item');
+		openItemEditForm(item, false);
+	});
+
+	// Cancel edit (restore view via page reload)
+	$(document).on('click', 'a.js-cancel-edit', function(e) {
+		e.preventDefault();
+		window.location.href = '<?php echo $_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype; ?>';
+	});
+
 	// Clone element
 	$(document).on('click', 'a.action-clone', function(e) {
 		e.preventDefault();
@@ -1350,6 +1461,7 @@ $(function() {
 		let itemActions = itemHeader.find('.park-item-actions');
 		let contentBefore = itemActions.html();
 		let cloneAfter = $(this).data('cloneafter');
+		let isModeVerif = item.data('ismodeverif');
 
 		itemHeader.append('<div class="action-progress-bar progress-info"></div>');
 		itemActions.html('<div class="item-action action-cancel"><span class="fas fa-times"></span></div>');
@@ -1364,7 +1476,7 @@ $(function() {
                 	action: 'cloneitem',
                 	parckey: '<?php echo $parc->parc_key; ?>',
                 	itemid: item.data('itemid'),
-                	ismodeverif: item.data('ismodeverif'),
+                	ismodeverif: isModeVerif,
                 	token: '<?php echo newToken(); ?>',
                 	cloneafter: cloneAfter,
                 },
@@ -1378,12 +1490,10 @@ $(function() {
                 		itemHeader.find('.action-progress-bar').stop().remove();
 						itemActions.html(contentBefore);
 						itemHeader.removeClass('menu-open');
-						// Save new card as open by default
 						saveCardState(response.newElementID, true);
-						// Scroll to new element
-						$([document.documentElement, document.body]).animate({
-					        scrollTop: $("#item-" + response.newElementID).offset().top
-					    }, 200);
+
+						let newItem = $('#item-' + response.newElementID);
+						openItemEditForm(newItem, isModeVerif ? true : false);
 
                 	} else {
                 		itemHeader.find('.action-progress-bar').stop().remove();
@@ -1476,12 +1586,50 @@ $(function() {
 	                }
 	            });
 	        }
-        }).disableSelection();
+        });
     });
 });
 </script>
-<?php
 
+<!-- Custom Export Modal -->
+<div id="gp-export-modal-overlay" class="gp-modal-overlay" style="display:none;">
+	<div class="gp-modal-container">
+		<div class="gp-modal-header">
+			<h3><?php echo $langs->trans('gp_export_choice_title'); ?></h3>
+			<span class="gp-modal-close">&times;</span>
+		</div>
+		<div class="gp-modal-body">
+			<p class="gp-modal-desc">
+				<i class="fa fa-info-circle"></i> <?php echo $langs->trans('gp_export_choice_desc'); ?>
+			</p>
+			<div class="gp-modal-cards">
+				<!-- Excel -->
+				<a href="#" id="gp-btn-excel-confirm" class="gp-modal-card excel">
+					<i class="fas fa-file-excel"></i>
+					<span><?php echo $langs->trans('ExportExcel'); ?></span>
+				</a>
+				
+				<!-- PDF -->
+				<a href="#" id="gp-btn-pdf-confirm" class="gp-modal-card pdf">
+					<i class="fas fa-file-pdf"></i>
+					<span><?php echo $langs->trans('ExportPDF'); ?></span>
+				</a>
+
+			</div>
+		</div>
+		<div class="gp-modal-footer">
+			<button class="button gp-modal-close-btn"><?php echo $langs->trans('Cancel'); ?></button>
+		</div>
+	</div>
+</div>
+
+<script>
+	const GP_EXPORT_BASE_URL = '<?php echo $_SERVER['PHP_SELF'].'?socid='.$socid.'&action=generate_export_excel&token='.newToken().'&id_inter='; ?>';
+	const GP_EXPORT_PDF_BASE_URL = '<?php echo $_SERVER['PHP_SELF'].'?socid='.$socid.'&action=generate_export_pdf&token='.newToken().'&id_inter='; ?>';
+
+</script>
+
+<?php
 llxFooter();
 $db->close();
 ?>

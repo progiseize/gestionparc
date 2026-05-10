@@ -114,7 +114,7 @@ if ($action == 'cloneitem') {
 						$results['newElement'] .= '<li><a class="item-action action-clone" data-cloneafter="1" href="'.$parkUrl.'?socid='.$newElement->socid.'&parctype='.$parckey.'&action=duplicate&itemid='.$newElement->rowid.'&parcid='.$parkID.'&token='.newToken().'"><span class="fas fa-clone paddingright"></span> '.$langs->trans('ToClone').'</a></li>';
 						$results['newElement'] .= '<li><a class="item-action action-clone" data-cloneafter="0" href="'.$parkUrl.'?socid='.$newElement->socid.'&parctype='.$parckey.'&action=duplicateafter&itemid='.$newElement->rowid.'&parcid='.$parkID.'&token='.newToken().'"><span class="far fa-clone paddingright"></span> '.$langs->trans('gp_CloneAtEnd').'</a></li>';
 						$results['newElement'] .= '<li class="separator"></li>';
-						$results['newElement'] .= '<li><a class="item-action" href="'.$parkUrl.'?socid='.$newElement->socid.'&parctype='.$parckey.'&action=edit&itemid='.$newElement->rowid.'&parcid='.$parkID.'&token='.newToken().'#item-'.$newElement->rowid.'"><span class="fas fa-pencil-alt paddingright"></span> '.$langs->trans('Edit').'</a></li>';
+						$results['newElement'] .= '<li><a class="item-action action-edit" href="#"><span class="fas fa-pencil-alt paddingright"></span> '.$langs->trans('Edit').'</a></li>';
 						if ($user->hasRight('gestionparc', 'parc', 'delete') || $user->admin) {
 							$results['newElement'] .= '<li><a class="item-action action-delete" href="'.$parkUrl.'?socid='.$newElement->socid.'&parctype='.$parckey.'&action=delete&itemid='.$newElement->rowid.'&parcid='.$parkID.'&token='.newToken().'"><span class="fas fa-trash-alt paddingright"></span> '.$langs->trans('Delete').'</a></li>';
 						}
@@ -172,6 +172,81 @@ if ($action == 'cloneitem') {
 				$gestionparc->setElementPosition($parckey, $line->rowid, (int) $line->position + 1);
 			}
 		}
+	}
+}
+
+// GET ITEM EDIT FORM
+if ($action == 'getitemform') {
+	$itemid     = GETPOSTINT('itemid');
+	$socid      = GETPOSTINT('socid');
+	$isModeVerif = GETPOSTINT('ismodeverif');
+	$isFromVerif = GETPOSTINT('fromverif');
+
+	$parkID  = $gestionparc->fetch_parcType(0, 0, $parckey);
+	$element = $gestionparc->fetchElement($parckey, $itemid);
+
+	if (!isset($element->rowid)) {
+		$results['success'] = false;
+		$results['error']   = 'ItemNotFound';
+	} else {
+		$results['success'] = true;
+		$results['itemID']  = $element->rowid;
+
+		$parkUrl      = dol_buildpath('/gestionparc/tabs/gestionparc.php', 1);
+		$parkItemClass = 'park-item item-open editing';
+		if ($isModeVerif) {
+			$parkItemClass .= ($element->verif ? ' verified' : ' unverified');
+		}
+
+		$html  = '<div id="item-'.$element->rowid.'" class="'.$parkItemClass.'" data-itemid="'.$element->rowid.'" data-ismodeverif="'.($isModeVerif ? 1 : 0).'" data-long-press-delay="600">';
+			$html .= '<div class="park-item-header">';
+				$html .= '<div>';
+					$html .= '<span class="paddingright fas fa-grip-vertical opacitylow grabbable" style="padding-right:6px;"></span>';
+					$html .= 'ID #'.$element->rowid;
+					if ($isModeVerif && $element->verif) {
+						$html .= ' <span style="margin-left:4px;" class="text-success"><span class="fas fa-check-circle"></span></span>';
+					} elseif ($isModeVerif && !$element->verif) {
+						$html .= ' <span style="margin-left:4px;" class="text-warning"><span class="fas fa-exclamation-circle"></span></span>';
+					}
+				$html .= '</div>';
+				$html .= '<div class="park-item-actions"></div>';
+			$html .= '</div>';
+			$html .= '<div class="park-item-content">';
+				$html .= '<form method="POST" action="'.$parkUrl.'?socid='.$socid.'&parctype='.$parckey.'">';
+					$html .= '<input type="hidden" name="action" value="edit_item">';
+					$html .= '<input type="hidden" name="token" value="'.newToken().'">';
+					$html .= '<input type="hidden" name="parcid" value="'.$parkID.'">';
+					$html .= '<input type="hidden" name="itemid" value="'.$element->rowid.'">';
+					if ($isFromVerif) {
+						$html .= '<input type="hidden" name="fromverif" value="1">';
+					}
+					foreach ($gestionparc->fields as $parcfield) {
+						if (!$parcfield->enabled) {
+							continue;
+						}
+						if ($parcfield->only_verif && !$isModeVerif) {
+							continue;
+						}
+						$fieldValue = $element->{$parcfield->field_key};
+						if ($isFromVerif && getDolGlobalString('GESTIONPARC_VERIF_MODE') == 'manual' && $parcfield->required_manual_verif) {
+							$fieldValue = '';
+						}
+						$html .= '<div class="park-field">';
+							$html .= '<div class="park-field-label">'.$parcfield->label.'</div>';
+							$html .= '<div class="park-field-value">';
+								$html .= $parcfield->construct_field($gestionparc, $socid, $fieldValue);
+							$html .= '</div>';
+						$html .= '</div>';
+					}
+					$html .= '<div class="button-sets">';
+						$html .= '<a class="button-edit button-cancel js-cancel-edit" href="#"><span class="fas fa-times"></span></a>';
+						$html .= '<button class="button-edit button-valid" type="submit"><span class="fas fa-check"></span></button>';
+					$html .= '</div>';
+				$html .= '</form>';
+			$html .= '</div>';
+		$html .= '</div>';
+
+		$results['formHtml'] = $html;
 	}
 }
 

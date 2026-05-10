@@ -82,4 +82,38 @@ jQuery(document).ready(function(){
 	jQuery('.gestionparc-table .gestionparc-add').on('click',function(e){jQuery(this).closest('.gestionparc-table').find('.gestionparc-newline').toggle();});
 	*/
 
+	// --- CUSTOM EXPORT MODAL LOGIC ---
+	
+	// Open Modal
+	jQuery(document).on('click', '.gp-open-export-modal', function(e) {
+		e.preventDefault();
+		var interId = jQuery(this).data('id');
+		if (!interId) return;
+
+		// Update Links
+		jQuery('#gp-btn-excel-confirm').attr('href', GP_EXPORT_BASE_URL + interId);
+		jQuery('#gp-btn-pdf-confirm').attr('href', GP_EXPORT_PDF_BASE_URL + interId);
+
+		// Show Modal
+		jQuery('#gp-export-modal-overlay').fadeIn(200);
+		jQuery('body').css('overflow', 'hidden'); // Prevent scroll
+
+	});
+
+	// Close Modal (Close buttons + Confirm buttons)
+	jQuery(document).on('click', '.gp-modal-close, .gp-modal-close-btn, #gp-btn-excel-confirm, #gp-btn-pdf-confirm', function() {
+		jQuery('#gp-export-modal-overlay').fadeOut(200);
+		jQuery('body').css('overflow', '');
+	});
+
+
+
+	// Close Modal (Overlay click)
+	jQuery(document).on('click', '#gp-export-modal-overlay', function(e) {
+		if (jQuery(e.target).hasClass('gp-modal-overlay')) {
+			jQuery(this).fadeOut(200);
+			jQuery('body').css('overflow', '');
+		}
+	});
+
 });

@@ -4,6 +4,8 @@
 require_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
 require_once DOL_DOCUMENT_ROOT.'/categories/class/categorie.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/admin.lib.php';
+require_once DOL_DOCUMENT_ROOT.'/core/lib/files.lib.php';
+
 
 // ON CHARGE LA LIBRAIRIE DU MODULE
 dol_include_once('./gestionparc/lib/gestionparc.lib.php');
@@ -577,7 +579,12 @@ class GestionParc
         $sql .= ", ".(int) $user->id;
         $sql .= ", ".(int) $position;
         foreach ($this->fields as $parcfield) {
-            $sql .= ", '".$this->db->escape($element->{$parcfield->field_key})."'";
+            if ($parcfield->type === 'autonumber') {
+                $new_val = $parcfield->getNextAutoNumber((int) $element->socid, $parckey, $parcfield->field_key);
+                $sql .= ", '".$this->db->escape($new_val)."'";
+            } else {
+                $sql .= ", '".$this->db->escape($element->{$parcfield->field_key})."'";
+            }
         }
         $sql .= ")";
         $res = $this->db->query($sql);
@@ -1910,13 +1917,12 @@ class GestionParcVerif
 
     public function advancedCloseVerif($socid, $description, $duree){
 
-        // TODO Ne pas créér d'onglets XLSX si pas de champ visible
-
         global $conf, $langs, $user, $mysoc;
 
         include_once DOL_DOCUMENT_ROOT.'/fichinter/class/fichinter.class.php';
         include_once DOL_DOCUMENT_ROOT.'/core/lib/date.lib.php';
         dol_include_once('gestionparc/class/gestionparcexport.class.php');
+        dol_include_once('gestionparc/class/gestionparcpdf.class.php');
 
         $this->db->begin();
 
@@ -1924,260 +1930,19 @@ class GestionParcVerif
         $langs->load('bills');
         $langs->load('gestionparc@gestionparc');
 
-        //
         $customer = new Societe($this->db);
         $customer->fetch($socid);
 
         $intervention = new Fichinter($this->db);
         $intervention->socid = $socid;
         $intervention->description = 'Vérification Parc Client '.date('d/m/Y');
-        if(!empty($description)) : $intervention->note_public = $description; endif;
+        if (!empty($description)) { $intervention->note_public = $description; }
         $intervention->create($user);
         $lineverif_desc = '';
 
-        //
-        $gestionparc = new GestionParc($this->db);
+        $gestionparc    = new GestionParc($this->db);
         $list_parctypes = $gestionparc->list_parcType(1);
 
-        $sheetfile = new GestionParcExport($this->db);
-        $sheetfile->separator = ';';
-        $default_row_height = 16;
-
-        // ON DONNE UN NOM AU FICHIER
-        $upload_dir = $conf->ficheinter->dir_output.'/'.dol_sanitizeFileName($intervention->ref);
-        $result_creadir = dol_mkdir($upload_dir);
-        $file_title = 'rapport_verification.'.$sheetfile->extension;
-        $dir_file = $upload_dir.'/'.$file_title;
-
-        // ON OUVRE LE FICHIER
-        $sheetfile->open_file($dir_file, $langs);
-
-        // ON ECRIT LE HEADER DU FICHIER
-        $sheetfile->write_header($langs);
-
-        // ON RECUPERE LA FEUILLE ACTIVE
-        $sheet = $sheetfile->workbook->getActiveSheet();
-        $sheet->getDefaultRowDimension()->setRowHeight($default_row_height);
-        $sheetfile->workbook->getDefaultStyle()->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
-
-        $letters_array = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
-        $e_key = 4;
-
-        //
-        $tab = 0;
-        foreach($list_parctypes as $parctype_id => $parctype_infos):
-
-            $list_parcFields = $gestionparc->list_parcFields($parctype_id);
-            $pos = array();
-            $labels = array();
-            $types = array();
-            $view_excel = array();
-            $verified_lines = 0;
-            $full_description = '';
-
-            foreach($list_parcFields as $parcfield):
-                if($parcfield->enabled):
-                    $pos[$parcfield->field_key] = $parcfield->position;
-                    $labels[$parcfield->field_key] = $parcfield->label;
-                    $types[$parcfield->field_key] = $parcfield->type;
-                    $view_excel[$parcfield->field_key] = $parcfield->view_excel;
-                endif;
-            endforeach;
-            $nb_excel_fields = array_count_values($view_excel)[1];
-
-            // Si aucun champ à afficher, on passe au parc suivant
-            if(empty($pos)): continue; endif;
-
-            // Tri et récupération du parc client
-            asort($pos);
-            $parc_lines = $gestionparc->getSocParcContent($socid, $parctype_infos['key']);
-            $nb_parclines = count($parc_lines);
-
-            // Si le parc client est vide, on passe au suivant
-            if($nb_parclines <= 0): continue; endif;
-
-            $lineverif_desc .= '<br/>';
-            $lineverif_desc .= '<b><u>'.$parctype_infos['label'].'</u></b><br/>';
-
-            // On verifie si on créé un onglet
-            $addtosheetfile = 0;
-            foreach($view_excel as $keyf => $view):
-                if($view): $addtosheetfile = 1; endif;
-            endforeach;
-
-            $row = 1;
-            if($addtosheetfile):
-
-                $tab++;
-                if($tab == 1):
-                    $sheet->setTitle(strtoupper($parctype_infos['label']));
-                else:
-                    $sheetfile->workbook->createSheet();
-                    $sheetfile->workbook->setActiveSheetIndex($tab - 1);
-                    $sheet = $sheetfile->workbook->getActiveSheet();
-                    $sheet->getDefaultRowDimension()->setRowHeight($default_row_height);
-                    $sheet->setTitle(strtoupper($parctype_infos['label']));
-                endif;
-
-                // On dimensionne les colonnes
-                $sheet->getColumnDimension('A')->setWidth(15);
-                $sheet->getColumnDimension('B')->setWidth(45);
-                $sheet->getColumnDimension('C')->setWidth(20);
-                $sheet->getColumnDimension('D')->setWidth(40);
-                $sheet->getColumnDimension('E')->setWidth(40);
-            endif;
-
-            //
-            $splitconfig = getDolGlobalInt('GESTIONPARC_ADVANCED_EXPORT_LINESPLIT');
-            if($splitconfig > 0):
-                $split_parclines = array_chunk($parc_lines, $splitconfig);
-            else:
-                $split_parclines = array();
-                $split_parclines[] = $parc_lines;
-            endif;
-            $n = 0;
-
-            foreach($split_parclines as $parcset_key => $parcset): $n++;
-
-                if($addtosheetfile):
-
-                    if($n > 1): $row += 3; endif;
-
-                    // ********** CUSTOM HEADER
-                    $rowbeforeheader = $row;
-                    $rowafterheader = $sheetfile->customHeader($row,$nb_excel_fields,$customer,$parctype_infos['label']);
-                    $row = $rowafterheader;
-                    $row++;
-
-                    // ********** PARC FIELDS TABLE
-                    $letterkey = 0;
-                    foreach($pos as $key_field => $key_pos):
-
-                        if($view_excel[$key_field]):
-                            //var_dump('Add Column name : '.$key_field);
-                            $sheet->setCellValue($letters_array[$letterkey].$row,$labels[$key_field]);
-                            $sheet->getStyle($letters_array[$letterkey].$row)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-                            $sheet->getStyle($letters_array[$letterkey].$row)->getFont()->setBold(true);
-                            $alignkey = getDolGlobalString('GESTIONPARC_EXCEL_ALIGN_'.strtoupper($key_field));
-                            if($alignkey):
-                                $align = '';
-                                switch ($alignkey) {
-                                    case 'left': $align = \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT; break;
-                                    case 'center': $align = \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER; break;
-                                    case 'right': $align = \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT; break;
-                                    default: $align = \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT; break;
-                                }
-                                $sheet->getStyle($letters_array[$letterkey].$row)->getAlignment()->setHorizontal($align);
-                            endif;
-                            $letterkey++;
-                        endif;
-                    endforeach;
-                    $row++;
-
-                endif;
-
-                $letterkey = 0;
-                $parcsetline = 0;
-                foreach($parcset as $parcline):
-
-                    $letterkey = 0;
-
-                    $full_description .= '- ';
-                    foreach($pos as $key_field => $key_pos):
-                        if($types[$key_field] == 'prodserv') :
-                            require_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
-                            $p = new Product($this->db);
-                            $p->fetch($parcline->{$key_field});
-                            $fieldvalue = $p->label;
-                        else:
-                            $fieldvalue = $parcline->{$key_field};
-                        endif;
-
-                        if($view_excel[$key_field] && $addtosheetfile):
-                            $sheet->setCellValue($letters_array[$letterkey].$row,$fieldvalue);
-                            $sheet->getStyle($letters_array[$letterkey].$row)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-                            $alignkey = getDolGlobalString('GESTIONPARC_EXCEL_ALIGN_'.strtoupper($key_field));
-                            if($alignkey):
-                                $align = '';
-                                switch ($alignkey) {
-                                    case 'left': $align = \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT; break;
-                                    case 'center': $align = \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER; break;
-                                    case 'right': $align = \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT; break;
-                                    default: $align = \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT; break;
-                                }
-                                $sheet->getStyle($letters_array[$letterkey].$row)->getAlignment()->setHorizontal($align);
-                            endif;
-
-                            $letterkey++;
-                        endif;
-                        $full_description .= '<b>'.$labels[$key_field].':</b> '.$fieldvalue.' <b>/</b> ';
-                    endforeach;
-
-                    if($addtosheetfile):
-                        $row++;
-                        $parcsetline++;
-                    endif;
-
-                    if($parcline->verif):
-                        $verified_lines++;
-                        $full_description .= '<b>Vérifié: </b>Oui';
-                    else:
-                        $full_description .= '<b>Vérifié: </b>Non';
-                    endif;
-                    $full_description .= '<br/>';
-
-                endforeach;
-
-                // BORDER FOR EMPTY GROUP LINES
-                if($addtosheetfile && getDolGlobalInt('GESTIONPARC_ADVANCED_EXPORT_FILLEMPTY')):
-                    if($splitconfig > 0 && $parcsetline < $splitconfig):
-                        $splitdiff = $splitconfig - $parcsetline;
-                        for ($i=0; $i < $splitdiff; $i++):
-                            $letterkey = 0;
-                            foreach($pos as $key_field => $key_pos):
-                                if($view_excel[$key_field] && $addtosheetfile):
-                                    $sheet->getStyle($letters_array[$letterkey].$row)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-                                    $letterkey++;
-                                endif;
-                            endforeach;
-                            $row++;
-                        endfor;
-                    endif;
-                endif;
-
-                // PARCSET BORDER
-                if ($addtosheetfile && !empty($rowbeforeheader)) :
-                $parcset_lastletterkey = $e_key;
-                $check_lastletterkey = $nb_excel_fields - 1;
-                if($check_lastletterkey > $parcset_lastletterkey):
-                    $parcset_lastletterkey = $check_lastletterkey;
-                endif;
-                $parcset_lastrow = $row - 1;
-                $sheet->getStyle('A'.$rowbeforeheader.':'.$letters_array[$parcset_lastletterkey].$parcset_lastrow)->getBorders()->getOutline()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM);
-                endif;
-                
-            endforeach;
-
-            if($letterkey > $e_key):
-                $colk = $e_key + 1;
-                while($colk <= $letterkey):
-                    $sheet->getColumnDimension($letters_array[$colk])->setAutoSize(true);
-                    $colk++;
-                endwhile;
-            endif;
-
-            $lineverif_desc .= '<span style="font-size:0.85em"><b>Eléments vérifiés:</b> '.$verified_lines.'/'.$nb_parclines.'</span><br/>';
-            if(getDolGlobalInt('MAIN_MODULE_GESTIONPARC_VERIFDETAILS')):
-                $lineverif_desc .= '<span style="font-size:0.85em">'.$full_description.'</span><br/>';
-            endif;
-
-        endforeach;
-
-        //
-        $sheetfile->write_footer($langs);
-        $sheetfile->close_file();
-
-        // ON AJOUTE LA LIGNE
         $now = dol_now();
         $intervention->addline($user, $intervention->id, $lineverif_desc, $now, $duree);
 
@@ -2188,10 +1953,30 @@ class GestionParcVerif
         $intervention->array_options['options_gestionparc_isverif'] = $this->rowid;
         $intervention->updateExtraField('gestionparc_isverif');
 
-        // ON VALIDE L'INTERVENTION
+        // ON VALIDE L'INTERVENTION (la ref provisoire devient la ref définitive ici)
         $blop = $intervention->setValid($user);
 
-        // ON GENERE LE DOCUMENT
+        // Recharger l'objet pour avoir la ref définitive (ex: FI2024-0001 au lieu de PROV23)
+        $intervention->fetch($intervention->id);
+
+        // ── Générer les rapports GestionParc avec la ref définitive ──
+        $base_dir = !empty($conf->ficheinter->dir_output) ? $conf->ficheinter->dir_output : (!empty($conf->fichinter->dir_output) ? $conf->fichinter->dir_output : DOL_DATA_ROOT.'/fichinter');
+        $upload_dir = $base_dir.'/'.dol_sanitizeFileName($intervention->ref);
+        dol_mkdir($upload_dir);
+
+        $sheetfile = new GestionParcExport($this->db);
+        $excel_filename = 'rapport_'.dol_sanitizeFileName($intervention->ref).'.'.$sheetfile->extension;
+        $excel_file     = $upload_dir.'/'.$excel_filename;
+        if (file_exists($excel_file)) dol_delete_file($excel_file);
+        $this->_renderExcelReport($intervention, $list_parctypes, $customer, $excel_file);
+
+        $pdf_filename = 'rapport_'.dol_sanitizeFileName($intervention->ref).'.pdf';
+        $pdf_file     = $upload_dir.'/'.$pdf_filename;
+        if (file_exists($pdf_file)) dol_delete_file($pdf_file);
+        $report_data = $this->getReportData($list_parctypes, $customer);
+        $this->_renderPDFReport($intervention, $report_data, $customer, $pdf_file);
+
+        // ON GENERE LE DOCUMENT (PDF standard Dolibarr de la ficheinter)
         $intervention->generateDocument($this->model_pdf, $langs);
 
         // ON CLOS LE MODE VERIF
@@ -2207,6 +1992,276 @@ class GestionParcVerif
         else: $this->db->rollback(); return false;
         endif;
 
+    }
+
+    /**
+     * Standalone method to generate an Excel export for an existing intervention.
+     *
+     * @param int $fichinter_id
+     * @return string|bool Absolute path to the generated file or false on error.
+     */
+    public function generateExcelExport($fichinter_id)
+    {
+        global $db, $conf, $langs, $user;
+
+        include_once DOL_DOCUMENT_ROOT.'/fichinter/class/fichinter.class.php';
+        include_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
+        dol_include_once('gestionparc/class/gestionparcexport.class.php');
+        dol_include_once('gestionparc/class/gestionparc.class.php');
+
+        $intervention = new Fichinter($db);
+        if ($intervention->fetch($fichinter_id) <= 0) return false;
+
+        $customer = new Societe($db);
+        $customer->fetch($intervention->socid);
+
+        $gestionparc = new GestionParc($db);
+        $list_parctypes = $gestionparc->list_parcType(1);
+
+        $sheetfile = new GestionParcExport($db);
+        
+        // Prepare output dir in the intervention's document directory
+        $base_dir = !empty($conf->ficheinter->dir_output) ? $conf->ficheinter->dir_output : (!empty($conf->fichinter->dir_output) ? $conf->fichinter->dir_output : DOL_DATA_ROOT.'/fichinter');
+        $upload_dir = $base_dir.'/'.dol_sanitizeFileName($intervention->ref);
+        dol_mkdir($upload_dir);
+
+        $filename = 'rapport_'.dol_sanitizeFileName($intervention->ref).'.'.$sheetfile->extension;
+        $dir_file = $upload_dir.'/'.$filename;
+
+
+        // Force regeneration: delete existing new-style file AND legacy-style file in the CORRECT folder
+        if (file_exists($dir_file)) dol_delete_file($dir_file);
+        $legacy_file = $upload_dir.'/rapport_verification.'.$sheetfile->extension;
+        if (file_exists($legacy_file)) dol_delete_file($legacy_file);
+
+
+
+        // Render
+        if ($this->_renderExcelReport($intervention, $list_parctypes, $customer, $dir_file)) {
+            return $dir_file;
+        }
+
+        return false;
+    }
+
+    /**
+     * Standalone method to generate a PDF export for an existing intervention.
+     *
+     * @param int $fichinter_id
+     * @return string|bool Absolute path to the generated file or false on error.
+     */
+    public function generatePDFExport($fichinter_id)
+    {
+        global $db, $conf, $langs, $user;
+
+        include_once DOL_DOCUMENT_ROOT.'/fichinter/class/fichinter.class.php';
+        include_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
+        dol_include_once('gestionparc/class/gestionparcpdf.class.php');
+        dol_include_once('gestionparc/class/gestionparc.class.php');
+
+        $intervention = new Fichinter($db);
+        if ($intervention->fetch($fichinter_id) <= 0) return false;
+
+        $customer = new Societe($db);
+        $customer->fetch($intervention->socid);
+
+        $gestionparc = new GestionParc($db);
+        $list_parctypes = $gestionparc->list_parcType(1);
+
+        // Prepare output dir in the intervention's document directory
+        $base_dir = !empty($conf->ficheinter->dir_output) ? $conf->ficheinter->dir_output : (!empty($conf->fichinter->dir_output) ? $conf->fichinter->dir_output : DOL_DATA_ROOT.'/fichinter');
+        $upload_dir = $base_dir.'/'.dol_sanitizeFileName($intervention->ref);
+        dol_mkdir($upload_dir);
+
+        $filename = 'rapport_'.dol_sanitizeFileName($intervention->ref).'.pdf';
+        $dir_file = $upload_dir.'/'.$filename;
+
+        // Force regeneration
+        if (file_exists($dir_file)) dol_delete_file($dir_file);
+
+
+        // Get Shared Report Data
+        $report_data = $this->getReportData($list_parctypes, $customer);
+
+        // Render
+        if ($this->_renderPDFReport($intervention, $report_data, $customer, $dir_file)) {
+            return $dir_file;
+        }
+
+        return false;
+    }
+
+    /**
+     * Shared helper to gather all data needed for verification reports (Excel & PDF).
+     *
+     * @param array $list_parctypes
+     * @param Societe $customer
+     * @return array Structured data for rendering
+     */
+    /**
+     * Core rendering logic for the Advanced PDF Report.
+     *
+     * @param Fichinter $intervention
+     * @param array     $report_data
+     * @param Societe   $customer
+     * @param string    $dir_file
+     * @return bool
+     */
+    protected function _renderPDFReport($intervention, $report_data, $customer, $dir_file)
+    {
+        global $db, $langs, $conf;
+
+        dol_include_once('gestionparc/class/gestionparcpdf.class.php');
+        
+        $pdf = new GestionParcPDF($this->db);
+        $pdf->generate($intervention, $report_data, $customer, $dir_file);
+
+        return true;
+    }
+
+    public function getReportData($list_parctypes, $customer)
+    {
+        global $db, $langs, $conf;
+        include_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
+        
+        $gestionparc = new GestionParc($this->db);
+        $data = array(
+            'max_cols' => 4,
+            'sections' => array()
+        );
+
+        // 1. Determine max columns
+        foreach ($list_parctypes as $parctype_id => $parctype_infos) {
+            $nb = 0;
+            foreach ($gestionparc->list_parcFields($parctype_id) as $parcfield) {
+                if ($parcfield->enabled && $parcfield->view_excel) $nb++;
+            }
+            if ($nb > $data['max_cols']) $data['max_cols'] = $nb;
+        }
+
+        // 2. Gather sections data
+        foreach ($list_parctypes as $parctype_id => $parctype_infos) {
+            $section = array(
+                'label' => $parctype_infos['label'],
+                'fields' => array(),
+                'lines' => array(),
+                'stats' => array('total' => 0, 'verified' => 0)
+            );
+
+            // Fields
+            foreach ($gestionparc->list_parcFields($parctype_id) as $parcfield) {
+                if (!$parcfield->enabled || !$parcfield->view_excel) continue;
+                $section['fields'][$parcfield->field_key] = array(
+                    'label' => $parcfield->label,
+                    'type'  => $parcfield->type,
+                    'pos'   => (int) $parcfield->position,
+                    'align' => getDolGlobalString('GESTIONPARC_EXCEL_ALIGN_'.strtoupper($parcfield->field_key)),
+                );
+            }
+            if (empty($section['fields'])) continue;
+            uasort($section['fields'], function($a, $b) { return $a['pos'] - $b['pos']; });
+
+            // Lines
+            $parc_lines = $gestionparc->getSocParcContent($customer->id, $parctype_infos['key']);
+            $section['stats']['total'] = count($parc_lines);
+            if ($section['stats']['total'] <= 0) continue;
+
+            foreach ($parc_lines as $parcline) {
+                if ($parcline->verif) $section['stats']['verified']++;
+                
+                $row_values = array();
+                foreach ($section['fields'] as $fkey => $fdata) {
+                    if ($fdata['type'] == 'prodserv') {
+                        $p = new Product($this->db);
+                        $p->fetch($parcline->{$fkey});
+                        $row_values[] = $p->label;
+                    } else {
+                        $row_values[] = $parcline->{$fkey};
+                    }
+                }
+                $section['lines'][] = $row_values;
+            }
+
+            $data['sections'][] = $section;
+        }
+
+        return $data;
+    }
+
+
+    /**
+     * Core rendering logic for the Advanced Excel Report.
+     *
+     * @param Fichinter $intervention
+     * @param array     $list_parctypes
+     * @param Societe   $customer
+     * @param string    $dir_file
+     * @return bool
+     */
+    protected function _renderExcelReport($intervention, $list_parctypes, $customer, $dir_file)
+    {
+        global $db, $langs, $conf;
+
+        $langs->loadLangs(array('companies', 'bills'));
+
+        dol_include_once('gestionparc/class/gestionparcexport.class.php');
+        $sheetfile = new GestionParcExport($this->db);
+        
+        $report_data = $this->getReportData($list_parctypes, $customer);
+        $max_cols_global = $report_data['max_cols'];
+
+        
+        $sheetfile->open_file($dir_file, $langs);
+        $sheetfile->write_header($langs);
+
+        // ── 2. Create "RAPPORT COMPLET" Sheet ──
+        $tab = 1;
+        $full_sheet = $sheetfile->workbook->getActiveSheet();
+        $sheetfile->setupSheet($full_sheet, $langs->transnoentities('gp_advexp_fullreport'), $max_cols_global);
+        $inter_date = !empty($intervention->dateo) ? $intervention->dateo : (!empty($intervention->datec) ? $intervention->datec : null);
+        $full_row = $sheetfile->customHeader($full_sheet, 1, $max_cols_global, $customer, '', $inter_date);
+
+        foreach ($report_data['sections'] as $section) {
+            // Render Individual Worksheets
+            $col_labels = array();
+            $align_map  = array();
+            $c_idx = 0;
+            foreach ($section['fields'] as $fdata) {
+                $col_labels[] = $fdata['label'];
+                if (!empty($fdata['align'])) $align_map[$c_idx] = $fdata['align'];
+                $c_idx++;
+            }
+
+            $nb_data_cols = count($col_labels);
+            $tab++;
+            $sheetfile->workbook->createSheet();
+            $sheetfile->workbook->setActiveSheetIndex($tab - 1);
+            $sheet = $sheetfile->workbook->getActiveSheet();
+            $sheetfile->setupSheet($sheet, $section['label'], $nb_data_cols);
+
+            $row = $sheetfile->customHeader($sheet, 1, $nb_data_cols, $customer, $section['label'], $inter_date);
+            $row = $sheetfile->writeColumnHeaders($sheet, $row, $col_labels);
+
+            // Render on Consolidated Sheet (each section uses its own column count — no padding)
+            $full_row = $sheetfile->writeSectionTitle($full_sheet, $full_row, $nb_data_cols, $section['label']);
+            $full_row = $sheetfile->writeColumnHeaders($full_sheet, $full_row, $col_labels);
+
+            foreach ($section['lines'] as $l_idx => $values) {
+                $isOdd = ($l_idx % 2 === 1);
+                $row      = $sheetfile->writeDataRow($sheet, $row, $values, $isOdd, $align_map);
+                $full_row = $sheetfile->writeDataRow($full_sheet, $full_row, $values, $isOdd, $align_map);
+            }
+
+            $row      = $sheetfile->writeSummaryRow($sheet, $row, $section['stats']['verified'], $section['stats']['total'], $nb_data_cols);
+            $full_row = $sheetfile->writeSummaryRow($full_sheet, $full_row, $section['stats']['verified'], $section['stats']['total'], $nb_data_cols);
+            $full_row += 2;
+        }
+
+
+        $sheetfile->write_footer($langs);
+        $sheetfile->close_file();
+
+        return true;
     }
 
     public function getLastVerif($socid)
