@@ -213,3 +213,11 @@ gp_advexp_datevisit=Date of Inspection
 gp_advexp_user=Technician's Name
 gp_advexp_commercial=Sales Representative's Name
 gp_advexp_parctype=Component Type
+gp_advexp_fullreport=FULL REPORT
+
+# EXPORT MODAL
+gp_export_choice_title=Choose export format
+gp_export_choice_desc=Select the document format to generate for this intervention.
+gp_export_success=Report generated successfully
+ExportExcel=Export Excel
+ExportPDF=Export PDF

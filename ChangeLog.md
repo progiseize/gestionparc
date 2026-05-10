@@ -4,6 +4,12 @@
 [comment]: <> (Modele pdf)
 [comment]: <> (Harmoniser les constantes du module)
 
+### 1.8.4
+- NEW : Card edit mode during verifications is now loaded via AJAX to prevent page reloads.
+- NEW : Cloned cards now automatically open in edit mode to easily apply changes.
+- FIX : Added auto-incrementation for the autonumber field when cloning cards.
+- NEW : Added custom export templates (Excel & PDF)
+
 ### 1.8.3
 - NEW: Added 'Force default value on verification' option for parc fields to automatically reset specified fields to their default value when opening a new verification session
 - NEW : Added option "N/C" to the year selection list field

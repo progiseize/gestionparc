@@ -60,6 +60,130 @@ class ActionsGestionParc
         return 0;
     }
 
+    /**
+     * Hook on fichinter card: handle gp_export_excel / gp_export_pdf actions.
+     * Generates the file and saves it to the fichinter document directory (no download).
+     */
+    public function doActions(&$parameters, &$object, &$action, $hookmanager)
+    {
+        global $langs, $conf, $user, $db;
+
+        $contexts = explode(':', $parameters['context']);
+        if (!in_array('interventioncard', $contexts)) return 0;
+
+        if (!isModEnabled('gestionparc') || !getDolGlobalInt('MAIN_MODULE_GESTIONPARC_USEVERIF')) return 0;
+
+        if ($action !== 'gp_export_excel' && $action !== 'gp_export_pdf') return 0;
+
+        $langs->load('gestionparc@gestionparc');
+
+        if (GETPOST('token') != $_SESSION['token']) {
+            setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings');
+            return 0;
+        }
+
+        $fichinter_id = (int) $object->id;
+        dol_include_once('gestionparc/class/gestionparc.class.php');
+        $verification = new GestionParcVerif($db);
+
+        if ($action === 'gp_export_excel') {
+            $file_path = $verification->generateExcelExport($fichinter_id);
+        } else {
+            $file_path = $verification->generatePDFExport($fichinter_id);
+        }
+
+        if ($file_path && file_exists($file_path)) {
+            setEventMessages($langs->trans('gp_export_success'), null, 'mesgs');
+        } else {
+            setEventMessages($langs->trans('gp_error'), null, 'errors');
+        }
+
+        header('Location: '.dol_buildpath('fichinter/card.php?id='.$fichinter_id, 1));
+        exit;
+    }
+
+    /**
+     * Hook on fichinter card: inject the Export Verif button + modal when a
+     * closed GestionParc verification is linked to the fichinter.
+     */
+    public function addMoreActionsButtons(&$parameters, &$object, &$action, $hookmanager)
+    {
+        global $langs, $conf, $user, $db;
+
+        $contexts = explode(':', $parameters['context']);
+        if (!in_array('interventioncard', $contexts)) return 0;
+
+        if (!isModEnabled('gestionparc') || !getDolGlobalInt('MAIN_MODULE_GESTIONPARC_USEVERIF')) return 0;
+
+        $langs->load('gestionparc@gestionparc');
+
+        // Only show button if this fichinter has a closed GestionParc verification
+        $sql = "SELECT rowid FROM ".MAIN_DB_PREFIX."gestionparc_verifs"
+             . " WHERE fichinter_id = ".(int)$object->id." AND is_close = 1"
+             . " ORDER BY rowid DESC LIMIT 1";
+        $res = $db->query($sql);
+        if (!$res || $res->num_rows == 0) return 0;
+
+        $excel_url = dol_buildpath('fichinter/card.php', 1).'?id='.$object->id.'&action=gp_export_excel&token='.newToken();
+        $pdf_url   = dol_buildpath('fichinter/card.php', 1).'?id='.$object->id.'&action=gp_export_pdf&token='.newToken();
+
+        // --- CSS (not loaded on fichinter card by default) ---
+        print '<link rel="stylesheet" href="'.dol_buildpath('/gestionparc/assets/css/gestionparc.css', 1).'">';
+
+        // --- Export button ---
+        print '<div class="inline-block divButAction">';
+        print '<a class="butAction gp-open-export-modal" href="javascript:void(0)"'
+            . ' data-excel-url="'.dol_escape_htmltag($excel_url).'"'
+            . ' data-pdf-url="'.dol_escape_htmltag($pdf_url).'">';
+        print '<i class="fa fa-file-export"></i> '.dol_escape_htmltag($langs->trans('Export'));
+        print '</a>';
+        print '</div>';
+
+        // --- Modal ---
+        print '<div id="gp-export-modal-overlay" class="gp-modal-overlay" style="display:none;">';
+        print '  <div class="gp-modal-container">';
+        print '    <div class="gp-modal-header">';
+        print '      <h3>'.dol_escape_htmltag($langs->trans('gp_export_choice_title')).'</h3>';
+        print '      <span class="gp-modal-close">&times;</span>';
+        print '    </div>';
+        print '    <div class="gp-modal-body">';
+        print '      <p class="gp-modal-desc"><i class="fa fa-info-circle"></i> '.dol_escape_htmltag($langs->trans('gp_export_choice_desc')).'</p>';
+        print '      <div class="gp-modal-cards">';
+        print '        <a href="#" id="gp-fichinter-btn-excel" class="gp-modal-card excel">';
+        print '          <i class="fas fa-file-excel"></i><span>'.dol_escape_htmltag($langs->trans('ExportExcel')).'</span>';
+        print '        </a>';
+        print '        <a href="#" id="gp-fichinter-btn-pdf" class="gp-modal-card pdf">';
+        print '          <i class="fas fa-file-pdf"></i><span>'.dol_escape_htmltag($langs->trans('ExportPDF')).'</span>';
+        print '        </a>';
+        print '      </div>';
+        print '    </div>';
+        print '    <div class="gp-modal-footer">';
+        print '      <button class="button gp-modal-close-btn">'.dol_escape_htmltag($langs->trans('Cancel')).'</button>';
+        print '    </div>';
+        print '  </div>';
+        print '</div>';
+
+        // --- JS ---
+        print '<script>';
+        print '(function(){';
+        print '  var overlay = document.getElementById("gp-export-modal-overlay");';
+        print '  document.querySelectorAll(".gp-open-export-modal").forEach(function(btn){';
+        print '    btn.addEventListener("click", function(){';
+        print '      document.getElementById("gp-fichinter-btn-excel").href = this.dataset.excelUrl;';
+        print '      document.getElementById("gp-fichinter-btn-pdf").href = this.dataset.pdfUrl;';
+        print '      overlay.style.display = "flex";';
+        print '    });';
+        print '  });';
+        print '  document.querySelectorAll(".gp-modal-close,.gp-modal-close-btn").forEach(function(el){';
+        print '    el.addEventListener("click", function(){ overlay.style.display = "none"; });';
+        print '  });';
+        print '  overlay.addEventListener("click", function(e){ if(e.target===overlay) overlay.style.display="none"; });';
+        print '})();';
+        print '</script>';
+
+        return 0;
+    }
+
     public function replaceThirdparty(&$parameters, &$object, &$action, $hookmanager)
     {
 
