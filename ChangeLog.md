@@ -4,6 +4,30 @@
 [comment]: <> (Modele pdf)
 [comment]: <> (Harmoniser les constantes du module)
 
+### 1.9.0
+- NEW : Revert mode on verifications - a checked component can be un-checked in one click during an ongoing verification (the green "checked" button turns into "undo check" on hover); the verified counter is kept in sync. Works in card and list views, instant and manual modes.
+- NEW : When closing a verification with components left uncontrolled, a Yes/No confirmation pop-up ("Warning, some components have not been controlled. Do you want to continue?") is shown.
+- MAJ : PDF export now starts each component (organe) on a new page, so a table is no longer split across pages when avoidable (a single table larger than one page still spans, by necessity); the first component stays under the header on page 1.
+- FIX : PDF export - a table spanning several pages now keeps its navy outer border on every page and repeats the column headers on each page (previously the border was missing on large tables).
+- FIX : PDF export - row heights now match the actual rendering (computed from the real number of wrapped lines), fixing truncated cells, uneven row spacing and a stray artifact left under a table at a page break.
+- FIX : Excel export - long header labels (e.g. "Référentiel de conformité") now wrap inside the label column instead of being cut.
+- MAJ : Excel export - all tables now share the same fixed total width (columns distributed to a constant width instead of auto-sized), including the consolidated sheet where shorter components fill the width by merging their last column. Text columns wrap and row height adapts to the content, so nothing is cut or overflows.
+- NEW : Each verification now stores a snapshot of its park data at close time; Excel/PDF exports of a past verification reflect the data as it was then, no longer the current live data. Verifications closed before this version (no snapshot) still fall back to live data.
+- NEW : Repair page can rebuild snapshots for past verifications from the historical XLSX reports stored in each intervention (preview + apply); exports of old verifications then show the original header (technician/sales rep/client) and items. Also available via scripts/backport_snapshots.php.
+- MAJ : "Force default value on verification" now also resets a field whose default value is empty (the field is cleared) - e.g. to wipe the "Observations" field at each new verification.
+- NEW : Park items are now displayed in numbering order (autonumber field) by default; only items moved manually (drag & drop) keep their fixed position. New items are inserted at their numbering position instead of at the end. Dragging a pinned item back to its numbering position automatically un-pins it.
+- MAJ : Migration preserves existing manual arrangements - parcs whose saved order already matched their creation order are switched to numbering order, while parcs that had been reordered manually keep their layout (items pinned).
+- NEW : "Compliance framework" field (APSAD R4 / Code du Travail) added to the thirdparty GestionParc tab, editable inline (pencil).
+- NEW : At least one compliance framework must be checked on the thirdparty to close (validate) a verification.
+- NEW : The compliance framework is snapshotted onto the intervention extrafield at verification close (visible/editable on the intervention card).
+- MAJ : Excel and PDF exports now display the compliance framework at the bottom of the header (read from the intervention snapshot, fallback to the thirdparty).
+- NEW : "Plan type" field (Plan de sécurité / Plan d'intervention / Plan d'évacuation / Sans) with the exact same behaviour as the compliance framework (thirdparty tab, validation requirement, intervention snapshot, exports header).
+- NEW : Sales representative and technician are now stored as intervention extrafields, set at verification close and editable inline (pencil) per field from the GestionParc tab and the intervention card.
+- NEW : Defaults at verification start - sales rep and technician are both carried over from the previous intervention (so launching a verification no longer overrides the displayed choice); fallback to the thirdparty's current sales rep / the current user when empty.
+- NEW : Existing interventions are backfilled (empty values only) - technician from the validator, sales rep from the thirdparty's current sales rep.
+- MAJ : Excel and PDF exports now rely on these stored values (fallback to legacy behaviour when empty).
+- FIX : Export title now shows the intervention year instead of the current year.
+
 ### 1.8.4
 - NEW : Card edit mode during verifications is now loaded via AJAX to prevent page reloads.
 - NEW : Cloned cards now automatically open in edit mode to easily apply changes.
@@ -154,4 +178,4 @@
 ### 1.0 (16/03/2022)
 - Module permettant de créer des parcs clients et créer des interventions sur ces parcs.
 - Traductible  100%
-- Box Accueil : Suivi du nombre de parcs, nombre total d'items 
+- Box Accueil : Suivi du nombre de parcs, nombre total d'items

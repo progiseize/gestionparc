@@ -33,6 +33,8 @@ if (GETPOST('token') != $_SESSION['token']) {
 $gestionparc = new GestionParc($db);
 if (isModEnabled('intervention')) {
 	$verification = new GestionParcVerif($db);
+	// Charge la vérif en cours pour que rowid soit défini (compteur nb_verified à jour)
+	$verification->isVerif($socid);
 }
 
 header('Content-Type: application/json');
@@ -68,6 +70,23 @@ switch ($action) {
 			} else {
 				echo json_encode(array('success' => false, 'error' => 'Verification failed'));
 			}
+		}
+		break;
+
+	case 'set_line_unverify':
+		$error = 0;
+		if (empty($socid))  { echo json_encode(array('success' => false, 'error' => 'Missing socid')); exit; }
+		if (empty($itemid)) { echo json_encode(array('success' => false, 'error' => 'Missing itemid')); exit; }
+		if (empty($parcid)) { echo json_encode(array('success' => false, 'error' => 'Missing parcid')); exit; }
+
+		$gestionparc->fetch_parcType($parcid);
+		if ($verification->setLineCheck($socid, $gestionparc->parc_key, $itemid, 0, $verification->rowid)) {
+			echo json_encode(array(
+				'success' => true,
+				'message' => $langs->trans('gp_verifline_reverted')
+			));
+		} else {
+			echo json_encode(array('success' => false, 'error' => 'Revert failed'));
 		}
 		break;
 

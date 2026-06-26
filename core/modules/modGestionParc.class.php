@@ -67,7 +67,7 @@ class modGestionParc extends DolibarrModules
         $this->editor_url = 'https://progiseize.fr';
 
         // Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-        $this->version = '1.8.4';
+        $this->version = '1.9.0';
         $this->url_last_version ="	https://modules-api.progiseize.fr/modules/version/300320";
 
         // Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
@@ -378,10 +378,27 @@ class modGestionParc extends DolibarrModules
     public function init($options='')
     {
 
-        global $conf, $db;
+        global $conf, $db, $langs;
         //dolibarr_set_const($db, "CHECKLASTVERSION_EXTERNALMODULE", '1', 'int', 0, '', $conf->entity);
 
         $this->_load_tables('/gestionparc/sql/');
+
+        // Provisionne / migre les extrafields fichinter de vérification + backfill (si le mode verif est actif)
+        if (getDolGlobalInt('MAIN_MODULE_GESTIONPARC_USEVERIF')) {
+            dol_include_once('/gestionparc/class/gestionparc.class.php');
+            $verifsetup = new GestionParcVerif($db);
+            $verifsetup->ensureInterventionExtrafields();
+            $verifsetup->ensureVerifSnapshotColumn();
+        }
+
+        // Provisionne l'extrafield societe "Référentiel de conformité" (indépendant du mode vérif)
+        dol_include_once('/gestionparc/class/gestionparc.class.php');
+        $gpsetup = new GestionParcVerif($db);
+        $gpsetup->ensureSocieteExtrafields();
+
+        // Ajoute la colonne manual_position aux tables par-parc (tri par défaut sur la numérotation)
+        $gpparc = new GestionParc($db);
+        $gpparc->ensureManualPositionColumn();
 
         $sql = array();
         return $this->_init($sql, $options);
@@ -402,4 +419,3 @@ class modGestionParc extends DolibarrModules
     }
 
 }
-

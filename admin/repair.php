@@ -114,6 +114,20 @@ if($action == 'repairmoduletable') :
     endforeach;
 endif;
 
+// BACKPORT DES SNAPSHOTS DE VERIFICATION (a partir des rapports XLSX historiques)
+$backport_stats = null;
+$backport_commit = false;
+if ($action == 'backport_dryrun' || $action == 'backport_commit') :
+    if (GETPOST('token') != $_SESSION['token']) :
+        setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings');
+    else:
+        $backport_commit = ($action == 'backport_commit');
+        $backport_force = GETPOST('backport_force') ? true : false;
+        $gpverif_bp = new GestionParcVerif($db);
+        $backport_stats = $gpverif_bp->backportSnapshots($backport_commit, $backport_force);
+    endif;
+endif;
+
 /***************************************************
 * VIEW
 ****************************************************/
@@ -169,6 +183,50 @@ llxHeader('', $langs->transnoentities('gp_repairTitle').' :: '.$langs->transnoen
     <?php if($action == 'repairmoduletable' && $success == count($array_repair)) : ?>
         <div class="dolpgs-messagebox box-success right"><?php echo $langs->trans('gp_repairSuccessMsg'); ?> <i class="paddingleft fas fa-check"></i></div>
     <?php endif; ?>
+
+    <!-- BACKPORT DES SNAPSHOTS DE VERIFICATION -->
+    <form enctype="multipart/form-data" action="<?php print $_SERVER["PHP_SELF"]; ?>" method="post" style="margin-top:24px;">
+        <input type="hidden" name="token" value="<?php echo newToken(); ?>">
+
+        <table class="dolpgs-table">
+            <tbody>
+                <tr class="dolpgs-thead noborderside">
+                    <th colspan="2"><?php echo $langs->trans('gp_backportTitle'); ?></th>
+                    <th class="right" style="white-space:nowrap;">
+                        <button type="submit" name="action" value="backport_dryrun" class="dolpgs-btn btn-sm"><?php echo $langs->trans('gp_backportDryRun'); ?></button>
+                        <button type="submit" name="action" value="backport_commit" class="dolpgs-btn btn-primary btn-sm"><?php echo $langs->trans('gp_backportRun'); ?></button>
+                    </th>
+                </tr>
+                <tr class="dolpgs-tbody">
+                    <td colspan="3" class="pgsz-optiontable-fielddesc"><?php echo $langs->trans('gp_backportDesc'); ?>
+                        <label style="display:inline-block;margin-left:12px;"><input type="checkbox" name="backport_force" value="1"> <?php echo $langs->trans('gp_backportForce'); ?></label>
+                    </td>
+                </tr>
+                <?php if(is_array($backport_stats)) :
+                    $bp_labels = array(
+                        'total'=>'gp_backportStatTotal','parsed'=>'gp_backportStatParsed','written'=>'gp_backportStatWritten',
+                        'skipped_has'=>'gp_backportStatSkipped','no_xlsx'=>'gp_backportStatNoXlsx','parse_empty'=>'gp_backportStatEmpty','suspect_mtime'=>'gp_backportStatSuspect',
+                    );
+                    foreach($bp_labels as $k=>$lk) : ?>
+                        <tr class="dolpgs-tbody">
+                            <td class="bold pgsz-optiontable-fieldname"><?php echo $langs->trans($lk); ?></td>
+                            <td class="pgsz-optiontable-fielddesc"><?php echo (int) $backport_stats[$k]; ?></td>
+                            <td class="right pgsz-optiontable-field"></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    <tr class="dolpgs-tbody">
+                        <td colspan="3" class="right">
+                            <?php if($backport_commit) : ?>
+                                <span class="dolpgs-color-success bold"><?php echo $langs->trans('gp_backportDoneCommit', (int) $backport_stats['written']); ?> <i class="fas fa-check"></i></span>
+                            <?php else: ?>
+                                <span class="opacitymedium"><?php echo $langs->trans('gp_backportDoneDryRun'); ?></span>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </form>
 
 </div>
 

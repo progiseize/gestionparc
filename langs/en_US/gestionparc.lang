@@ -25,6 +25,10 @@ gestionparc_desclong=Customer Asset Management. Assign and model data related to
 # MODELE
 gp_model_desc=Model supporting asset management verifications
 gp_extrafieldFichInter_isverif=Verification identifier
+gp_extrafieldFichInter_commercial=Sales representative
+gp_extrafieldFichInter_intervenant=Technician
+gp_referentiel_conformite=Compliance framework
+gp_typedeplan=Plan type
 
 # BOX
 gp_boxNb_title=Customer Base Management
@@ -38,10 +42,15 @@ gp_clientparc=Customer Base
 gp_showEmptyParcs=Show empty bases
 gp_client_verifmode=Verification mode
 gp_client_lastverif=Last verification
+gp_users_block_title=Sales rep. / Technician
+gp_users_saved=Sales representative / technician saved
 gp_verifcom=Add a comment on the intervention
 gp_verif_open=Activate verification
 gp_verif_close=Close verification
 gp_verif_cancel=Cancel verification
+gp_verif_uncontrolled_title=Uncontrolled components
+gp_verif_confirm_uncontrolled=Some components have not been controlled. Do you still want to close the verification?
+gp_verif_continue_anyway=Continue anyway
 gp_verif_label=Verification
 gp_product_unknown=Unknown product
 gp_empty_parclist_message=It appears that no bases are active for this third party
@@ -52,10 +61,15 @@ GestionParcListView=List view
 gp_verif_error_twice=Two verification instances are open for this third party.
 gp_verif_error_needIntercom=You must enter a reason for closure.
 gp_verif_error_needDuration=You must enter an intervention duration.
+gp_verif_error_needSocField=You must select at least one option for "%s" on the thirdparty before validating the intervention.
 gp_verif_error_onclose=Error closing the verification.
 gp_verif_success_onclose=Intervention "%s" validated.
 gp_verif_success_oncancel=Verification successfully cancelled
 gp_verifline_success=Item verified.
+gp_verifline_reverted=Check reverted.
+gp_verif_verify=Verify
+gp_verif_verified=Component checked
+gp_verif_revert=Undo check
 gp_verifall=Mark all items in this portfolio as verified.
 gp_confirmVerifAll=Please confirm your action.
 
@@ -206,6 +220,20 @@ gp_repairTitle=Repair - Fleet Management
 gp_repairText=Click this button to repair the tables.
 gp_repairButton=Repair
 gp_repairSuccessMsg=Full Repair
+gp_backportTitle=Rebuild verification history (snapshots)
+gp_backportDesc=Rebuilds the frozen data (header + items) of closed verifications from the XLSX reports already generated in each intervention, so their export reflects the original state. Run the preview first (nothing is written), then apply.
+gp_backportForce=Overwrite existing snapshots
+gp_backportDryRun=Preview (dry-run)
+gp_backportRun=Apply
+gp_backportStatTotal=Closed verifications scanned
+gp_backportStatParsed=XLSX reports read successfully
+gp_backportStatWritten=Snapshots written
+gp_backportStatSkipped=Skipped (snapshot already present)
+gp_backportStatNoXlsx=No XLSX report (older CSV verifications)
+gp_backportStatEmpty=Empty / unreadable reports
+gp_backportStatSuspect=Suspect XLSX (modified after close)
+gp_backportDoneCommit=%d snapshot(s) written
+gp_backportDoneDryRun=Preview done - nothing written. Click "Apply" to save.
 
 # EXPORT
 gp_advexp_title=VERIFICATION REPORT

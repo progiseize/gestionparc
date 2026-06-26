@@ -91,6 +91,81 @@ switch ($action):
 		}
 		break;
 
+	// ENREGISTRER UN CHAMP (commercial ou intervenant) - campagne en cours ou dernière intervention
+	case 'gp_set_user':
+
+		if (GETPOST('token') != $_SESSION['token']) {
+			$error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings');
+		}
+		if (!$user->hasRight('gestionparc', 'parc', 'verif') && !$user->admin) {
+			$error++; setEventMessages($langs->trans('NotEnoughPermissions'), null, 'warnings');
+		}
+
+		$gp_field = GETPOST('gp_field', 'aZ09');
+		if (!in_array($gp_field, array('commercial', 'intervenant'))) {
+			$error++;
+		}
+
+		if (!$error) {
+			$gp_value = GETPOST('gp_value', 'int');
+			$target_verif = GETPOST('gp_verif_id', 'int');
+			$target_fichinter = GETPOST('gp_fichinter_id', 'int');
+
+			if ($target_verif > 0) {
+				$verification->updateVerifUserField($target_verif, $gp_field, $gp_value);
+			} elseif ($target_fichinter > 0) {
+				$fi = new Fichinter($db);
+				if ($fi->fetch($target_fichinter) > 0) {
+					$fi->fetch_optionals();
+					$fi->array_options['options_gestionparc_'.$gp_field] = $gp_value ? $gp_value : '';
+					$fi->updateExtraField('gestionparc_'.$gp_field);
+				}
+			}
+			setEventMessages($langs->trans('gp_users_saved'), null, 'mesgs');
+			header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype);
+			exit;
+		}
+		break;
+
+	// ENREGISTRER UN CHAMP PERSONNALISE TIERS (extrafield societe, cases à cocher)
+	case 'gp_set_socfield':
+
+		if (GETPOST('token') != $_SESSION['token']) {
+			$error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings');
+		}
+		if (!$user->hasRight('gestionparc', 'parc', 'write') && !$user->admin) {
+			$error++; setEventMessages($langs->trans('NotEnoughPermissions'), null, 'warnings');
+		}
+		$gp_fieldkey = GETPOST('gp_fieldkey', 'aZ09');
+		$gp_socfields = GestionParcVerif::getCustomSocFields();
+		if (!isset($gp_socfields[$gp_fieldkey])) {
+			$error++; setEventMessages($langs->trans('gp_error'), null, 'warnings');
+		}
+
+		if (!$error) {
+			// S'assure que les extrafields existent (upgrade-safe)
+			$gpverif_ensure = new GestionParcVerif($db);
+			$gpverif_ensure->ensureSocieteExtrafields();
+
+			$valid_keys = array_keys($gp_socfields[$gp_fieldkey]['options']);
+			$posted = GETPOST('gp_socfield', 'array');
+			$selected = array();
+			foreach ((array) $posted as $optk) {
+				if (in_array($optk, $valid_keys, true)) $selected[] = $optk;
+			}
+
+			$object->fetch_optionals();
+			$object->array_options['options_'.$gp_fieldkey] = implode(',', $selected);
+			if ($object->updateExtraField($gp_fieldkey) > 0) {
+				setEventMessages($langs->trans('RecordSaved'), null, 'mesgs');
+			} else {
+				setEventMessages($object->error, null, 'errors');
+			}
+			header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype);
+			exit;
+		}
+		break;
+
 	// CLOSE VERIF
 	case 'close_verif':
 
@@ -117,6 +192,17 @@ switch ($action):
 			if ($t2s <= 0) {
 				$error++; $action = 'initclose_verif';
 				setEventMessages($langs->trans('gp_verif_error_needDuration'), null, 'errors');
+			}
+
+			// Au moins une case doit être cochée sur les champs requis pour valider l'intervention
+			$object->fetch_optionals();
+			foreach (GestionParcVerif::getCustomSocFields() as $gp_fk => $gp_fdef) {
+				if (empty($gp_fdef['required'])) continue;
+				$gp_val = isset($object->array_options['options_'.$gp_fk]) ? trim((string) $object->array_options['options_'.$gp_fk]) : '';
+				if ($gp_val === '') {
+					$error++; $action = 'initclose_verif';
+					setEventMessages($langs->trans('gp_verif_error_needSocField', $langs->transnoentities($gp_fdef['label'])), null, 'errors');
+				}
 			}
 
 			if (!$error) {
@@ -227,6 +313,28 @@ switch ($action):
 			if ($verification->setLineCheck($socid, $gestionparc->parc_key, GETPOST('itemid'), 1, $verification->rowid)) {
 				setEventMessages($langs->trans('gp_verifline_success'), null, 'mesgs');
 				// Redirect to keep position
+				header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'#item-'.GETPOST('itemid'));
+				exit;
+			} else {
+				$error++; setEventMessages($langs->trans('gp_error'), null, 'warnings');
+			}
+		}
+		break;
+
+	// REVERT : revenir en arrière sur le contrôle d'une ligne (dévérifier)
+	case 'set_line_unverify':
+
+		if (GETPOST('token') != $_SESSION['token']) {
+			$error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings');
+		}
+		if (empty(GETPOST('socid')))  { $error++; setEventMessages($langs->trans('gp_error_needSocId'), null, 'warnings'); }
+		if (empty(GETPOST('itemid'))) { $error++; setEventMessages($langs->trans('gp_error_needItemId'), null, 'warnings'); }
+		if (empty(GETPOST('parcid'))) { $error++; setEventMessages($langs->trans('gp_error_needTypeId'), null, 'warnings'); }
+
+		if (!$error) {
+			$gestionparc->fetch_parcType(GETPOST('parcid'));
+			if ($verification->setLineCheck($socid, $gestionparc->parc_key, GETPOST('itemid'), 0, $verification->rowid)) {
+				setEventMessages($langs->trans('gp_verifline_reverted'), null, 'mesgs');
 				header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'#item-'.GETPOST('itemid'));
 				exit;
 			} else {
@@ -804,6 +912,31 @@ print '<div class="park-main-wrapper">';
 	$linkback = '<a href="'.DOL_URL_ROOT.'/societe/list.php?restore_lastsearch_values=1">'.$langs->trans("BackToList").'</a>';
 	dol_banner_tab($object, 'socid', $linkback, ($user->socid ? 0 : 1), 'rowid', 'nom');
 
+	// Contexte commercial / intervenant : cible = campagne en cours, sinon dernière intervention
+	$gp_show_users     = false;
+	$gp_can_edit_users = ($user->hasRight('gestionparc', 'parc', 'verif') || $user->admin);
+	$gp_last_inter_id  = 0;
+	$gp_sel_com = 0; $gp_sel_int = 0;
+	$gp_target_hidden = '';
+	if (isModEnabled('intervention') && getDolGlobalInt('MAIN_MODULE_GESTIONPARC_USEVERIF')) {
+		$gp_last_inter_id = $verification->getLastVerif($socid);
+		if ($isModeVerif) {
+			$gp_sel_com = !empty($verification->commercial) ? $verification->commercial : 0;
+			$gp_sel_int = !empty($verification->intervenant) ? $verification->intervenant : 0;
+			$gp_target_hidden = '<input type="hidden" name="gp_verif_id" value="'.$modeVerifID.'">';
+			$gp_show_users = true;
+		} elseif ($gp_last_inter_id) {
+			$gp_inter_tmp = new Fichinter($db);
+			if ($gp_inter_tmp->fetch($gp_last_inter_id) > 0) {
+				$gp_inter_tmp->fetch_optionals();
+				$gp_sel_com = !empty($gp_inter_tmp->array_options['options_gestionparc_commercial']) ? $gp_inter_tmp->array_options['options_gestionparc_commercial'] : 0;
+				$gp_sel_int = !empty($gp_inter_tmp->array_options['options_gestionparc_intervenant']) ? $gp_inter_tmp->array_options['options_gestionparc_intervenant'] : 0;
+			}
+			$gp_target_hidden = '<input type="hidden" name="gp_fichinter_id" value="'.$gp_last_inter_id.'">';
+			$gp_show_users = true;
+		}
+	}
+
 	//
 	print '<div class="fichecenter">';
 		print '<div class="fichehalfleft">';
@@ -839,6 +972,81 @@ print '<div class="park-main-wrapper">';
 							print '</td>';
 						print '</tr>';
 					}
+					// Champs personnalisés tiers (extrafields societe, gérés uniquement depuis cet onglet)
+					$object->fetch_optionals();
+					$gp_can_edit_socf = ($user->hasRight('gestionparc', 'parc', 'write') || $user->admin);
+					foreach (GestionParcVerif::getCustomSocFields() as $gp_fk => $gp_fdef) {
+						$gp_f_options  = $gp_fdef['options'];
+						$gp_f_value    = isset($object->array_options['options_'.$gp_fk]) ? $object->array_options['options_'.$gp_fk] : '';
+						$gp_f_selected = array_filter(array_map('trim', explode(',', (string) $gp_f_value)));
+						$gp_f_editing  = ($action == 'gp_edit_socfield' && GETPOST('gp_fieldkey', 'aZ09') == $gp_fk);
+						print '<tr>';
+							print '<td class="titlefieldmiddle">'.$langs->trans($gp_fdef['label']).'</td>';
+							print '<td>';
+							if ($gp_f_editing && $gp_can_edit_socf) {
+								print '<form action="'.$_SERVER["PHP_SELF"].'?socid='.$object->id.'&parctype='.$parctype.'" method="POST">';
+								print '<input type="hidden" name="token" value="'.newToken().'">';
+								print '<input type="hidden" name="action" value="gp_set_socfield">';
+								print '<input type="hidden" name="gp_fieldkey" value="'.$gp_fk.'">';
+								foreach ($gp_f_options as $gp_optk => $gp_optlabel) {
+									$gp_chk = in_array($gp_optk, $gp_f_selected, true) ? ' checked' : '';
+									print '<label class="marginrightonly"><input type="checkbox" name="gp_socfield[]" value="'.$gp_optk.'"'.$gp_chk.'> '.$gp_optlabel.'</label> ';
+								}
+								print '<input type="submit" class="button smallpaddingimp small nomarginleft" value="'.$langs->trans('Save').'">';
+								print '</form>';
+							} else {
+								if (!empty($gp_f_selected)) {
+									$gp_f_labels = array();
+									foreach ($gp_f_selected as $gp_optk) {
+										$gp_f_labels[] = isset($gp_f_options[$gp_optk]) ? $gp_f_options[$gp_optk] : $gp_optk;
+									}
+									print dol_escape_htmltag(implode(', ', $gp_f_labels));
+								} else {
+									print '<span class="opacitymedium">'.$langs->trans('None').'</span>';
+								}
+								if ($gp_can_edit_socf) {
+									print ' <a class="editfielda" href="'.$_SERVER["PHP_SELF"].'?socid='.$object->id.'&parctype='.$parctype.'&action=gp_edit_socfield&gp_fieldkey='.$gp_fk.'">'.img_edit().'</a>';
+								}
+							}
+							print '</td>';
+						print '</tr>';
+					}
+					// Commercial / Intervenant : un champ par ligne, édition inline au crayon (comme sur la fiche d'intervention)
+					if ($gp_show_users) {
+						$gp_fields = array(
+							'commercial'  => array($langs->trans('gp_extrafieldFichInter_commercial'),  $gp_sel_com),
+							'intervenant' => array($langs->trans('gp_extrafieldFichInter_intervenant'), $gp_sel_int),
+						);
+						foreach ($gp_fields as $gp_fk => $gp_fd) {
+							$gp_editing = ($action == 'gp_edit_user' && GETPOST('gp_field', 'aZ09') == $gp_fk);
+							print '<tr>';
+								print '<td class="titlefieldmiddle">'.$gp_fd[0].'</td>';
+								print '<td>';
+								if ($gp_editing && $gp_can_edit_users) {
+									print '<form action="'.$_SERVER["PHP_SELF"].'?socid='.$object->id.'&parctype='.$parctype.'" method="POST">';
+									print '<input type="hidden" name="token" value="'.newToken().'">';
+									print '<input type="hidden" name="action" value="gp_set_user">';
+									print '<input type="hidden" name="gp_field" value="'.$gp_fk.'">';
+									print $gp_target_hidden;
+									print $form->select_dolusers($gp_fd[1], 'gp_value', 1, null, 0, '', '', $conf->entity, 0, 0, '', 0, '', 'maxwidth200');
+									print ' <input type="submit" class="button smallpaddingimp small nomarginleft" value="'.$langs->trans('Save').'">';
+									print '</form>';
+								} else {
+									if (!empty($gp_fd[1])) {
+										$gp_u = new User($db);
+										if ($gp_u->fetch($gp_fd[1]) > 0) { print $gp_u->getNomUrl(1); }
+										else { print '&mdash;'; }
+									} else {
+										print '<span class="opacitymedium">'.$langs->trans('None').'</span>';
+									}
+									if ($gp_can_edit_users) {
+										print ' <a class="editfielda" href="'.$_SERVER["PHP_SELF"].'?socid='.$object->id.'&parctype='.$parctype.'&action=gp_edit_user&gp_field='.$gp_fk.'">'.img_edit().'</a>';
+									}
+								}
+								print '</td>';
+							print '</tr>';
+						}
+					}
 				print '</tbody>';
 			print '</table>';
 		print '</div>';
@@ -848,7 +1056,7 @@ print '<div class="park-main-wrapper">';
 				print '<tbody>';
 				if (isModEnabled('intervention') && getDolGlobalInt('MAIN_MODULE_GESTIONPARC_USEVERIF')) {
 					// todo: link intervention with table element_element
-					$last_intervention = $verification->getLastVerif($socid);
+					$last_intervention = $gp_last_inter_id;
 					if ($last_intervention) {
 						$ficheinter->fetch($last_intervention);
 						print '<tr>';
@@ -868,11 +1076,14 @@ print '<div class="park-main-wrapper">';
 							print '<td valign="middle">'.$langs->trans('gp_client_verifmode').'</td>';
 							print '<td>';
 							if ($isModeVerif) {
-								print '<form action="'.$_SERVER["PHP_SELF"].'?socid='.$object->id.'&parctype='.$parctype.'" method="POST">';
+								// Si tous les organes ne sont pas contrôlés, le bouton ouvre une
+								// modale de confirmation (gérée en JS) au lieu de clôturer directement.
+								$gp_uncontrolled = ($verification->nb_verified < $verification->nb_total) ? 1 : 0;
+								print '<form id="gp-close-verif-form" action="'.$_SERVER["PHP_SELF"].'?socid='.$object->id.'&parctype='.$parctype.'" method="POST">';
 									print '<input type="hidden" name="token" value="'.newToken().'">';
 									print '<input type="hidden" name="verif_id" value="'.$modeVerifID.'">';
 									print '<input type="hidden" name="action" value="initclose_verif">';
-									print '<input type="submit" name="close" value="'.$langs->trans('gp_verif_close').'" class="button smallpaddingimp small nomarginleft">';
+									print '<input type="submit" name="close" value="'.$langs->trans('gp_verif_close').'" class="button smallpaddingimp small nomarginleft gp-close-verif-btn" data-uncontrolled="'.$gp_uncontrolled.'">';
 									print '<input type="submit" name="cancel_verif" value="'.$langs->trans('gp_verif_cancel').'" class="button butActionDelete cancel smallpaddingimp small nomarginleft" >';
 								print '</form>';
 							} else {
@@ -1046,7 +1257,13 @@ if ((int) $gestionparc->rowid > 0) {
 						print '</div>';
 						print '</form>';
 					} else if ($isModeVerif && $linecontent->verif) {
-						print '<div class="button-verify verified" >Élement vérifié</div>';
+						// Élément contrôlé : cliquer permet de revenir en arrière (revert)
+						$gp_is_manual = (getDolGlobalString('GESTIONPARC_VERIF_MODE') == 'manual');
+						$gp_editurl = $_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parc->parc_key.'&action=edit&itemid='.$linecontent->rowid.'&parcid='.$parc->rowid.'&fromverif=1&token='.newToken().'#item-'.$linecontent->rowid;
+						print '<a class="button-verify verified js-revert-item" href="#" title="'.dol_escape_htmltag($langs->trans('gp_verif_revert')).'" data-itemid="'.$linecontent->rowid.'" data-parcid="'.$parc->rowid.'" data-socid="'.$object->id.'" data-parctype="'.$parctype.'" data-mode="'.($gp_is_manual ? 'manual' : 'instant').'" data-editurl="'.dol_escape_htmltag($gp_editurl).'">';
+							print '<span class="gp-verified-label"><span class="fas fa-check"></span> '.$langs->trans('gp_verif_verified').'</span>';
+							print '<span class="gp-revert-hint"><span class="fas fa-undo"></span> '.$langs->trans('gp_verif_revert').'</span>';
+						print '</a>';
 					} else if ($isModeVerif && !$linecontent->verif) {
 						// Mode de vérification : manuel ou instantané
 						if (getDolGlobalString('GESTIONPARC_VERIF_MODE') == 'manual') {
@@ -1094,7 +1311,10 @@ if ((int) $gestionparc->rowid > 0) {
 							print '<td class="verify-cell">';
 							if ($action != "edit" || $action == "edit" && $editItem_id != $linecontent->rowid) {
 								if ($linecontent->verif) {
-									echo img_picto($langs->trans("Activated"), 'check-square');
+									// Cliquer permet de revenir en arrière (revert)
+									$gp_is_manual = (getDolGlobalString('GESTIONPARC_VERIF_MODE') == 'manual');
+									$gp_editurl = $_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parc->parc_key.'&action=edit&itemid='.$linecontent->rowid.'&parcid='.$parc->rowid.'&fromverif=1&token='.newToken().'#item-'.$linecontent->rowid;
+									echo '<a class="reposition js-revert-item-list" href="#" title="'.dol_escape_htmltag($langs->trans('gp_verif_revert')).'" data-itemid="'.$linecontent->rowid.'" data-parcid="'.$parc->rowid.'" data-socid="'.$object->id.'" data-parctype="'.$parctype.'" data-mode="'.($gp_is_manual ? 'manual' : 'instant').'" data-editurl="'.dol_escape_htmltag($gp_editurl).'">'.img_picto($langs->trans("Activated"), 'check-square').'</a>';
 								} else {
 									// Mode de vérification : manuel ou instantané
 									if (getDolGlobalString('GESTIONPARC_VERIF_MODE') == 'manual') {
@@ -1308,92 +1528,176 @@ $(function() {
 		itemHeader.toggleClass('menu-open');
 	});
 
-	// Vérifier un élément en AJAX (vue cards)
+	// Libellés (i18n)
+	var GP_TXT_VERIFY   = <?php echo json_encode($langs->transnoentities('gp_verif_verify')); ?>;
+	var GP_TXT_VERIFIED = <?php echo json_encode($langs->transnoentities('gp_verif_verified')); ?>;
+	var GP_TXT_REVERT   = <?php echo json_encode($langs->transnoentities('gp_verif_revert')); ?>;
+	var GP_VERIFY_URL   = '<?php echo dol_buildpath('/gestionparc/ajax/verify-items.php', 1); ?>';
+	var GP_TOKEN        = '<?php echo newToken(); ?>';
+
+	// Construit le bouton "élément vérifié" (cliquable pour revert)
+	function gpVerifiedBtn(d) {
+		var $b = $('<a class="button-verify verified js-revert-item" href="#"></a>')
+			.attr('title', GP_TXT_REVERT)
+			.attr('data-itemid', d.itemId).attr('data-parcid', d.parcId)
+			.attr('data-socid', d.socId).attr('data-parctype', d.parcType)
+			.attr('data-mode', d.mode).attr('data-editurl', d.editUrl || '');
+		$b.append($('<span class="gp-verified-label"><span class="fas fa-check"></span> </span>').append(document.createTextNode(GP_TXT_VERIFIED)));
+		$b.append($('<span class="gp-revert-hint"><span class="fas fa-undo"></span> </span>').append(document.createTextNode(GP_TXT_REVERT)));
+		return $b;
+	}
+	// Construit le bouton "Vérifier" (non vérifié) selon le mode
+	function gpUnverifiedBtn(d) {
+		if (d.mode === 'manual') {
+			return $('<a class="button-verify unverified"></a>').attr('href', d.editUrl).text(GP_TXT_VERIFY);
+		}
+		return $('<a class="button-verify unverified js-verify-item" href="#"></a>')
+			.attr('data-itemid', d.itemId).attr('data-parcid', d.parcId)
+			.attr('data-socid', d.socId).attr('data-parctype', d.parcType).text(GP_TXT_VERIFY);
+	}
+
+	// Vérifier un élément en AJAX (vue cards) — mode instantané
 	$(document).on('click', '.js-verify-item', function(e) {
 		e.preventDefault();
-		
+
 		var $btn = $(this);
-		var itemId = $btn.data('itemid');
-		var parcId = $btn.data('parcid');
-		var socId = $btn.data('socid');
-		var parcType = $btn.data('parctype');
-		
+		var d = { itemId: $btn.data('itemid'), parcId: $btn.data('parcid'), socId: $btn.data('socid'), parcType: $btn.data('parctype'), mode: 'instant', editUrl: '' };
+
 		// Désactiver le bouton pendant le traitement
-		$btn.prop('disabled', true).text('Vérification...');
-		
+		$btn.css('pointer-events', 'none').text('Vérification...');
+
 		$.ajax({
-			url: '<?php echo dol_buildpath('/gestionparc/ajax/verify-items.php', 1); ?>',
+			url: GP_VERIFY_URL,
 			type: 'POST',
 			dataType: 'json',
-			data: {
-				action: 'set_line_verify',
-				itemid: itemId,
-				parcid: parcId,
-				socid: socId,
-				parctype: parcType,
-				token: '<?php echo newToken(); ?>'
-			},
+			data: { action: 'set_line_verify', itemid: d.itemId, parcid: d.parcId, socid: d.socId, parctype: d.parcType, token: GP_TOKEN },
 			success: function(response) {
 				if (response.success) {
-					// Remplacer le bouton par le statut vérifié
-					$btn.replaceWith('<div class="button-verify verified">Élement vérifié</div>');
-					
-					// Mettre à jour l'icône dans le header de la carte
-					var $item = $('#item-' + itemId);
+					$btn.replaceWith(gpVerifiedBtn(d));
+					var $item = $('#item-' + d.itemId);
 					$item.removeClass('unverified').addClass('verified');
-					
-					// Changer l'icône de warning à check
 					var $icon = $item.find('.park-item-header .fa-exclamation-circle');
 					if ($icon.length) {
-						$icon.removeClass('fa-exclamation-circle text-warning')
-							.addClass('fa-check-circle text-success');
+						$icon.removeClass('fa-exclamation-circle text-warning').addClass('fa-check-circle text-success');
 					}
 				} else {
-					$btn.prop('disabled', false).text('Vérifier');
+					$btn.css('pointer-events', 'auto').text(GP_TXT_VERIFY);
 					console.error('Erreur:', response.error);
 				}
 			},
 			error: function(xhr, status, error) {
-				$btn.prop('disabled', false).text('Vérifier');
+				$btn.css('pointer-events', 'auto').text(GP_TXT_VERIFY);
+				console.error('Erreur AJAX:', error);
+			}
+		});
+	});
+
+	// Revert (revenir en arrière) sur un élément contrôlé — vue cards (tous modes)
+	$(document).on('click', '.js-revert-item', function(e) {
+		e.preventDefault();
+
+		var $btn = $(this);
+		var d = { itemId: $btn.data('itemid'), parcId: $btn.data('parcid'), socId: $btn.data('socid'), parcType: $btn.data('parctype'), mode: $btn.data('mode'), editUrl: $btn.data('editurl') };
+
+		$btn.css('pointer-events', 'none').css('opacity', '0.6');
+
+		$.ajax({
+			url: GP_VERIFY_URL,
+			type: 'POST',
+			dataType: 'json',
+			data: { action: 'set_line_unverify', itemid: d.itemId, parcid: d.parcId, socid: d.socId, parctype: d.parcType, token: GP_TOKEN },
+			success: function(response) {
+				if (response.success) {
+					$btn.replaceWith(gpUnverifiedBtn(d));
+					var $item = $('#item-' + d.itemId);
+					$item.removeClass('verified').addClass('unverified');
+					var $icon = $item.find('.park-item-header .fa-check-circle');
+					if ($icon.length) {
+						$icon.removeClass('fa-check-circle text-success').addClass('fa-exclamation-circle text-warning');
+					}
+				} else {
+					$btn.css('pointer-events', 'auto').css('opacity', '1');
+					console.error('Erreur:', response.error);
+				}
+			},
+			error: function(xhr, status, error) {
+				$btn.css('pointer-events', 'auto').css('opacity', '1');
 				console.error('Erreur AJAX:', error);
 			}
 		});
 	});
 
 	// Vérifier un élément en AJAX (vue liste)
+	// Icônes (vue liste)
+	var GP_ICON_CHECK  = <?php echo json_encode(img_picto($langs->transnoentities('Activated'), 'check-square')); ?>;
+	var GP_ICON_SWITCH = <?php echo json_encode(img_picto($langs->transnoentities('Disabled'), 'switch_off')); ?>;
+
+	function gpListVerifiedLink(d) {
+		return $('<a class="reposition js-revert-item-list" href="#"></a>')
+			.attr('title', GP_TXT_REVERT)
+			.attr('data-itemid', d.itemId).attr('data-parcid', d.parcId)
+			.attr('data-socid', d.socId).attr('data-parctype', d.parcType)
+			.attr('data-mode', d.mode).attr('data-editurl', d.editUrl || '')
+			.html(GP_ICON_CHECK);
+	}
+	function gpListUnverifiedLink(d) {
+		if (d.mode === 'manual') {
+			return $('<a class="reposition"></a>').attr('href', d.editUrl).html(GP_ICON_SWITCH);
+		}
+		return $('<a class="reposition js-verify-item-list" href="#"></a>')
+			.attr('data-itemid', d.itemId).attr('data-parcid', d.parcId)
+			.attr('data-socid', d.socId).attr('data-parctype', d.parcType)
+			.html(GP_ICON_SWITCH);
+	}
+
 	$(document).on('click', '.js-verify-item-list', function(e) {
 		e.preventDefault();
-		
+
 		var $link = $(this);
-		var itemId = $link.data('itemid');
-		var parcId = $link.data('parcid');
-		var socId = $link.data('socid');
-		var parcType = $link.data('parctype');
-		
-		// Désactiver le lien pendant le traitement
+		var d = { itemId: $link.data('itemid'), parcId: $link.data('parcid'), socId: $link.data('socid'), parcType: $link.data('parctype'), mode: 'instant', editUrl: '' };
+
 		$link.css('pointer-events', 'none').css('opacity', '0.5');
-		
+
 		$.ajax({
-			url: '<?php echo dol_buildpath('/gestionparc/ajax/verify-items.php', 1); ?>',
+			url: GP_VERIFY_URL,
 			type: 'POST',
 			dataType: 'json',
-			data: {
-				action: 'set_line_verify',
-				itemid: itemId,
-				parcid: parcId,
-				socid: socId,
-				parctype: parcType,
-				token: '<?php echo newToken(); ?>'
-			},
+			data: { action: 'set_line_verify', itemid: d.itemId, parcid: d.parcId, socid: d.socId, parctype: d.parcType, token: GP_TOKEN },
 			success: function(response) {
 				if (response.success) {
-					// Remplacer l'icône par check-square
-					var $cell = $link.closest('.verify-cell');
-					$cell.html('<?php echo img_picto($langs->trans("Activated"), "check-square"); ?>');
-					
-					// Ajouter la classe parcline-ok à la ligne
-					var $row = $('#item-' + itemId);
-					$row.addClass('parcline-ok');
+					$link.closest('.verify-cell').empty().append(gpListVerifiedLink(d));
+					$('#item-' + d.itemId).addClass('parcline-ok');
+				} else {
+					$link.css('pointer-events', 'auto').css('opacity', '1');
+					console.error('Erreur:', response.error);
+				}
+			},
+			error: function(xhr, status, error) {
+				$link.css('pointer-events', 'auto').css('opacity', '1');
+				console.error('Erreur AJAX:', error);
+			}
+		});
+	});
+
+	// Revert (revenir en arrière) — vue liste (tous modes)
+	$(document).on('click', '.js-revert-item-list', function(e) {
+		e.preventDefault();
+
+		var $link = $(this);
+		var $cell = $link.closest('.verify-cell');
+		var d = { itemId: $link.data('itemid'), parcId: $link.data('parcid'), socId: $link.data('socid'), parcType: $link.data('parctype'), mode: $link.data('mode'), editUrl: $link.data('editurl') };
+
+		$link.css('pointer-events', 'none').css('opacity', '0.5');
+
+		$.ajax({
+			url: GP_VERIFY_URL,
+			type: 'POST',
+			dataType: 'json',
+			data: { action: 'set_line_unverify', itemid: d.itemId, parcid: d.parcId, socid: d.socId, parctype: d.parcType, token: GP_TOKEN },
+			success: function(response) {
+				if (response.success) {
+					$cell.empty().append(gpListUnverifiedLink(d));
+					$('#item-' + d.itemId).removeClass('parcline-ok');
 				} else {
 					$link.css('pointer-events', 'auto').css('opacity', '1');
 					console.error('Erreur:', response.error);
@@ -1568,6 +1872,7 @@ $(function() {
             stop: function(event, ui) {
 	            // Récupérer l'ordre des éléments après le drag & drop
 	            var sortedIDs = $(this).sortable("toArray");
+	            var movedItem = ui.item.attr('id'); // élément réellement déplacé
 
 	            // Appel AJAX pour sauvegarder l'ordre
 	            $.ajax({
@@ -1576,6 +1881,7 @@ $(function() {
 	                data: {
 	                	action: 'itemsort',
 	                	itemsort: sortedIDs,
+	                	moveditem: movedItem,
 	                	parckey: '<?php echo $parc->parc_key; ?>',
 	                	token: '<?php echo newToken(); ?>',
 	                },
@@ -1623,10 +1929,50 @@ $(function() {
 	</div>
 </div>
 
+<!-- Modale de confirmation : clôture avec organes non contrôlés -->
+<div id="gp-confirm-close-overlay" class="gp-modal-overlay" style="display:none;">
+	<div class="gp-modal-container gp-modal-sm">
+		<div class="gp-modal-header">
+			<h3><?php echo $langs->trans('gp_verif_uncontrolled_title'); ?></h3>
+			<span class="gp-modal-close">&times;</span>
+		</div>
+		<div class="gp-modal-body">
+			<p class="gp-modal-desc"><i class="fas fa-exclamation-triangle"></i> <?php echo $langs->trans('gp_verif_confirm_uncontrolled'); ?></p>
+		</div>
+		<div class="gp-modal-footer gp-modal-footer-split">
+			<button type="button" class="button gp-modal-close-btn" id="gp-confirm-close-no"><?php echo $langs->trans('No'); ?></button>
+			<button type="button" class="button gp-modal-btn-primary" id="gp-confirm-close-yes"><?php echo $langs->trans('gp_verif_continue_anyway'); ?></button>
+		</div>
+	</div>
+</div>
+
 <script>
 	const GP_EXPORT_BASE_URL = '<?php echo $_SERVER['PHP_SELF'].'?socid='.$socid.'&action=generate_export_excel&token='.newToken().'&id_inter='; ?>';
 	const GP_EXPORT_PDF_BASE_URL = '<?php echo $_SERVER['PHP_SELF'].'?socid='.$socid.'&action=generate_export_pdf&token='.newToken().'&id_inter='; ?>';
 
+	// Modale de confirmation de clôture (organes non contrôlés)
+	jQuery(document).on('click', '.gp-close-verif-btn', function(e) {
+		if (parseInt(jQuery(this).attr('data-uncontrolled'), 10) === 1) {
+			e.preventDefault();
+			jQuery('#gp-confirm-close-overlay').fadeIn(200);
+			jQuery('body').css('overflow', 'hidden');
+		}
+	});
+	jQuery(document).on('click', '#gp-confirm-close-yes', function() {
+		jQuery('#gp-confirm-close-overlay').fadeOut(100);
+		jQuery('body').css('overflow', '');
+		jQuery('#gp-close-verif-form').trigger('submit');
+	});
+	jQuery(document).on('click', '#gp-confirm-close-no, #gp-confirm-close-overlay .gp-modal-close', function() {
+		jQuery('#gp-confirm-close-overlay').fadeOut(200);
+		jQuery('body').css('overflow', '');
+	});
+	jQuery(document).on('click', '#gp-confirm-close-overlay', function(e) {
+		if (jQuery(e.target).hasClass('gp-modal-overlay')) {
+			jQuery(this).fadeOut(200);
+			jQuery('body').css('overflow', '');
+		}
+	});
 </script>
 
 <?php

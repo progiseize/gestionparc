@@ -153,13 +153,19 @@
 .park-item-wrapper .park-item .park-item-content .park-field .park-field-value {color: var(--gp-text-color-lighter);}
 
 .park-item-wrapper .park-item .button-sets {display: flex;gap:16px;margin-top: 24px;}
-.park-item-wrapper .park-item .button-sets .button-edit {flex:1;padding:8px;text-align:center;border-radius:4px;font-size:0.85em;text-transform:uppercase;font-weight:500;display: block;border: none; outline: none;background: transparent;}
+.park-item-wrapper .park-item .button-sets .button-edit {flex:1;padding:8px;text-align:center;border-radius:4px;font-size:0.85em;text-transform:uppercase;font-weight:500;display: block;border: none; outline: none;background: transparent;cursor: pointer;}
 .park-item-wrapper .park-item .button-sets .button-edit.button-cancel {background: var(--gp-error-color);color: #fff;}
 .park-item-wrapper .park-item .button-sets .button-edit.button-valid {background: #25a580;color: #fff;}
-.park-item-wrapper .park-item .button-verify {padding:8px;text-align:center;border-radius:4px;font-size:0.85em;text-transform:uppercase;font-weight:500;display: block;}
+.park-item-wrapper .park-item .button-verify {padding:8px;text-align:center;border-radius:4px;font-size:0.85em;text-transform:uppercase;font-weight:500;display: block;cursor: pointer;}
 .park-item-wrapper .park-item .button-verify.verified {background:rgba(40, 167, 69, 0.2);color:#28a745;}
 .park-item-wrapper .park-item .button-verify.unverified {background:#bc9526; color:#fff;}
 .park-item-wrapper .park-item .button-verify.unverified:hover {text-decoration: none;background:#3f4347;}
+/* Élément vérifié : cliquable pour revenir en arrière (revert) */
+.park-item-wrapper .park-item .button-verify.verified {cursor:pointer;transition:background .15s ease,color .15s ease;}
+.park-item-wrapper .park-item .button-verify.verified .gp-revert-hint {display:none;}
+.park-item-wrapper .park-item .button-verify.verified:hover {text-decoration:none;background:rgba(220,53,69,0.12);color:#dc3545;}
+.park-item-wrapper .park-item .button-verify.verified:hover .gp-verified-label {display:none;}
+.park-item-wrapper .park-item .button-verify.verified:hover .gp-revert-hint {display:inline;}
 
 .park-item-wrapper .park-item .grabbable {cursor: move; cursor: grab; cursor: -moz-grab; cursor: -webkit-grab;}
 .park-item-wrapper .park-item .grabbable:active {cursor: grabbing;cursor: -moz-grabbing;cursor: -webkit-grabbing;}
@@ -392,4 +398,37 @@ div.mesgs div.errors {
 @keyframes slideUp {
     from { transform: translateY(20px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
+}
+
+/* ── Modale de confirmation (cohérente avec la modale d'export) ──── */
+.gp-modal-container.gp-modal-sm { max-width: 460px; }
+
+/* Icône d'avertissement discrète, dans la teinte navy du module */
+.gp-modal-body .gp-modal-desc .fa-exclamation-triangle {
+    color: #173652;
+    font-size: 1.1em;
+}
+
+/* Pied de modale : annuler à gauche, action à droite */
+.gp-modal-footer.gp-modal-footer-split {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* Bouton d'action principal (navy, identité du module) */
+.gp-modal-btn-primary {
+    background: #173652 !important;
+    color: #fff !important;
+    border: 1px solid #173652 !important;
+    border-radius: 6px;
+    padding: 7px 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.gp-modal-btn-primary:hover {
+    background: #0f263b !important;
+    box-shadow: 0 4px 12px -3px rgba(23, 54, 82, 0.5);
 }
