@@ -37,3 +37,7 @@ ALTER TABLE llx_gestionparc_verifs CHANGE commentaires commentaires text CHARACT
 ALTER TABLE llx_gestionparc_verifs CHANGE fichinter_id fichinter_id int NOT NULL DEFAULT '0';
 ALTER TABLE llx_gestionparc_verifs CHANGE is_close is_close int NOT NULL DEFAULT '0';
 ALTER TABLE llx_gestionparc_verifs CHANGE files_list files_list JSON NULL DEFAULT NULL;
+ALTER TABLE llx_gestionparc_verifs ADD commercial int NOT NULL DEFAULT 0;
+ALTER TABLE llx_gestionparc_verifs ADD intervenant int NOT NULL DEFAULT 0;
+ALTER TABLE llx_gestionparc_verifs ADD report_snapshot MEDIUMTEXT NULL DEFAULT NULL;
+ALTER TABLE llx_gestionparc_verifs ADD reset_backup MEDIUMTEXT NULL DEFAULT NULL;

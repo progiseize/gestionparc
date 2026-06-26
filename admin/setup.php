@@ -28,6 +28,17 @@ endif;
 if (!$user->hasRight('gestionparc','parc','setup')) : accessforbidden();
 endif;
 
+// Provisionne l'extrafield societe "Référentiel de conformité" (upgrade-safe, idempotent)
+$gpsetup = new GestionParcVerif($db);
+$gpsetup->ensureSocieteExtrafields();
+
+// Ajoute la colonne report_snapshot à la table des vérifs (instantané des données à la clôture)
+$gpsetup->ensureVerifSnapshotColumn();
+
+// Ajoute la colonne manual_position aux tables par-parc (tri par défaut sur la numérotation)
+$gpparc = new GestionParc($db);
+$gpparc->ensureManualPositionColumn();
+
 /*******************************************************************
 * FONCTIONS
 ********************************************************************/
@@ -58,8 +69,12 @@ if ($action == 'set_options') :
             $extras_fichinter = $extrafields->fetch_name_optionals_label('fichinter');
 
             if(!array_key_exists('gestionparc_isverif', $extras_fichinter)) :
-                $extrafields->addExtraField('gestionparc_isverif', 'gp_extrafieldFichInter_isverif', 'int', '100', '', 'fichinter', 0, 0, 'null', '', 0, '', '0', '', '', $conf->entity, 'gestionparc@gestionparc');
+                $extrafields->addExtraField('gestionparc_isverif', 'gp_extrafieldFichInter_isverif', 'int', '100', '', 'fichinter', 0, 0, 'null', '', 0, '', '0', '', '', '', 'gestionparc@gestionparc');
             endif;
+
+            // Extrafields commercial / intervenant (création ou migration) + backfill
+            $verifsetup = new GestionParcVerif($db);
+            $verifsetup->ensureInterventionExtrafields();
 
             if(!$gestionparc->setVerifMode('add')) : $error++;
             endif;

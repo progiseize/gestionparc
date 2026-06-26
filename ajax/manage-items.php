@@ -44,16 +44,32 @@ $action = GETPOST('action', 'alpha');
 $parckey = GETPOST('parckey', 'alphanohtml');
 $results = array();
 
+// S'assure que la colonne manual_position existe (upgrade-safe) avant toute écriture d'ordre
+$gestionparc->ensureManualPositionColumnForParc($parckey);
+
 // ITEM SORT
 if ($action == 'itemsort'){
 	$itemSort = GETPOST('itemsort', 'array');
+	$movedRaw = GETPOST('moveditem', 'alphanohtml');
+	$movedID = (int) str_replace('item-', '', $movedRaw);
 	if (!empty($itemSort)) {
-		$i = 0;
+		$i = 0; $movedIndex = 0;
 		foreach ($itemSort as $item) {
 			$i++;
-			$itemID = str_replace('item-', '', $item);
+			$itemID = (int) str_replace('item-', '', $item);
 			$rr = $gestionparc->setElementPosition($parckey, $itemID, $i);
 			$results[$i]= $rr;
+			if ($itemID === $movedID) $movedIndex = $i;
+		}
+		// L'élément déplacé est épinglé (garde sa position) SAUF s'il retombe à sa
+		// position naturelle (ordre de numérotation) : dans ce cas il est désépinglé
+		// et suit de nouveau la numérotation. Les autres éléments ne changent pas d'état.
+		if ($movedID > 0 && $movedIndex > 0) {
+			if ($gestionparc->isAtNaturalPosition($parckey, $movedID, $movedIndex)) {
+				$gestionparc->setElementManual($parckey, $movedID, 0);
+			} else {
+				$gestionparc->setElementManual($parckey, $movedID, 1);
+			}
 		}
 	}
 }

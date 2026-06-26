@@ -34,6 +34,7 @@ class GestionParcPDF extends TCPDF
     private $db;
     /** @var object */  private $intervention;
     /** @var object */  private $customer;
+    /** @var array */   private $headerOverride = array();
 
     // ── Palette — identical to GestionParcExport constants ─────────────────
     const TITLE_BG   = array(23,  54,  82);
@@ -166,6 +167,7 @@ class GestionParcPDF extends TCPDF
 
         $this->intervention = $intervention;
         $this->customer     = $customer;
+        $this->headerOverride = (isset($report_data['header']) && is_array($report_data['header'])) ? $report_data['header'] : array();
 
         // Ensure translation keys from companies / bills are available
         $langs->loadLangs(array('companies', 'bills'));
@@ -184,8 +186,8 @@ class GestionParcPDF extends TCPDF
         $this->AddPage();
         $this->drawInfoBlock($intervention, $customer);
 
-        foreach ($report_data['sections'] as $section) {
-            $this->drawSection($section);
+        foreach ($report_data['sections'] as $idx => $section) {
+            $this->drawSection($section, ($idx === 0));
         }
 
         $this->Output($output_file, 'F');
@@ -222,6 +224,9 @@ class GestionParcPDF extends TCPDF
         $w  = self::CW;
         $y  = $this->GetY();
 
+        // ── Info rows data preparation ────────────────────────────────────
+        $inter_date = !empty($intervention->dateo) ? $intervention->dateo : (!empty($intervention->datec) ? $intervention->datec : dol_stringtotime(date('Y-m-d')));
+
         // ── Row 1: Title bar ─────────────────────────────────────────────
         $th = 11;
         $this->sf(self::TITLE_BG);
@@ -232,27 +237,23 @@ class GestionParcPDF extends TCPDF
         $this->Cell(
             $w,
             $th,
-            mb_strtoupper($this->t($langs->trans('gp_advexp_title'))) . ' ' . date('Y'),
+            mb_strtoupper($this->t($langs->trans('gp_advexp_title'))) . ' ' . dol_print_date($inter_date, '%Y'),
             0,
             1,
             'C'
         );
         $y += $th;
 
-        // ── Info rows data preparation ────────────────────────────────────
-        $inter_date = !empty($intervention->dateo) ? $intervention->dateo : (!empty($intervention->datec) ? $intervention->datec : dol_stringtotime(date('Y-m-d')));
+        if (!class_exists('GestionParcVerif')) dol_include_once('/gestionparc/class/gestionparc.class.php');
+        $export_users = GestionParcVerif::resolveExportUsers($this->db, $intervention, $customer);
+        $ho = $this->headerOverride; // en-tête figé (backport) si présent
+        $tech     = !empty($ho['technicien']) ? $ho['technicien'] : $export_users['intervenant'];
+        $salesrep = !empty($ho['commercial']) ? $ho['commercial'] : $export_users['commercial'];
 
-        $tech = trim((string)$user->firstname . ' ' . (string)$user->lastname);
-        if (empty($tech)) $tech = $user->login;
-
-        $salesrep = '';
-        if (method_exists($customer, 'getSalesRepresentatives')) {
-            foreach ($customer->getSalesRepresentatives($user) as $sr) {
-                $salesrep .= ($salesrep ? ' / ' : '') . trim($sr['firstname'] . ' ' . $sr['lastname']);
-            }
-        }
-
-        $addr_client = trim($this->t($customer->address) . ', ' . trim($customer->zip . ' ' . $this->t($customer->town)), ', ');
+        $cust_name    = !empty($ho['client'])      ? $ho['client']      : $customer->name;
+        $addr_client  = !empty($ho['address'])     ? $ho['address']     : trim($this->t($customer->address) . ', ' . trim($customer->zip . ' ' . $this->t($customer->town)), ', ');
+        $cust_phone   = !empty($ho['phone'])       ? $ho['phone']       : (!empty($customer->phone) ? $customer->phone : '—');
+        $cust_code    = !empty($ho['code_client']) ? $ho['code_client'] : $customer->code_client;
 
         // 7 info rows + 1 spacer at position 3 (0-indexed)
         $info_rows = array(
@@ -260,11 +261,19 @@ class GestionParcPDF extends TCPDF
             array($this->t($langs->trans('gp_advexp_user')),       $this->t($tech)),
             array($this->t($langs->trans('gp_advexp_commercial')), $this->t($salesrep)),
             null,   // spacer
-            array($this->t($langs->trans('Customer')),             $this->t($customer->name)),
-            array($this->t($langs->trans('Address')),              $addr_client),
-            array($this->t($langs->trans('Phone')),                  !empty($customer->phone) ? $customer->phone : '—'),
-            array($this->t($langs->trans('CustomerCode')),         $customer->code_client),
+            array($this->t($langs->trans('Customer')),             $this->t($cust_name)),
+            array($this->t($langs->trans('Address')),              $this->t($addr_client)),
+            array($this->t($langs->trans('Phone')),                  $cust_phone),
+            array($this->t($langs->trans('CustomerCode')),         $cust_code),
         );
+
+        // Champs personnalisés (bas du header)
+        foreach (GestionParcVerif::getCustomSocFields() as $code => $def) {
+            $val = GestionParcVerif::resolveCustomSocField($this->db, $code, $intervention, $customer);
+            if ($val !== '') {
+                $info_rows[] = array($this->t($langs->trans($def['label'])), $this->t($val));
+            }
+        }
 
         // ── Geometry ─────────────────────────────────────────────────────
         $logo_w = 58;   // A:B equivalent
@@ -427,9 +436,15 @@ class GestionParcPDF extends TCPDF
     //   └──────────────────────────────────── 6 / 6 élément(s) vérifié(s) ┘  E8E8E8
     // ─────────────────────────────────────────────────────────────────────
 
-    private function drawSection($section)
+    private function drawSection($section, $isFirst = false)
     {
-        if ($this->GetY() > 238) $this->AddPage();
+        // Chaque organe démarre sur une nouvelle page (même s'il reste de la place).
+        // Le 1er organe reste sous l'en-tête de la page 1 (sauf si la place y est trop juste).
+        if (!$isFirst) {
+            $this->AddPage();
+        } elseif ($this->GetY() > 238) {
+            $this->AddPage();
+        }
 
         $col_widths = $this->calcColWidths($section['fields']);
         $x0 = self::ML;
@@ -456,20 +471,34 @@ class GestionParcPDF extends TCPDF
         $this->SetLineWidth(0.2);
 
         // ── Column headers (navy bg + white text — exact Excel COLHDR style) ──
-        $table_top  = $this->GetY();
-        $start_page = $this->getPage();
+        $bottom_limit = $this->getPageHeight() - 18;
+        $table_top    = $this->GetY();
         $this->drawColHeaders($section['fields'], $col_widths);
+        $page_top = $table_top; // haut du tableau sur la page courante (pour la bordure)
 
         // ── Data rows ─────────────────────────────────────────────────────
+        // Saut de page géré ici : on ferme la bordure de la page courante, on
+        // passe à la page suivante et on répète les en-têtes de colonnes.
         foreach ($section['lines'] as $idx => $values) {
+            $row_h = $this->calcRowHeight($values, $col_widths);
+            if ($this->GetY() + $row_h > $bottom_limit) {
+                $this->drawSectionBorder($x0, $page_top, $w, $this->GetY() - $page_top);
+                $this->AddPage();
+                $page_top = $this->GetY();
+                $this->drawColHeaders($section['fields'], $col_widths);
+            }
             $this->drawDataRow($values, $col_widths, ($idx % 2 === 1));
         }
 
         // ── Summary row ───────────────────────────────────────────────────
+        $sum_h = 8;
+        if ($this->GetY() + $sum_h > $bottom_limit) {
+            $this->drawSectionBorder($x0, $page_top, $w, $this->GetY() - $page_top);
+            $this->AddPage();
+            $page_top = $this->GetY();
+        }
         $y_sum   = $this->GetY();
-        $sum_h   = 8;
         $sum_txt = $section['stats']['verified'] . ' / ' . $section['stats']['total'] . ' élément(s) vérifié(s)';
-
         $this->sf(self::SUMMARY_BG);
         $this->Rect($x0, $y_sum, $w, $sum_h, 'F');
         $this->SetFont('helvetica', 'B', 8.5);
@@ -477,17 +506,45 @@ class GestionParcPDF extends TCPDF
         $this->SetXY($x0, $y_sum);
         $this->Cell($w - 4, $sum_h, $sum_txt, 0, 1, 'R');
 
-        // ── Outer border: only draw when the whole section fits on one page ─
-        // If a page break occurred during data rows, table_top belongs to a
-        // previous page and the Rect coordinates would be meaningless / produce
-        // a ghost rectangle. In that case we skip it.
-        if ($this->getPage() === $start_page) {
-            $this->sd(self::BDR_DARK);
-            $this->SetLineWidth(0.55);
-            $this->Rect($x0, $table_top, $w, $this->GetY() - $table_top, 'D');
-        }
+        // ── Bordure extérieure navy sur la (dernière) page du tableau ──
+        $this->drawSectionBorder($x0, $page_top, $w, $this->GetY() - $page_top);
 
         $this->Ln(8);
+    }
+
+    /** Dessine la bordure extérieure navy d'un bloc de tableau. */
+    private function drawSectionBorder($x, $y, $w, $h)
+    {
+        if ($h <= 0) return;
+        $this->sd(self::BDR_DARK);
+        $this->SetLineWidth(0.55);
+        $this->Rect($x, $y, $w, $h, 'D');
+        $this->SetLineWidth(0.2);
+    }
+
+    /**
+     * Hauteur d'une ligne de données, calée sur le rendu réel de MultiCell :
+     * nb de lignes (au plus large) × hauteur de ligne ($line_h) + padding vertical.
+     * On fixe la même police et le même padding que drawDataRow pour que
+     * getNumLines() compte exactement comme MultiCell, évitant troncature et
+     * espacements incohérents.
+     */
+    private function calcRowHeight($values, $col_widths)
+    {
+        $line_h = 5.0;   // hauteur d'une ligne rendue par MultiCell
+        $min_h  = 7.0;   // hauteur minimale d'une ligne
+        $vpad   = 3.0;   // padding vertical (1.5 haut + 1.5 bas)
+
+        $this->SetFont('helvetica', '', 8.5);
+        $this->setCellPaddings(3, 1.5, 2, 1.5); // identique au rendu
+
+        $max_lines = 1;
+        for ($c = 0; $c < count($values); $c++) {
+            $n = $this->getNumLines($this->t((string) $values[$c]), $col_widths[$c]);
+            if ($n > $max_lines) $max_lines = $n;
+        }
+
+        return max($min_h, $max_lines * $line_h + $vpad);
     }
 
     // ── Column headers — navy bg, white text, white internal dividers ─────
@@ -525,20 +582,11 @@ class GestionParcPDF extends TCPDF
     private function drawDataRow($values, $col_widths, $isOdd)
     {
         $line_h = 5.0;  // height of ONE line passed to MultiCell
-        $min_h  = 7.0;  // minimum total row height
 
         $this->SetFont('helvetica', '', 8.5);
 
-        // Calculate total row height = max across all cells of their wrapped height
-        $row_h = $min_h;
-        for ($c = 0; $c < count($values); $c++) {
-            $h = $this->getStringHeight($col_widths[$c] - 5, $this->t((string)$values[$c]));
-            if ($h > $row_h) $row_h = $h;
-        }
-
-        if ($this->GetY() + $row_h > $this->getPageHeight() - 18) {
-            $this->AddPage();
-        }
+        // Hauteur de la ligne (le saut de page est géré en amont par drawSection)
+        $row_h = $this->calcRowHeight($values, $col_widths);
 
         $y  = $this->GetY();
         $x0 = self::ML;

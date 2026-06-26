@@ -47,6 +47,10 @@ class GestionParcExport extends ExportExcel2007
 	const COLOR_BORDER_DARK = 'FF173652'; // dark blue — outer borders
 	const COLOR_BORDER_SOFT = 'FFD0D0D0'; // grey — inner cell borders
 
+	// Largeur totale fixe d'un tableau (unités Excel) : garantit que tous les
+	// tableaux ont la même largeur, quel que soit le nombre de colonnes.
+	const TABLE_WIDTH = 145;
+
 	// ── Column index helper ──────────────────────────────────────────────────
 
 	/**
@@ -56,6 +60,58 @@ class GestionParcExport extends ExportExcel2007
 	public function col($index0)
 	{
 		return Coordinate::stringFromColumnIndex($index0 + 1);
+	}
+
+	/**
+	 * Largeurs de colonnes pour atteindre une largeur totale constante (TABLE_WIDTH).
+	 * A=12 (Numéro), B=35 (Produit), C=20 (MES) restent fixes (l'en-tête en dépend) ;
+	 * les colonnes suivantes se partagent le reste à parts égales. Pour <= 3 colonnes,
+	 * la dernière est étirée pour atteindre la largeur totale.
+	 *
+	 * @param int $n  Nombre de colonnes de données
+	 * @return float[]  Largeurs indexées 0..n-1 (somme = TABLE_WIDTH si n >= 1)
+	 */
+	public function dataColWidths($n)
+	{
+		$n = (int) $n;
+		if ($n <= 0) return array();
+
+		$base = array(12, 35, 20);
+		$w = array();
+		for ($i = 0; $i < min($n, 3); $i++) $w[$i] = $base[$i];
+
+		$rest = $n - 3;
+		if ($rest > 0) {
+			$remaining = self::TABLE_WIDTH - array_sum($w);
+			$each = max(14, $remaining / $rest);
+			for ($i = 3; $i < $n; $i++) $w[$i] = round($each, 2);
+		} else {
+			// <= 3 colonnes : on étire la dernière pour atteindre la largeur totale
+			$sum = array_sum($w);
+			if ($sum < self::TABLE_WIDTH) $w[$n - 1] += (self::TABLE_WIDTH - $sum);
+		}
+		return $w;
+	}
+
+	/**
+	 * Hauteur de ligne (pt) calée sur le retour à la ligne réel de chaque cellule,
+	 * d'après la largeur de colonne effective. ~0,92 caractère par unité de largeur
+	 * (police 12). 24pt = 1 ligne, +16pt par ligne supplémentaire.
+	 *
+	 * @param array $values  Valeurs de la ligne
+	 * @param array $widths  Largeurs effectives par colonne (0-based)
+	 * @return int
+	 */
+	protected function computeRowHeight(array $values, array $widths)
+	{
+		$max_lines = 1;
+		foreach (array_values($values) as $i => $v) {
+			$wd  = isset($widths[$i]) ? $widths[$i] : 20;
+			$cpl = max(1, $wd * 0.92);
+			$n   = max(1, (int) ceil(mb_strlen((string) $v) / $cpl));
+			if ($n > $max_lines) $max_lines = $n;
+		}
+		return (int) max(24, 24 + ($max_lines - 1) * 16);
 	}
 
 	// ── Style helpers ────────────────────────────────────────────────────────
@@ -123,17 +179,11 @@ class GestionParcExport extends ExportExcel2007
 	{
 		$sheet->setTitle(mb_strtoupper(mb_substr($title, 0, 31)));
 
-		// Column A and B are fixed for the logo zone
-		$sheet->getColumnDimension('A')->setWidth(12);
-		$sheet->getColumnDimension('B')->setWidth(35);
-
-		// Column C is used for header labels, we give it a modest minimum
-		$sheet->getColumnDimension('C')->setWidth(20);
-
-		// Columns D onwards: AutoSize for data
-		for ($i = 3; $i < $nb_data_cols; $i++) {
-			$col_letter = $this->col($i);
-			$sheet->getColumnDimension($col_letter)->setAutoSize(true);
+		// Largeurs de colonnes fixes : tous les tableaux font la même largeur totale
+		// (A,B,C gardent leurs largeurs pour ne pas casser l'en-tête ; les colonnes
+		// suivantes se répartissent le reste pour atteindre TABLE_WIDTH).
+		foreach ($this->dataColWidths($nb_data_cols) as $i => $wd) {
+			$sheet->getColumnDimension($this->col($i))->setWidth($wd);
 		}
 
 		$sheet->getDefaultRowDimension()->setRowHeight(24);
@@ -182,7 +232,7 @@ class GestionParcExport extends ExportExcel2007
 	 * @param string  $parclabel
 	 * @return int  First row after the header block
 	 */
-	public function customHeader($sheet, $row_start, $nb_data_cols, $customer, $parclabel = '', $inter_date = null)
+	public function customHeader($sheet, $row_start, $nb_data_cols, $customer, $parclabel = '', $inter_date = null, $intervenant_name = null, $commercial_name = null, $extra_rows = array(), $header_override = array())
 	{
 		global $mysoc, $user, $conf, $langs;
 
@@ -195,7 +245,8 @@ class GestionParcExport extends ExportExcel2007
 		// ── Row 1 : Title ────────────────────────────────────────────────
 		$title_range = 'A' . $row . ':' . $H_LAST . $row;
 		$sheet->mergeCells($title_range);
-		$sheet->setCellValue('A' . $row, $langs->transnoentities('gp_advexp_title') . ' ' . date('Y'));
+		$title_year = !empty($inter_date) ? dol_print_date($inter_date, '%Y') : date('Y');
+		$sheet->setCellValue('A' . $row, $langs->transnoentities('gp_advexp_title') . ' ' . $title_year);
 		$this->applyFill($sheet, $title_range, self::COLOR_TITLE_BG);
 		$this->applyFontColor($sheet, $title_range, self::COLOR_TITLE_FG);
 		$sheet->getStyle($title_range)->getFont()->setBold(true)->setSize(20);
@@ -292,25 +343,31 @@ class GestionParcExport extends ExportExcel2007
 		);
 		$row++;
 
+		$intervenant_value = ($intervenant_name !== null && $intervenant_name !== '') ? $intervenant_name : trim($user->firstname . ' ' . $user->lastname);
 		$this->writeInfoRow(
 			$sheet,
 			$row,
 			$H_LAST,
 			$langs->transnoentities('gp_advexp_user'),
-			trim($user->firstname . ' ' . $user->lastname)
+			$intervenant_value
 		);
 		$row++;
 
-		$salesrep_parts = array();
-		foreach ($customer->getSalesRepresentatives($user) as $sr) {
-			$salesrep_parts[] = trim($sr['firstname'] . ' ' . $sr['lastname']);
+		if ($commercial_name !== null && $commercial_name !== '') {
+			$commercial_value = $commercial_name;
+		} else {
+			$salesrep_parts = array();
+			foreach ($customer->getSalesRepresentatives($user) as $sr) {
+				$salesrep_parts[] = trim($sr['firstname'] . ' ' . $sr['lastname']);
+			}
+			$commercial_value = implode(' / ', $salesrep_parts);
 		}
 		$this->writeInfoRow(
 			$sheet,
 			$row,
 			$H_LAST,
 			$langs->transnoentities('gp_advexp_commercial'),
-			implode(' / ', $salesrep_parts)
+			$commercial_value
 		);
 		$row++;
 
@@ -323,11 +380,11 @@ class GestionParcExport extends ExportExcel2007
 			$row,
 			$H_LAST,
 			$langs->transnoentities('Customer'),
-			$customer->nom
+			(!empty($header_override['client']) ? $header_override['client'] : $customer->nom)
 		);
 		$row++;
 
-		$client_address = trim($customer->address . ', ' . $customer->zip . ' ' . $customer->town, ', ');
+		$client_address = !empty($header_override['address']) ? $header_override['address'] : trim($customer->address . ', ' . $customer->zip . ' ' . $customer->town, ', ');
 		$this->writeInfoRow(
 			$sheet,
 			$row,
@@ -342,7 +399,7 @@ class GestionParcExport extends ExportExcel2007
 			$row,
 			$H_LAST,
 			$langs->transnoentities('Phone'),
-			!empty($customer->phone) ? $customer->phone : '—'
+			(!empty($header_override['phone']) ? $header_override['phone'] : (!empty($customer->phone) ? $customer->phone : '—'))
 		);
 		$row++;
 
@@ -351,7 +408,7 @@ class GestionParcExport extends ExportExcel2007
 			$row,
 			$H_LAST,
 			$langs->transnoentities('CustomerCode'),
-			$customer->code_client
+			(!empty($header_override['code_client']) ? $header_override['code_client'] : $customer->code_client)
 		);
 		$row++;
 
@@ -364,6 +421,20 @@ class GestionParcExport extends ExportExcel2007
 				$parclabel
 			);
 			$row++;
+		}
+
+		// Champs personnalisés (bas du header)
+		if (!empty($extra_rows) && is_array($extra_rows)) {
+			foreach ($extra_rows as $extra_row) {
+				$this->writeInfoRow(
+					$sheet,
+					$row,
+					$H_LAST,
+					$extra_row['label'],
+					$extra_row['value']
+				);
+				$row++;
+			}
 		}
 
 		if (empty($parclabel)) {
@@ -438,12 +509,14 @@ class GestionParcExport extends ExportExcel2007
 	 */
 	protected function writeInfoRow($sheet, $row, $h_last, $label, $value, $val_align = 'left')
 	{
-		// Label cell (C ONLY - no merge with D)
+		// Label cell (C ONLY - no merge with D). Retour à la ligne pour les libellés
+		// longs (ex. "Référentiel de conformité") qui dépassent la largeur de la colonne C.
 		$sheet->setCellValue('C' . $row, $label);
 		$sheet->getStyle('C' . $row)->getFont()->setBold(true)->setSize(13);
 		$this->applyFontColor($sheet, 'C' . $row, self::COLOR_INFO_LABEL);
 		$sheet->getStyle('C' . $row)->getAlignment()
-			->setVertical(Alignment::VERTICAL_CENTER);
+			->setVertical(Alignment::VERTICAL_CENTER)
+			->setWrapText(true);
 
 		// Value cell (D:h_last merged)
 		$val_range = 'D' . $row . ':' . $h_last . $row;
@@ -458,14 +531,15 @@ class GestionParcExport extends ExportExcel2007
 			->setWrapText(true);
 
 		// Excel auto-fit row height does not work on merged cells.
-		// We must estimate the required height manually.
-		$lines = 0;
+		// We must estimate the required height manually, en tenant compte du
+		// retour à la ligne de la valeur ET du libellé (colonne C, largeur ~20).
+		$value_lines = 0;
 		$val_norm = str_replace(array("\r\n", "\r"), "\n", $value);
-		$texts = explode("\n", $val_norm);
-		foreach ($texts as $t) {
-			// Assume the merged column might be narrow (around 30-35 chars per line)
-			$lines += max(1, ceil(mb_strlen($t) / 30));
+		foreach (explode("\n", $val_norm) as $t) {
+			$value_lines += max(1, ceil(mb_strlen($t) / 30));
 		}
+		$label_lines = max(1, (int) ceil(mb_strlen((string) $label) / 17)); // C ~20, gras 13pt
+		$lines = max($value_lines, $label_lines);
 		$estimated_height = max(24, $lines * 18 + 6);
 		$sheet->getRowDimension($row)->setRowHeight($estimated_height);
 
@@ -498,9 +572,12 @@ class GestionParcExport extends ExportExcel2007
 	 * @param array $col_labels  Ordered list of column labels
 	 * @return int  Next row number
 	 */
-	public function writeColumnHeaders($sheet, $row, array $col_labels)
+	public function writeColumnHeaders($sheet, $row, array $col_labels, $sheet_cols = 0)
 	{
-		$nb = count($col_labels);
+		$col_labels = array_values($col_labels);
+		$ncol = count($col_labels);
+		if ($sheet_cols < $ncol) $sheet_cols = $ncol;
+
 		$col_idx = 0;
 		foreach ($col_labels as $label) {
 			$cell = $this->col($col_idx) . $row;
@@ -518,6 +595,18 @@ class GestionParcExport extends ExportExcel2007
 				->getColor()->setARGB(self::COLOR_BORDER_DARK);
 			$col_idx++;
 		}
+
+		// Fusion de la dernière colonne d'en-tête sur les colonnes restantes (consolidé)
+		if ($sheet_cols > $ncol) {
+			for ($k = $ncol; $k < $sheet_cols; $k++) {
+				$c2 = $this->col($k) . $row;
+				$this->applyFill($sheet, $c2, self::COLOR_COLHDR_BG);
+				$sheet->getStyle($c2)->getBorders()->getAllBorders()
+					->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB(self::COLOR_BORDER_DARK);
+			}
+			$sheet->mergeCells($this->col($ncol - 1) . $row . ':' . $this->col($sheet_cols - 1) . $row);
+		}
+
 		// Outer border on the whole header row
 		$sheet->getRowDimension($row)->setRowHeight(28); // Refined header height
 		return $row + 1;
@@ -536,12 +625,28 @@ class GestionParcExport extends ExportExcel2007
 	 * @param array      $align_map   0-based col index => 'left'|'center'|'right'
 	 * @return int  Next row number
 	 */
-	public function writeDataRow($sheet, $row, array $values, $isOdd, array $align_map = array())
+	public function writeDataRow($sheet, $row, array $values, $isOdd, array $align_map = array(), $sheet_cols = 0)
 	{
 		$row_bg = $isOdd ? self::COLOR_ROW_ODD : 'FFFFFFFF';
+		$values = array_values($values);
+		$ncol   = count($values);
+		if ($sheet_cols < $ncol) $sheet_cols = $ncol;
 
-		// Refined row height (between standard 15 and previous 38)
-		$sheet->getRowDimension($row)->setRowHeight(24);
+		// Largeurs (du tableau complet) ; la dernière cellule fusionne les colonnes
+		// restantes quand la section a moins de colonnes que la feuille (consolidé).
+		$widths = $this->dataColWidths($sheet_cols);
+		$eff = array();
+		for ($i = 0; $i < $ncol; $i++) {
+			if ($i === $ncol - 1 && $sheet_cols > $ncol) {
+				$wsum = 0; for ($k = $ncol - 1; $k < $sheet_cols; $k++) $wsum += isset($widths[$k]) ? $widths[$k] : 0;
+				$eff[$i] = $wsum;
+			} else {
+				$eff[$i] = isset($widths[$i]) ? $widths[$i] : 20;
+			}
+		}
+
+		// Hauteur adaptée au retour à la ligne réel de chaque cellule
+		$sheet->getRowDimension($row)->setRowHeight($this->computeRowHeight($values, $eff));
 
 		$col_idx = 0;
 		foreach ($values as $value) {
@@ -550,16 +655,14 @@ class GestionParcExport extends ExportExcel2007
 			$sheet->getStyle($cell)->getFont()->setSize(12);
 			$this->applyFill($sheet, $cell, $row_bg);
 
-			// Enable wrapping ONLY for the 'Produit' column (Index 1)
-			$wrap = ($col_idx === 1);
+			// Retour à la ligne sur les colonnes texte (pas le Numéro)
+			$wrap = ($col_idx !== 0);
 			$sheet->getStyle($cell)->getAlignment()
 				->setWrapText($wrap)
 				->setVertical(Alignment::VERTICAL_CENTER);
-			// Soft inner borders
 			$sheet->getStyle($cell)->getBorders()->getAllBorders()
 				->setBorderStyle(Border::BORDER_HAIR)
 				->getColor()->setARGB(self::COLOR_BORDER_SOFT);
-			// Left border slightly stronger for readability
 			$sheet->getStyle($cell)->getBorders()->getLeft()
 				->setBorderStyle(Border::BORDER_THIN)
 				->getColor()->setARGB(self::COLOR_BORDER_SOFT);
@@ -576,7 +679,6 @@ class GestionParcExport extends ExportExcel2007
 						break;
 				}
 			} else {
-				// Auto-center years, numbers, and dates (XX/XX/XXXX)
 				$clean_val = trim((string) $value);
 				if (is_numeric($clean_val) || preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $clean_val)) {
 					$h = Alignment::HORIZONTAL_CENTER;
@@ -584,6 +686,18 @@ class GestionParcExport extends ExportExcel2007
 			}
 			$sheet->getStyle($cell)->getAlignment()->setHorizontal($h);
 			$col_idx++;
+		}
+
+		// Fusion de la dernière cellule sur les colonnes restantes (sections plus
+		// courtes de la feuille consolidée) pour conserver la même largeur totale.
+		if ($sheet_cols > $ncol) {
+			for ($k = $ncol; $k < $sheet_cols; $k++) {
+				$c2 = $this->col($k) . $row;
+				$this->applyFill($sheet, $c2, $row_bg);
+				$sheet->getStyle($c2)->getBorders()->getAllBorders()
+					->setBorderStyle(Border::BORDER_HAIR)->getColor()->setARGB(self::COLOR_BORDER_SOFT);
+			}
+			$sheet->mergeCells($this->col($ncol - 1) . $row . ':' . $this->col($sheet_cols - 1) . $row);
 		}
 
 		return $row + 1;

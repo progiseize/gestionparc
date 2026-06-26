@@ -25,6 +25,10 @@ gestionparc_desclong=Gestion de parc client. Assignez et modéliser des données
 # MODELE
 gp_model_desc=Modèle prenant en charge les vérifications gestion de parc
 gp_extrafieldFichInter_isverif=Identifiant vérification
+gp_extrafieldFichInter_commercial=Commercial
+gp_extrafieldFichInter_intervenant=Intervenant
+gp_referentiel_conformite=Référentiel de conformité
+gp_typedeplan=Type de plan
 
 # BOX
 gp_boxNb_title=Gestion des parcs clients
@@ -38,10 +42,15 @@ gp_clientparc=Parc Client
 gp_showEmptyParcs=Afficher les parcs vides
 gp_client_verifmode=Mode vérification
 gp_client_lastverif=Dernière vérification
+gp_users_block_title=Commercial / Intervenant
+gp_users_saved=Commercial / intervenant enregistrés
 gp_verifcom=Ajouter un commentaire sur l'intervention
 gp_verif_open=Activer vérification
 gp_verif_close=Clôturer vérification
 gp_verif_cancel=Annuler vérification
+gp_verif_uncontrolled_title=Organes non contrôlés
+gp_verif_confirm_uncontrolled=Certains organes n'ont pas été contrôlés. Voulez-vous quand même clôturer la vérification ?
+gp_verif_continue_anyway=Continuer quand même
 gp_verif_label=Vérification
 gp_product_unknown=Produit inconnu
 gp_empty_parclist_message=Il semblerait qu'aucun parc ne soit actif pour ce tiers
@@ -52,10 +61,15 @@ GestionParcListView=Vue Liste
 gp_verif_error_twice=Deux instances de vérifications sont ouvertes pour ce tiers.
 gp_verif_error_needIntercom=Vous devez saisir une raison de clôture
 gp_verif_error_needDuration=Vous devez saisir une duree d'intervention
+gp_verif_error_needSocField=Vous devez cocher au moins une option pour « %s » sur la fiche tiers avant de valider l'intervention.
 gp_verif_error_onclose=Erreur lors de la clôture de la vérification.
 gp_verif_success_onclose=Intervention "%s" validée
 gp_verif_success_oncancel=Verification annulée avec succès
 gp_verifline_success=Item vérifié
+gp_verifline_reverted=Contrôle annulé
+gp_verif_verify=Vérifier
+gp_verif_verified=Élément vérifié
+gp_verif_revert=Annuler le contrôle
 gp_verifall=Marquer tous les éléments de ce parc comme vérifiés
 gp_confirmVerifAll=Merci de confirmer votre action
 
@@ -162,7 +176,7 @@ gp_field_onlyverif_desc=Ce champ sera visible uniquement en mode vérification. 
 gp_field_required_manual_verif=Obligatoire en vérification manuelle
 gp_field_required_manual_verif_desc=En mode vérification manuelle, ce champ devra être obligatoirement rempli pour valider la vérification de l'élément
 gp_field_force_default_on_verif=Forcer la valeur par défaut à chaque vérification
-gp_field_force_default_on_verif_desc=Lors de l'ouverture d'une nouvelle vérification, ce champ sera automatiquement remis à sa valeur par défaut
+gp_field_force_default_on_verif_desc=Lors de l'ouverture d'une nouvelle vérification, ce champ sera automatiquement remis à sa valeur par défaut (si la valeur par défaut est vide, le champ est vidé)
 gp_field_date_help=Format FR ou US / dd/mm/YYYY ou YYYY_mm_dd pour la date du jour
 
 # RETOURS / ERREURS
@@ -218,6 +232,20 @@ gp_repairTitle=Réparation - GestionParc
 gp_repairText=Cliquez sur ce bouton pour réparer les tables.
 gp_repairButton=Réparer
 gp_repairSuccessMsg=Réparation complète
+gp_backportTitle=Reconstruire l'historique des vérifications (snapshots)
+gp_backportDesc=Reconstruit les données figées (en-tête + organes) des vérifications clôturées à partir des rapports XLSX déjà générés dans chaque intervention, pour que leur export reflète l'état d'origine. Lancez d'abord l'aperçu (rien n'est écrit), puis appliquez.
+gp_backportForce=Réécrire les snapshots existants
+gp_backportDryRun=Aperçu (dry-run)
+gp_backportRun=Appliquer
+gp_backportStatTotal=Vérifications clôturées analysées
+gp_backportStatParsed=Rapports XLSX lus avec succès
+gp_backportStatWritten=Snapshots écrits
+gp_backportStatSkipped=Ignorées (snapshot déjà présent)
+gp_backportStatNoXlsx=Sans rapport XLSX (anciennes vérifs CSV)
+gp_backportStatEmpty=Rapports vides / illisibles
+gp_backportStatSuspect=XLSX suspects (modifiés après la clôture)
+gp_backportDoneCommit=%d snapshot(s) écrit(s)
+gp_backportDoneDryRun=Aperçu terminé - aucune écriture. Cliquez sur « Appliquer » pour enregistrer.
 
 # EXPORT
 gp_advexp_title=RAPPORT DE VERIFICATION
