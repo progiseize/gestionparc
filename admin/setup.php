@@ -215,6 +215,13 @@ llxHeader('', $langs->transnoentities('Setup').' :: '.$langs->transnoentities('M
                             <input type="number" min="0" step="1" name="GESTIONPARC_ADVANCED_EXPORT_LINESPLIT" value="<?php echo getDolGlobalInt('GESTIONPARC_ADVANCED_EXPORT_LINESPLIT'); ?>">
                         </td>
                     </tr>
+                    <tr class="dolpgs-tbody">
+                        <td class="bold pgsz-optiontable-fieldname" valign="top"><?php echo $langs->trans('gp_setup_exportPhotos'); ?></td>
+                        <td class="pgsz-optiontable-fielddesc "><?php echo $langs->transnoentities('gp_setup_exportPhotosDesc'); ?></td>
+                        <td class="right pgsz-optiontable-field ">
+                            <?php echo ajax_constantonoff('GESTIONPARC_EXPORT_PHOTOS'); ?>
+                        </td>
+                    </tr>
                     <?php endif; ?>
                 </tbody>
             </table>

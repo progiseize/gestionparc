@@ -14,6 +14,7 @@ if ($user->socid > 0 || !$user->hasRight('gestionparc','parc','read')){
 }
 
 dol_include_once('/gestionparc/class/gestionparc.class.php');
+dol_include_once('/gestionparc/class/gestionparcphoto.class.php');
 
 $langs->loadLangs(array('gestionparc@gestionparc'));
 
@@ -62,10 +63,19 @@ switch ($action) {
 
 		if (!$error) {
 			$gestionparc->fetch_parcType($parcid);
+
+			// Photo obligatoire sur cet organe : au moins un cliché doit exister
+			$gpphoto = new GestionParcPhoto($db);
+			if ($gpphoto->isPhotoRequired($gestionparc->parc_key)
+				&& $gpphoto->countByItem($verification->rowid, $gestionparc->parc_key, $itemid) == 0) {
+				echo json_encode(array('success' => false, 'error' => $langs->transnoentities('gp_photo_error_required')));
+				exit;
+			}
+
 			if ($verification->setLineCheck($socid, $gestionparc->parc_key, $itemid, 1, $verification->rowid)) {
 				echo json_encode(array(
 					'success' => true,
-					'message' => $langs->trans('gp_verifline_success')
+					'message' => $langs->transnoentities('gp_verifline_success')
 				));
 			} else {
 				echo json_encode(array('success' => false, 'error' => 'Verification failed'));
@@ -83,7 +93,7 @@ switch ($action) {
 		if ($verification->setLineCheck($socid, $gestionparc->parc_key, $itemid, 0, $verification->rowid)) {
 			echo json_encode(array(
 				'success' => true,
-				'message' => $langs->trans('gp_verifline_reverted')
+				'message' => $langs->transnoentities('gp_verifline_reverted')
 			));
 		} else {
 			echo json_encode(array('success' => false, 'error' => 'Revert failed'));

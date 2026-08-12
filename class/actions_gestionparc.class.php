@@ -54,9 +54,48 @@ class ActionsGestionParc
             // On stocke le head modifié dans $this->results et on retourne 1
             $this->results = $parameters['head'];
             $this->results[] = $newtab;
-            
+
             return 1;
         }
+
+        // SI ON EST SUR UNE INTERVENTION : onglet des photos de la vérification
+        if ($element == 'fichinter' && $parameters['mode'] == 'add' && $parameters['filterorigmodule'] == 'external') {
+            // Droit dédié, désactivé par défaut : seul l'admin le voit sans attribution
+            if (!$user->admin && !$user->hasRight('gestionparc', 'photo', 'read')) {
+                return 0;
+            }
+
+            dol_include_once('/gestionparc/class/gestionparcphoto.class.php');
+            $gpverif = new GestionParcVerif($db);
+            $verif_id = $gpverif->getVerifIdByFichinter($object->id);
+            if (empty($verif_id)) return 0;
+
+            $gpphoto = new GestionParcPhoto($db);
+            $nbPhotos = count($gpphoto->listByVerif($verif_id));
+            if (empty($nbPhotos)) return 0; // pas d'onglet vide sur les interventions sans cliché
+
+            $newtab = array();
+            $newtab[0] = dol_buildpath('/gestionparc/tabs/photos.php?id='.$object->id, 1);
+            $newtab[1] = $langs->trans('gp_photo_label').' <span class="badge marginleftonlyshort">'.$nbPhotos.'</span>';
+            $newtab[2] = 'gestionparc_photos';
+
+            // L'onglet se place juste après "Contact intervention", pas en fin de barre.
+            // Repli en dernière position si cet onglet est masqué (droits, config).
+            $head = $parameters['head'];
+            $position = count($head);
+            foreach ($head as $i => $tab) {
+                if (isset($tab[2]) && $tab[2] == 'contact') {
+                    $position = $i + 1;
+                    break;
+                }
+            }
+            array_splice($head, $position, 0, array($newtab));
+
+            $this->results = $head;
+
+            return 1;
+        }
+
         return 0;
     }
 

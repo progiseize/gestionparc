@@ -30,3 +30,6 @@ CREATE TABLE IF NOT EXISTS `llx_gestionparc` (
   `enabled` tinyint(1) NOT NULL,
   PRIMARY KEY (`rowid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- Légende de rapport propre à l'organe (une entrée "CODE = signification" par ligne)
+ALTER TABLE llx_gestionparc ADD report_legend TEXT NULL DEFAULT NULL;

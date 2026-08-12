@@ -20,12 +20,14 @@ set_time_limit(0);
 
 require_once DOL_DOCUMENT_ROOT . '/core/modules/export/modules_export.php';
 include_once DOL_DOCUMENT_ROOT . '/core/modules/export/export_excel2007.modules.php';
+dol_include_once('/gestionparc/class/gestionparcphoto.class.php');
 
 use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Worksheet\PageSetup;
 
 /**
@@ -494,6 +496,71 @@ class GestionParcExport extends ExportExcel2007
 	}
 
 	/**
+	 * Write the "OBSERVATIONS" block: the comment typed in the verification
+	 * close pop-up, right under the header block. Nothing is written when the
+	 * field is empty.
+	 *
+	 * @param \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet
+	 * @param int    $row
+	 * @param int    $nb_data_cols
+	 * @param string $text
+	 * @return int  Next row
+	 */
+	public function writeObservations($sheet, $row, $nb_data_cols, $text)
+	{
+		global $langs;
+
+		// Le champ passe par restricthtml : on ramène les <br> à des sauts de ligne
+		// et on retire le balisage résiduel avant de décoder les entités.
+		$text = preg_replace('/<br\s*\/?>/i', "\n", (string) $text);
+		$text = trim(dol_html_entity_decode(strip_tags($text), ENT_QUOTES | ENT_HTML5));
+		if ($text === '') return $row;
+
+		$last = $this->col(max($nb_data_cols - 1, 3));
+
+		// Bandeau de titre
+		$title_range = 'A'.$row.':'.$last.$row;
+		$sheet->mergeCells($title_range);
+		$sheet->setCellValue('A'.$row, mb_strtoupper($langs->transnoentities('gp_advexp_observations')));
+		$this->applyFill($sheet, $title_range, self::COLOR_TITLE_BG);
+		$this->applyFontColor($sheet, $title_range, self::COLOR_TITLE_FG);
+		$sheet->getStyle($title_range)->getFont()->setBold(true)->setSize(14);
+		$sheet->getStyle($title_range)->getAlignment()
+			->setHorizontal(Alignment::HORIZONTAL_CENTER)
+			->setVertical(Alignment::VERTICAL_CENTER);
+		$sheet->getRowDimension($row)->setRowHeight(28);
+		$row++;
+
+		// Corps : cellule fusionnée, texte renvoyé à la ligne
+		$body_range = 'A'.$row.':'.$last.$row;
+		$sheet->mergeCells($body_range);
+		$sheet->setCellValueExplicit('A'.$row, $text, DataType::TYPE_STRING);
+		$sheet->getStyle($body_range)->getFont()->setSize(12);
+		$this->applyFontColor($sheet, $body_range, self::COLOR_INFO_VALUE);
+		$sheet->getStyle($body_range)->getAlignment()
+			->setHorizontal(Alignment::HORIZONTAL_LEFT)
+			->setVertical(Alignment::VERTICAL_TOP)
+			->setWrapText(true)
+			->setIndent(1);
+
+		// La hauteur d'une cellule fusionnée n'est pas auto-ajustée par Excel :
+		// on l'estime depuis le nombre de lignes rendues (largeur ~ TABLE_WIDTH).
+		$lines = 0;
+		foreach (explode("\n", str_replace(array("\r\n", "\r"), "\n", $text)) as $paragraph) {
+			$lines += max(1, (int) ceil(mb_strlen($paragraph) / 110));
+		}
+		$sheet->getRowDimension($row)->setRowHeight(max(30, $lines * 16 + 8));
+
+		$this->applyBorderOutline($sheet, 'A'.($row - 1).':'.$last.$row, Border::BORDER_MEDIUM, self::COLOR_BORDER_DARK);
+		$row++;
+
+		// Ligne d'aération avant le tableau suivant
+		$sheet->getRowDimension($row)->setRowHeight(24);
+
+		return $row + 1;
+	}
+
+	/**
 	 * Write one header info row.
 	 *
 	 * Fixed 2-column layout inside the header block:
@@ -748,5 +815,175 @@ class GestionParcExport extends ExportExcel2007
 		$drawing->setOffsetX($offsetX);
 		$drawing->setOffsetY($offsetY);
 		$drawing->setWorksheet($sheet);
+	}
+
+	// ── Légende ──────────────────────────────────────────────────────────────
+
+	/**
+	 * Écrit le bloc de légende en fin de feuille : les codes saisis sur chaque
+	 * organe (page de configuration de l'organe), en petit corps de texte.
+	 *
+	 * @param \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet
+	 * @param int   $row
+	 * @param int   $nb_data_cols
+	 * @param array $sections  Sections de report_data (clé 'legend' par section)
+	 * @return int  Next row
+	 */
+	public function writeLegend($sheet, $row, $nb_data_cols, $sections)
+	{
+		global $langs;
+
+		$groups = array();
+		foreach ($sections as $section) {
+			if (empty($section['legend'])) continue;
+			$groups[] = array('label' => $section['label'], 'entries' => $section['legend']);
+		}
+		if (empty($groups)) return $row;
+
+		$last = $this->col(max($nb_data_cols - 1, 1));
+
+		$row++; // aération après le dernier tableau
+
+		$sheet->setCellValue('A'.$row, mb_strtoupper($langs->transnoentities('gp_advexp_legend')));
+		$sheet->getStyle('A'.$row)->getFont()->setBold(true)->setSize(11);
+		$this->applyFontColor($sheet, 'A'.$row, self::COLOR_INFO_LABEL);
+		$sheet->getStyle('A'.$row.':'.$last.$row)->getBorders()->getBottom()
+			->setBorderStyle(Border::BORDER_THIN)
+			->getColor()->setARGB(self::COLOR_BORDER_DARK);
+		$sheet->getRowDimension($row)->setRowHeight(20);
+		$row++;
+
+		foreach ($groups as $group) {
+			$sheet->setCellValue('A'.$row, mb_strtoupper($group['label']));
+			$sheet->getStyle('A'.$row)->getFont()->setBold(true)->setSize(9);
+			$this->applyFontColor($sheet, 'A'.$row, self::COLOR_INFO_LABEL);
+			$sheet->getRowDimension($row)->setRowHeight(16);
+			$row++;
+
+			foreach ($group['entries'] as $entry) {
+				// Code en colonne A, signification fusionnée sur le reste
+				if ($entry['code'] !== '') {
+					$sheet->setCellValueExplicit('A'.$row, $entry['code'], DataType::TYPE_STRING);
+					$sheet->getStyle('A'.$row)->getFont()->setBold(true)->setSize(9);
+					$this->applyFontColor($sheet, 'A'.$row, self::COLOR_INFO_LABEL);
+					$sheet->getStyle('A'.$row)->getAlignment()->setIndent(1);
+				}
+
+				$label_range = 'B'.$row.':'.$last.$row;
+				if ($nb_data_cols > 2) $sheet->mergeCells($label_range);
+				$sheet->setCellValueExplicit('B'.$row, $entry['label'], DataType::TYPE_STRING);
+				$sheet->getStyle('B'.$row)->getFont()->setSize(9);
+				$this->applyFontColor($sheet, 'B'.$row, self::COLOR_INFO_VALUE);
+				$sheet->getStyle('B'.$row)->getAlignment()
+					->setHorizontal(Alignment::HORIZONTAL_LEFT)
+					->setVertical(Alignment::VERTICAL_CENTER)
+					->setWrapText(true);
+
+				$sheet->getRowDimension($row)->setRowHeight(max(15, (int) ceil(mb_strlen($entry['label']) / 100) * 14));
+				$row++;
+			}
+
+			$row++;
+		}
+
+		return $row;
+	}
+
+	// ── Annexe photographique ────────────────────────────────────────────────
+
+	/** Vignettes par ligne dans la feuille PHOTOS */
+	const PHOTO_COLS      = 3;
+	/** Hauteur d'une vignette (px) et de sa ligne de légende */
+	const PHOTO_HEIGHT_PX = 200;
+
+	/**
+	 * Écrit une feuille "PHOTOS" : les clichés de la campagne, groupés par organe,
+	 * en grille de PHOTO_COLS vignettes légendées par le n° de l'élément.
+	 *
+	 * @param array $sections  Sections de report_data (clé 'photos' par section)
+	 * @param Translate $langs
+	 * @return bool  true si la feuille a été créée
+	 */
+	public function writePhotoSheet($sections, $langs)
+	{
+		// Regroupe les clichés réellement présents sur le disque
+		$groups = array();
+		foreach ($sections as $section) {
+			if (empty($section['photos'])) continue;
+			$files = array();
+			foreach ($section['photos'] as $photo) {
+				$abs = GestionParcPhoto::getAbsolutePath($photo['path']);
+				if (!file_exists($abs)) continue;
+				$files[] = array('file' => $abs, 'item' => $photo['item']);
+			}
+			if (!empty($files)) $groups[] = array('label' => $section['label'], 'files' => $files);
+		}
+		if (empty($groups)) return false;
+
+		$this->workbook->createSheet();
+		$this->workbook->setActiveSheetIndex($this->workbook->getSheetCount() - 1);
+		$sheet = $this->workbook->getActiveSheet();
+		$sheet->setTitle(mb_strtoupper(mb_substr($langs->transnoentities('gp_advexp_photoannex'), 0, 31)));
+
+		$last_col = $this->col(self::PHOTO_COLS - 1);
+		for ($i = 0; $i < self::PHOTO_COLS; $i++) {
+			$sheet->getColumnDimension($this->col($i))->setWidth(38);
+		}
+		$ps = $sheet->getPageSetup();
+		$ps->setOrientation(PageSetup::ORIENTATION_PORTRAIT);
+		$ps->setPaperSize(PageSetup::PAPERSIZE_A4);
+		$ps->setFitToPage(true);
+		$ps->setFitToWidth(1);
+		$ps->setFitToHeight(0);
+
+		$row = 1;
+
+		// Titre de l'annexe
+		$range = 'A'.$row.':'.$last_col.$row;
+		$sheet->mergeCells($range);
+		$sheet->setCellValue('A'.$row, mb_strtoupper($langs->transnoentities('gp_advexp_photoannex')));
+		$this->applyFill($sheet, $range, self::COLOR_TITLE_BG);
+		$this->applyFontColor($sheet, $range, self::COLOR_TITLE_FG);
+		$sheet->getStyle($range)->getFont()->setBold(true)->setSize(18);
+		$sheet->getStyle($range)->getAlignment()
+			->setHorizontal(Alignment::HORIZONTAL_CENTER)
+			->setVertical(Alignment::VERTICAL_CENTER);
+		$sheet->getRowDimension($row)->setRowHeight(40);
+		$row += 2;
+
+		foreach ($groups as $group) {
+			$row = $this->writeSectionTitle($sheet, $row, self::PHOTO_COLS, $group['label']);
+
+			$col = 0;
+			foreach ($group['files'] as $photo) {
+				if ($col === 0) {
+					// Ligne des images puis ligne des légendes
+					$sheet->getRowDimension($row)->setRowHeight(self::PHOTO_HEIGHT_PX * 0.78);
+					$sheet->getRowDimension($row + 1)->setRowHeight(20);
+				}
+
+				$cell = $this->col($col).$row;
+				$this->addImage($cell, $photo['file'], basename($photo['file']), $photo['item'], self::PHOTO_HEIGHT_PX, 8, 6);
+
+				$cap = $this->col($col).($row + 1);
+				$sheet->setCellValue($cap, $photo['item']);
+				$sheet->getStyle($cap)->getFont()->setSize(11);
+				$this->applyFontColor($sheet, $cap, self::COLOR_INFO_VALUE);
+				$sheet->getStyle($cap)->getAlignment()
+					->setHorizontal(Alignment::HORIZONTAL_CENTER)
+					->setVertical(Alignment::VERTICAL_CENTER);
+
+				$col++;
+				if ($col >= self::PHOTO_COLS) {
+					$col = 0;
+					$row += 2;
+				}
+			}
+
+			if ($col > 0) $row += 2;
+			$row++;
+		}
+
+		return true;
 	}
 }

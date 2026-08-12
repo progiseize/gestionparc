@@ -34,12 +34,15 @@ if (!defined('NOREQUIRESOC')) {
 // Load Dolibarr environment
 require '../../../main.inc.php';
 dol_include_once('/gestionparc/class/gestionparc.class.php');
+dol_include_once('/gestionparc/class/gestionparcphoto.class.php');
 
 $langs->load('admin');
 $langs->load('gestionparc@gestionparc');
 
 //
 $gestionparc = new GestionParc($db);
+$gpphoto = new GestionParcPhoto($db);
+$gpverif = new GestionParcVerif($db);
 $action = GETPOST('action', 'alpha');
 $parckey = GETPOST('parckey', 'alphanohtml');
 $results = array();
@@ -251,6 +254,20 @@ if ($action == 'getitemform') {
 							$html .= '<div class="park-field-label">'.$parcfield->label.'</div>';
 							$html .= '<div class="park-field-value">';
 								$html .= $parcfield->construct_field($gestionparc, $socid, $fieldValue);
+							$html .= '</div>';
+						$html .= '</div>';
+					}
+					// Photos de la vérification en cours : le formulaire AJAX remplace toute
+					// la carte, le bloc doit donc être reconstruit ici aussi.
+					if ($isModeVerif) {
+						$verif_id = $gpverif->isVerif($socid);
+						$item_photos = $verif_id ? $gpphoto->listByItem($verif_id, $parckey, $element->rowid) : array();
+						$photo_required = $gpphoto->isPhotoRequired($parckey);
+						$can_photo = ($user->hasRight('gestionparc', 'parc', 'write') || $user->admin);
+						$html .= '<div class="park-field">';
+							$html .= '<div class="park-field-label">'.$langs->trans('gp_photo_label').($photo_required ? ' <span class="required">*</span>' : '').'</div>';
+							$html .= '<div class="park-field-value">';
+								$html .= GestionParcPhotoWidget($gestionparc, $element->rowid, $socid, $item_photos, $can_photo, $photo_required);
 							$html .= '</div>';
 						$html .= '</div>';
 					}

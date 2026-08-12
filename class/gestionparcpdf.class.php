@@ -4,6 +4,7 @@
 require_once DOL_DOCUMENT_ROOT . '/core/lib/pdf.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
 require_once TCPDF_PATH . 'tcpdf.php';
+dol_include_once('/gestionparc/class/gestionparcphoto.class.php');
 
 /**
  * GestionParcPDF — Faithful PDF translation of the Excel "RAPPORT COMPLET" sheet.
@@ -91,6 +92,74 @@ class GestionParcPDF extends TCPDF
     private function sd(array $c)
     {
         $this->SetDrawColor($c[0], $c[1], $c[2]);
+    }
+
+    // ── Checkbox list (custom soc fields) ─────────────────────────────────
+    //
+    //   ☒ APSAD R4    ☐ Code du Travail
+    //
+    // Every option of the field is rendered, checked or not. Options wrap to a
+    // new line when they no longer fit in $maxw. Pass $draw = false to only
+    // measure the block height (used by the row height computation).
+
+    const CB_SIZE = 3.0;   // box side (mm)
+    const CB_GAP  = 1.5;   // box → label
+    const CB_SEP  = 6.0;   // option → option
+    const CB_LH   = 5.0;   // line height
+
+    private function checkboxList($x, $y, $maxw, array $options, $draw = true)
+    {
+        $this->SetFont('helvetica', '', 8);
+
+        // Split options into lines fitting $maxw
+        $lines   = array(array());
+        $line_w  = 0;
+        foreach ($options as $opt) {
+            $opt_w = self::CB_SIZE + self::CB_GAP + $this->GetStringWidth($opt['label']);
+            $last  = count($lines) - 1;
+            $need  = $opt_w + (empty($lines[$last]) ? 0 : self::CB_SEP);
+            if (!empty($lines[$last]) && $line_w + $need > $maxw) {
+                $lines[] = array();
+                $last++;
+                $line_w = 0;
+                $need = $opt_w;
+            }
+            $lines[$last][] = $opt;
+            $line_w += $need;
+        }
+
+        $height = count($lines) * self::CB_LH;
+        if (!$draw) return $height;
+
+        $ly = $y;
+        foreach ($lines as $line) {
+            $lx = $x;
+            foreach ($line as $opt) {
+                $bx = $lx;
+                $by = $ly + (self::CB_LH - self::CB_SIZE) / 2;
+
+                $this->sd(self::INFO_LABEL);
+                $this->sf(self::ROW_EVEN);
+                $this->SetLineWidth(0.35);
+                $this->Rect($bx, $by, self::CB_SIZE, self::CB_SIZE, 'DF');
+
+                if (!empty($opt['checked'])) {
+                    $this->SetLineWidth(0.45);
+                    $this->Line($bx + 0.6, $by + 0.6, $bx + self::CB_SIZE - 0.6, $by + self::CB_SIZE - 0.6);
+                    $this->Line($bx + self::CB_SIZE - 0.6, $by + 0.6, $bx + 0.6, $by + self::CB_SIZE - 0.6);
+                }
+
+                $lbl_w = $this->GetStringWidth($opt['label']);
+                $this->sc(self::INFO_VALUE);
+                $this->SetXY($bx + self::CB_SIZE + self::CB_GAP, $ly);
+                $this->Cell($lbl_w + 0.5, self::CB_LH, $opt['label'], 0, 0, 'L');
+
+                $lx = $bx + self::CB_SIZE + self::CB_GAP + $lbl_w + self::CB_SEP;
+            }
+            $ly += self::CB_LH;
+        }
+
+        return $height;
     }
 
     // ── TCPDF Header — minimal, no logo, no colour clash ──────────────────
@@ -185,9 +254,18 @@ class GestionParcPDF extends TCPDF
 
         $this->AddPage();
         $this->drawInfoBlock($intervention, $customer);
+        $this->drawObservations(isset($report_data['observations']) ? $report_data['observations'] : '');
 
         foreach ($report_data['sections'] as $idx => $section) {
             $this->drawSection($section, ($idx === 0));
+        }
+
+        // Légendes des organes, regroupées en fin de rapport
+        $this->drawLegend($report_data);
+
+        // Annexe photographique (option globale du module)
+        if (getDolGlobalInt('GESTIONPARC_EXPORT_PHOTOS')) {
+            $this->drawPhotoAnnex($report_data);
         }
 
         $this->Output($output_file, 'F');
@@ -267,12 +345,14 @@ class GestionParcPDF extends TCPDF
             array($this->t($langs->trans('CustomerCode')),         $cust_code),
         );
 
-        // Champs personnalisés (bas du header)
+        // Champs personnalisés (bas du header) : toutes les cases, cochées ou non
         foreach (GestionParcVerif::getCustomSocFields() as $code => $def) {
-            $val = GestionParcVerif::resolveCustomSocField($this->db, $code, $intervention, $customer);
-            if ($val !== '') {
-                $info_rows[] = array($this->t($langs->trans($def['label'])), $this->t($val));
+            $opts = GestionParcVerif::getCustomSocFieldOptionsState($this->db, $code, $intervention, $customer);
+            if (empty($opts)) continue;
+            foreach ($opts as $i => $opt) {
+                $opts[$i]['label'] = $this->t($opt['label']);
             }
+            $info_rows[] = array($this->t($langs->trans($def['label'])), '', $opts);
         }
 
         // ── Geometry ─────────────────────────────────────────────────────
@@ -293,7 +373,11 @@ class GestionParcPDF extends TCPDF
                 $calculated_heights[] = $spacer_h;
                 $block_h += $spacer_h;
             } else {
-                $h_val = $this->getStringHeight($val_w - 2, $row[1]);
+                if (!empty($row[2])) {
+                    $h_val = $this->checkboxList(0, 0, $val_w - 4, $row[2], false);
+                } else {
+                    $h_val = $this->getStringHeight($val_w - 2, $row[1]);
+                }
                 $row_h = max($rh, $h_val + 2); // padding
                 $calculated_heights[] = $row_h;
                 $block_h += $row_h;
@@ -396,12 +480,17 @@ class GestionParcPDF extends TCPDF
             $this->SetXY($rx + 3, $ry + max(0, ($row_height - $h_lbl) / 2));
             $this->MultiCell($lbl_w - 3, $h_lbl, $label, 0, 'L', false, 0);
 
-            // Value (regular, dark gray — COLOR_INFO_VALUE)
+            // Value : cases à cocher (champs personnalisés) ou texte
             $this->SetFont('helvetica', '', 8);
             $this->sc(self::INFO_VALUE);
-            $h_val = $this->getStringHeight($val_w - 2, $value);
-            $this->SetXY($rx + $lbl_w + 2, $ry + max(0, ($row_height - $h_val) / 2));
-            $this->MultiCell($val_w - 2, 4.5, $value, 0, 'L', false, 0);
+            if (!empty($row[2])) {
+                $h_val = $this->checkboxList(0, 0, $val_w - 4, $row[2], false);
+                $this->checkboxList($rx + $lbl_w + 2, $ry + max(0, ($row_height - $h_val) / 2), $val_w - 4, $row[2]);
+            } else {
+                $h_val = $this->getStringHeight($val_w - 2, $value);
+                $this->SetXY($rx + $lbl_w + 2, $ry + max(0, ($row_height - $h_val) / 2));
+                $this->MultiCell($val_w - 2, 4.5, $value, 0, 'L', false, 0);
+            }
 
             $ry += $row_height;
         }
@@ -422,6 +511,67 @@ class GestionParcPDF extends TCPDF
 
         $this->SetLineWidth(0.2);
         $this->SetY($y + $block_h + 7);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // OBSERVATIONS
+    //
+    // Reprend le commentaire saisi dans la pop-up de clôture de la vérif,
+    // juste sous le bloc d'en-tête. Rien n'est dessiné si le champ est vide.
+    //
+    //   ┌─ OBSERVATIONS ────────────────────────────────────────────────┐  navy
+    //   │ Texte libre, sur autant de lignes que nécessaire.             │
+    //   └───────────────────────────────────────────────────────────────┘
+    // ─────────────────────────────────────────────────────────────────────
+
+    private function drawObservations($text)
+    {
+        global $langs;
+
+        // Le champ passe par restricthtml : on ramène les <br> à des sauts de ligne
+        // et on retire le balisage résiduel avant de décoder les entités.
+        $text = preg_replace('/<br\s*\/?>/i', "\n", (string) $text);
+        $text = trim($this->t(strip_tags($text)));
+        if ($text === '') return;
+
+        $x0 = self::ML;
+        $w  = self::CW;
+        $th = 8;    // bandeau de titre
+        $pad = 3;   // marge intérieure du corps
+
+        $this->SetFont('helvetica', '', 8.5);
+        $body_h = max(8, $this->getStringHeight($w - 2 * $pad, $text) + 2 * $pad);
+
+        // Le bloc reste solidaire de son titre : on bascule de page si besoin
+        if ($this->GetY() + $th + $body_h > $this->getPageHeight() - 20) {
+            $this->AddPage();
+        }
+
+        $y = $this->GetY();
+
+        // Bandeau de titre
+        $this->sf(self::TITLE_BG);
+        $this->Rect($x0, $y, $w, $th, 'F');
+        $this->SetFont('helvetica', 'B', 10);
+        $this->sc(self::TITLE_FG);
+        $this->SetXY($x0, $y);
+        $this->Cell($w, $th, mb_strtoupper($this->t($langs->trans('gp_advexp_observations'))), 0, 0, 'C');
+
+        // Corps
+        $this->sf(self::ROW_EVEN);
+        $this->Rect($x0, $y + $th, $w, $body_h, 'F');
+        $this->SetFont('helvetica', '', 8.5);
+        $this->sc(self::INFO_VALUE);
+        $this->SetXY($x0 + $pad, $y + $th + $pad);
+        $this->MultiCell($w - 2 * $pad, 4.5, $text, 0, 'L', false, 1);
+
+        // Bordure extérieure navy, comme les tableaux d'organe
+        $this->sd(self::BDR_DARK);
+        $this->SetLineWidth(0.55);
+        $this->Rect($x0, $y, $w, $th + $body_h, 'D');
+        $this->SetLineWidth(0.2);
+
+        $this->SetY($y + $th + $body_h + 7);
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -510,6 +660,235 @@ class GestionParcPDF extends TCPDF
         $this->drawSectionBorder($x0, $page_top, $w, $this->GetY() - $page_top);
 
         $this->Ln(8);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // LEGENDE
+    //
+    // Regroupe en fin de rapport les légendes saisies sur chaque organe
+    // (page de configuration de l'organe), pour expliciter les codes employés
+    // dans les tableaux. Petit corps de texte, un bloc par organe concerné.
+    //
+    //   LÉGENDE
+    //   EXTINCTEUR
+    //     VR = Vérification annuelle
+    //     NEUF = Ajout ou remplacement…
+    // ─────────────────────────────────────────────────────────────────────
+
+    const LG_LH   = 3.8;   // hauteur de ligne (mm)
+    const LG_CODE = 30;    // largeur de la colonne des codes (mm)
+
+    private function drawLegend($report_data)
+    {
+        global $langs;
+
+        $groups = array();
+        foreach ($report_data['sections'] as $section) {
+            if (empty($section['legend'])) continue;
+            $groups[] = array('label' => $section['label'], 'entries' => $section['legend']);
+        }
+        if (empty($groups)) return;
+
+        $x0 = self::ML;
+        $w  = self::CW;
+
+        // Hauteur totale, pour garder le bloc d'un seul tenant si possible
+        $this->SetFont('helvetica', '', 7);
+        $needed = 6;
+        foreach ($groups as $group) {
+            $needed += 5;
+            foreach ($group['entries'] as $entry) {
+                $needed += $this->legendEntryHeight($entry, $w);
+            }
+            $needed += 2;
+        }
+        if ($this->GetY() + min($needed, 60) > $this->getPageHeight() - 20) {
+            $this->AddPage();
+        } else {
+            $this->Ln(2);
+        }
+
+        // Titre
+        $this->SetFont('helvetica', 'B', 8);
+        $this->sc(self::INFO_LABEL);
+        $this->SetXY($x0, $this->GetY());
+        $this->Cell($w, 5, mb_strtoupper($this->t($langs->trans('gp_advexp_legend'))), 0, 1, 'L');
+        $this->sd(self::BDR_DARK);
+        $this->SetLineWidth(0.3);
+        $this->Line($x0, $this->GetY(), $x0 + $w, $this->GetY());
+        $this->Ln(1.5);
+
+        foreach ($groups as $group) {
+            if ($this->GetY() + 10 > $this->getPageHeight() - 20) $this->AddPage();
+
+            $this->SetFont('helvetica', 'B', 7);
+            $this->sc(self::INFO_LABEL);
+            $this->SetXY($x0, $this->GetY());
+            $this->Cell($w, 4, mb_strtoupper($this->t($group['label'])), 0, 1, 'L');
+
+            foreach ($group['entries'] as $entry) {
+                $h = $this->legendEntryHeight($entry, $w);
+                if ($this->GetY() + $h > $this->getPageHeight() - 20) $this->AddPage();
+
+                $y = $this->GetY();
+                $code  = $this->t($entry['code']);
+                $label = $this->t($entry['label']);
+
+                if ($code !== '') {
+                    $this->SetFont('helvetica', 'B', 7);
+                    $this->sc(self::INFO_LABEL);
+                    $this->SetXY($x0 + 2, $y);
+                    $this->Cell(self::LG_CODE, self::LG_LH, $code, 0, 0, 'L');
+
+                    $this->SetFont('helvetica', '', 7);
+                    $this->sc(self::TEXT_MUTED);
+                    $this->SetXY($x0 + 2 + self::LG_CODE, $y);
+                    $this->MultiCell($w - 4 - self::LG_CODE, self::LG_LH, $label, 0, 'L', false, 1);
+                } else {
+                    $this->SetFont('helvetica', '', 7);
+                    $this->sc(self::TEXT_MUTED);
+                    $this->SetXY($x0 + 2, $y);
+                    $this->MultiCell($w - 4, self::LG_LH, $label, 0, 'L', false, 1);
+                }
+            }
+
+            $this->Ln(1.5);
+        }
+    }
+
+    /** Hauteur d'une entrée de légende, calée sur le rendu de MultiCell. */
+    private function legendEntryHeight($entry, $w)
+    {
+        $this->SetFont('helvetica', '', 7);
+        $avail = ($entry['code'] !== '') ? ($w - 4 - self::LG_CODE) : ($w - 4);
+
+        return max(1, $this->getNumLines($this->t($entry['label']), $avail)) * self::LG_LH;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // ANNEXE PHOTOGRAPHIQUE
+    //
+    //   ┌─ ANNEXE PHOTOGRAPHIQUE ───────────────────────────────────────┐  navy
+    //   │ EXTINCTEUR                                                     │
+    //   │ ┌────────┐ ┌────────┐ ┌────────┐                               │
+    //   │ │ photo  │ │ photo  │ │ photo  │   3 vignettes par ligne       │
+    //   │ └────────┘ └────────┘ └────────┘                               │
+    //   │   N° 6       N° 7       N° 8                                   │
+    //
+    // Les clichés sont regroupés par organe, dans l'ordre des éléments.
+    // ─────────────────────────────────────────────────────────────────────
+
+    const PH_COLS   = 3;     // vignettes par ligne
+    const PH_GAP    = 6;     // écart horizontal/vertical entre vignettes (mm)
+    const PH_MAXH   = 46;    // hauteur max d'une vignette (mm)
+    const PH_CAPH   = 5;     // hauteur du bandeau de légende (mm)
+
+    private function drawPhotoAnnex($report_data)
+    {
+        global $langs;
+
+        // Rassemble les photos par organe
+        $groups = array();
+        foreach ($report_data['sections'] as $section) {
+            if (empty($section['photos'])) continue;
+            $files = array();
+            foreach ($section['photos'] as $photo) {
+                $abs = GestionParcPhoto::getAbsolutePath($photo['path']);
+                if (!file_exists($abs)) continue;
+                $files[] = array('file' => $abs, 'item' => $photo['item']);
+            }
+            if (!empty($files)) $groups[] = array('label' => $section['label'], 'files' => $files);
+        }
+        if (empty($groups)) return;
+
+        $this->AddPage();
+
+        $x0 = self::ML;
+        $w  = self::CW;
+
+        // Titre de l'annexe
+        $th = 9;
+        $this->sf(self::TITLE_BG);
+        $this->Rect($x0, $this->GetY(), $w, $th, 'F');
+        $this->SetFont('helvetica', 'B', 11);
+        $this->sc(self::TITLE_FG);
+        $this->SetXY($x0, $this->GetY());
+        $this->Cell($w, $th, mb_strtoupper($this->t($langs->trans('gp_advexp_photoannex'))), 0, 1, 'C');
+        $this->Ln(4);
+
+        $cell_w = ($w - (self::PH_COLS - 1) * self::PH_GAP) / self::PH_COLS;
+
+        foreach ($groups as $group) {
+            // Titre d'organe
+            if ($this->GetY() + 14 > $this->getPageHeight() - 20) $this->AddPage();
+            $this->SetFont('helvetica', 'B', 9);
+            $this->sc(self::INFO_LABEL);
+            $this->SetXY($x0, $this->GetY());
+            $this->Cell($w, 6, mb_strtoupper($this->t($group['label'])), 0, 1, 'L');
+            $this->sd(self::BDR_SOFT);
+            $this->SetLineWidth(0.2);
+            $this->Line($x0, $this->GetY(), $x0 + $w, $this->GetY());
+            $this->Ln(2);
+
+            $col = 0;
+            $row_y = $this->GetY();
+            $row_h = 0;
+
+            foreach ($group['files'] as $photo) {
+                $size = @getimagesize($photo['file']);
+                if ($size === false || empty($size[0]) || empty($size[1])) continue;
+
+                // Vignette contenue dans cell_w × PH_MAXH, ratio conservé
+                $ratio = $size[0] / $size[1];
+                $img_w = $cell_w;
+                $img_h = $img_w / $ratio;
+                if ($img_h > self::PH_MAXH) {
+                    $img_h = self::PH_MAXH;
+                    $img_w = $img_h * $ratio;
+                }
+                $cell_h = self::PH_MAXH + self::PH_CAPH;
+
+                if ($col === 0) {
+                    // Saut de page si la rangée ne tient pas
+                    if ($row_y + $cell_h > $this->getPageHeight() - 20) {
+                        $this->AddPage();
+                        $row_y = $this->GetY();
+                    }
+                    $row_h = $cell_h;
+                }
+
+                $cx = $x0 + $col * ($cell_w + self::PH_GAP);
+                // Image centrée horizontalement et calée en bas de la zone image
+                $ix = $cx + ($cell_w - $img_w) / 2;
+                $iy = $row_y + (self::PH_MAXH - $img_h) / 2;
+
+                $this->Image($photo['file'], $ix, $iy, $img_w, $img_h, '', '', '', true, 300);
+                $this->sd(self::BDR_SOFT);
+                $this->SetLineWidth(0.2);
+                $this->Rect($ix, $iy, $img_w, $img_h, 'D');
+
+                // Légende : numéro de l'élément
+                $this->SetFont('helvetica', '', 7.5);
+                $this->sc(self::TEXT_MUTED);
+                $this->SetXY($cx, $row_y + self::PH_MAXH);
+                $this->Cell($cell_w, self::PH_CAPH, $this->t($photo['item']), 0, 0, 'C');
+
+                $col++;
+                if ($col >= self::PH_COLS) {
+                    $col = 0;
+                    $row_y += $row_h + self::PH_GAP;
+                    $this->SetY($row_y);
+                }
+            }
+
+            // Rangée incomplète : on descend quand même sous les vignettes
+            if ($col > 0) {
+                $row_y += $row_h + self::PH_GAP;
+                $this->SetY($row_y);
+            }
+
+            $this->Ln(3);
+        }
     }
 
     /** Dessine la bordure extérieure navy d'un bloc de tableau. */

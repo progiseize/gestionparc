@@ -39,6 +39,9 @@ $check_id = $gestionparc->fetch_parcType($rowid);
 if($check_id <= 0) : header('Location: '.$dolibarr_main_url_root.'/custom/gestionparc/admin/manager');
 endif;
 
+// Colonne légende + amorçage des légendes par défaut (upgrade-safe, sans réactivation du module)
+$gestionparc->ensureReportLegendColumn();
+
 
 /*******************************************************************
 * VARIABLES
@@ -94,6 +97,35 @@ switch ($action):
             else:
                 setEventMessages("SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry", null, 'warnings');
             endif;
+        break;
+
+    // LEGENDE DE RAPPORT DE CET ORGANE (reprise en fin d'export)
+    case 'set_reportlegend':
+        if(GETPOST('token') == $_SESSION['token']) :
+            if($gestionparc->setReportLegend($rowid, GETPOST('gp_reportlegend', 'restricthtml'))) :
+                setEventMessages($langs->trans('RecordSaved'), null, 'mesgs');
+            else:
+                setEventMessages($langs->trans('gp_error'), null, 'errors');
+            endif;
+        else:
+            setEventMessages("SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry", null, 'warnings');
+        endif;
+        break;
+
+    // PHOTO OBLIGATOIRE SUR CET ORGANE (pendant les vérifications)
+    case 'enable_photorequired':
+    case 'disable_photorequired':
+        if(GETPOST('token') == $_SESSION['token']) :
+            dol_include_once('/gestionparc/class/gestionparcphoto.class.php');
+            $gpphoto = new GestionParcPhoto($db);
+            if($gpphoto->setPhotoRequired($rowid, $action == 'enable_photorequired')) :
+                setEventMessages($langs->trans('RecordSaved'), null, 'mesgs');
+            else:
+                setEventMessages($langs->trans('gp_error'), null, 'errors');
+            endif;
+        else:
+            setEventMessages("SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry", null, 'warnings');
+        endif;
         break;
 
     // ACTIVER CHAMP
@@ -353,6 +385,49 @@ endif;
     <div class="tabBar">
         <?php if(!empty($gestionparc->description)) : ?>
             <div class="justify opacitymedium"><?php print img_info().' '.$gestionparc->description; ?></div>
+        <?php endif; ?>
+
+        <?php if(getDolGlobalInt('MAIN_MODULE_GESTIONPARC_USEVERIF')) :
+            dol_include_once('/gestionparc/class/gestionparcphoto.class.php');
+            $gpphoto = new GestionParcPhoto($db);
+            $gp_photo_required = $gpphoto->isPhotoRequired($gestionparc->parc_key); ?>
+        <table class="dolpgs-table">
+            <tbody>
+                <tr class="dolpgs-tbody">
+                    <td class="bold pgsz-optiontable-fieldname" valign="top"><?php echo $langs->trans('gp_parc_photorequired'); ?></td>
+                    <td class="pgsz-optiontable-fielddesc"><?php echo $langs->transnoentities('gp_parc_photorequired_desc'); ?></td>
+                    <td class="right pgsz-optiontable-field">
+                        <?php if($gp_photo_required) : ?>
+                            <a class="reposition" href="<?php echo $_SERVER['PHP_SELF'].'?id='.$rowid.'&action=disable_photorequired&token='.newToken(); ?>"><?php echo img_picto($langs->trans("Activated"), 'switch_on'); ?></a>
+                        <?php else: ?>
+                            <a class="reposition" href="<?php echo $_SERVER['PHP_SELF'].'?id='.$rowid.'&action=enable_photorequired&token='.newToken(); ?>"><?php echo img_picto($langs->trans("Disabled"), 'switch_off'); ?></a>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <?php endif; ?>
+
+        <?php if(getDolGlobalInt('GESTIONPARC_ADVANCED_EXPORT')) : ?>
+        <form action="<?php echo $_SERVER['PHP_SELF'].'?id='.$rowid; ?>" method="POST">
+            <input type="hidden" name="token" value="<?php echo newToken(); ?>">
+            <input type="hidden" name="action" value="set_reportlegend">
+            <table class="dolpgs-table">
+                <tbody>
+                    <tr class="dolpgs-tbody">
+                        <td class="bold pgsz-optiontable-fieldname" valign="top" style="width:200px;"><?php echo $langs->trans('gp_parc_reportlegend'); ?></td>
+                        <td class="pgsz-optiontable-fielddesc" valign="top">
+                            <div class="opacitymedium" style="margin-bottom:8px;"><?php echo $langs->transnoentities('gp_parc_reportlegend_desc'); ?></div>
+                            <?php // keepn = 1 : dol_escape_htmltag transforme sinon les sauts de ligne en "\n" littéral ?>
+                            <textarea name="gp_reportlegend" rows="8" class="gp-legend-input" placeholder="<?php echo dol_escape_htmltag($langs->transnoentities('gp_parc_reportlegend_placeholder'), 0, 1); ?>"><?php echo dol_escape_htmltag($gestionparc->getReportLegend($rowid), 0, 1); ?></textarea>
+                            <div class="right" style="margin-top:8px;">
+                                <input type="submit" class="dolpgs-btn btn-primary btn-sm" value="<?php echo $langs->trans('Save'); ?>">
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </form>
         <?php endif; ?>
 
         <table class="dolpgs-table">

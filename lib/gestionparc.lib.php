@@ -373,3 +373,71 @@ function GestionParcCheckCookieForSocid($cookie_name,$socid)
         endif;
     endif;
 }
+
+/**
+ * Rend le bloc "photos" d'un élément de parc pendant une vérification.
+ *
+ * Les clichés sont rattachés à la vérif en cours : ils apparaissent dans les
+ * exports de cette campagne puis restent figés une fois la vérif close.
+ *
+ * @param object $parc       Type de parc (organe)
+ * @param int    $item_id    Identifiant de la ligne
+ * @param int    $socid      Tiers
+ * @param array  $photos     Photos déjà présentes (objets llx_gestionparc_photos)
+ * @param bool   $can_write  Droit d'ajout/suppression
+ * @param bool   $required   Photo obligatoire pour cet organe
+ * @return string
+ */
+function GestionParcPhotoWidget($parc, $item_id, $socid, $photos, $can_write, $required)
+{
+    global $langs;
+
+    $out = '<div class="gp-photos'.($required ? ' gp-photos-required' : '').'"';
+    $out .= ' data-itemid="'.(int) $item_id.'"';
+    $out .= ' data-parcid="'.(int) $parc->rowid.'"';
+    $out .= ' data-parctype="'.dol_escape_htmltag($parc->parc_key).'"';
+    $out .= ' data-socid="'.(int) $socid.'"';
+    $out .= ' data-required="'.($required ? 1 : 0).'">';
+
+    $out .= '<div class="gp-photos-list">';
+    foreach ($photos as $photo) {
+        $out .= GestionParcPhotoThumb($photo, $can_write);
+    }
+    $out .= '</div>';
+
+    if ($can_write) {
+        $out .= '<label class="gp-photo-add">';
+        // Pas d'attribut capture : le mobile propose alors "Appareil photo" ET "Galerie"
+        $out .= '<input type="file" class="gp-photo-input" accept="image/*" multiple>';
+        $out .= '<span class="fas fa-camera"></span> '.$langs->trans('gp_photo_add');
+        $out .= '</label>';
+    }
+
+    $out .= '<span class="gp-photos-status"></span>';
+    $out .= '</div>';
+
+    return $out;
+}
+
+/**
+ * Vignette d'une photo (utilisée au rendu initial et en retour d'upload AJAX).
+ *
+ * @param object $photo
+ * @param bool   $can_write
+ * @return string
+ */
+function GestionParcPhotoThumb($photo, $can_write)
+{
+    global $langs;
+
+    $out = '<span class="gp-photo-thumb" data-photoid="'.(int) $photo->rowid.'">';
+    $out .= '<a href="'.dol_escape_htmltag(GestionParcPhoto::getViewUrl($photo->rowid)).'" target="_blank" rel="noopener">';
+    $out .= '<img src="'.dol_escape_htmltag(GestionParcPhoto::getViewUrl($photo->rowid, true)).'" alt="'.dol_escape_htmltag($photo->filename).'" loading="lazy">';
+    $out .= '</a>';
+    if ($can_write) {
+        $out .= '<button type="button" class="gp-photo-del" title="'.dol_escape_htmltag($langs->transnoentities('Delete')).'"><span class="fas fa-times"></span></button>';
+    }
+    $out .= '</span>';
+
+    return $out;
+}

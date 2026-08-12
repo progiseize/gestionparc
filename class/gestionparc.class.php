@@ -30,6 +30,7 @@ class GestionParc
     public $fields;
     public $error = '';
     public $enabled;
+    public $report_legend;
     public $numeroFieldCache = array();
 
     // todo: public $lines
@@ -254,6 +255,7 @@ class GestionParc
         $this->author_maj = $item->author_maj;
         $this->entity = $item->entity;
         $this->enabled = $item->enabled;
+        $this->report_legend = isset($item->report_legend) ? $item->report_legend : '';
 
         // ON CONSTRUIT LE TABLEAU DES TAGS
         if(empty($item->tags)) {
@@ -643,6 +645,116 @@ class GestionParc
     // AJOUTE LA COLONNE manual_position AUX TABLES PAR-PARC (migration)
     // Idempotent : ne fait rien si la colonne existe déjà.
     /*****************************************************************/
+    /*****************************************************************/
+    // LEGENDE DE RAPPORT D'UN ORGANE
+    //
+    // Texte libre saisi sur la page de config de l'organe, une entrée par
+    // ligne au format "CODE = signification". Il est repris en fin de rapport
+    // pour expliciter les valeurs employées dans les colonnes (VR, NEUF, ...).
+    /*****************************************************************/
+
+    /**
+     * Légende livrée par défaut pour les organes de type extincteur.
+     * Sert d'amorçage : une fois posée en base, elle est modifiable comme
+     * n'importe quelle autre légende.
+     */
+    public static function getDefaultReportLegend($parc_key)
+    {
+        if (strpos((string) $parc_key, 'extincteur') !== 0) return '';
+
+        return "VR = Vérification annuelle\n"
+            ."VR + CHARGE = Quinquennal à 5 ans\n"
+            ."NEUF = Ajout ou Remplacement de l'extincteur percuté ou +10 ans\n"
+            ."ABSENT = Non présent\n"
+            ."NON CONTROLE = Présent mais pas de contrôle à la demande du client\n"
+            ."SUPPRIME = Enlevé du parc à la demande du client\n"
+            ."RECHARGE = Rechargé suite à percussion";
+    }
+
+    /**
+     * Ajoute la colonne report_legend et amorce les légendes par défaut.
+     * Idempotent : seules les lignes jamais renseignées (NULL) sont amorcées,
+     * une légende vidée volontairement vaut '' et n'est donc jamais réécrite.
+     */
+    public function ensureReportLegendColumn()
+    {
+        $table = MAIN_DB_PREFIX.$this->table_element;
+
+        $rescol = $this->db->query("SHOW COLUMNS FROM ".$table." LIKE 'report_legend'");
+        if ($rescol && $this->db->num_rows($rescol) == 0) {
+            $this->db->query("ALTER TABLE ".$table." ADD report_legend TEXT NULL DEFAULT NULL");
+        }
+
+        $res = $this->db->query("SELECT rowid, parc_key FROM ".$table." WHERE report_legend IS NULL");
+        if (!$res) return;
+
+        while ($obj = $this->db->fetch_object($res)) {
+            $default = self::getDefaultReportLegend($obj->parc_key);
+            if ($default === '') continue;
+            $sql = "UPDATE ".$table." SET report_legend = '".$this->db->escape($default)."'";
+            $sql .= " WHERE rowid = ".(int) $obj->rowid." AND report_legend IS NULL";
+            $this->db->query($sql);
+        }
+    }
+
+    /** Légende brute d'un organe (lecture ciblée, sans recharger tout le parc) */
+    public function getReportLegend($parc_id)
+    {
+        $table = MAIN_DB_PREFIX.$this->table_element;
+        $rescol = $this->db->query("SHOW COLUMNS FROM ".$table." LIKE 'report_legend'");
+        if (!$rescol || $this->db->num_rows($rescol) == 0) return '';
+
+        $res = $this->db->query("SELECT report_legend FROM ".$table." WHERE rowid = ".(int) $parc_id);
+        if (!$res || $this->db->num_rows($res) == 0) return '';
+        $obj = $this->db->fetch_object($res);
+
+        return (string) $obj->report_legend;
+    }
+
+    /** Enregistre la légende d'un organe */
+    public function setReportLegend($parc_id, $text)
+    {
+        $this->ensureReportLegendColumn();
+
+        $sql = "UPDATE ".MAIN_DB_PREFIX.$this->table_element;
+        $sql .= " SET report_legend = '".$this->db->escape((string) $text)."'";
+        $sql .= " WHERE rowid = ".(int) $parc_id;
+
+        return (bool) $this->db->query($sql);
+    }
+
+    /**
+     * Découpe une légende brute en entrées exploitables par les exports.
+     * Accepte "CODE = signification" par ligne ; une ligne sans "=" est
+     * conservée telle quelle (libellé seul, sans code).
+     *
+     * @param string $text
+     * @return array  Liste de array('code', 'label')
+     */
+    public static function parseReportLegend($text)
+    {
+        $entries = array();
+        $text = str_replace(array("\r\n", "\r"), "\n", (string) $text);
+
+        foreach (explode("\n", $text) as $line) {
+            $line = trim($line);
+            if ($line === '') continue;
+
+            $pos = strpos($line, '=');
+            if ($pos === false) {
+                $entries[] = array('code' => '', 'label' => $line);
+                continue;
+            }
+
+            $entries[] = array(
+                'code'  => trim(substr($line, 0, $pos)),
+                'label' => trim(substr($line, $pos + 1)),
+            );
+        }
+
+        return $entries;
+    }
+
     public function ensureManualPositionColumn()
     {
         $list_parcs = $this->list_parcType();
@@ -1749,6 +1861,86 @@ class GestionParcVerif
     }
 
     /*****************************************************************/
+    // OBSERVATIONS SAISIES A LA CLOTURE D'UNE VERIF
+    // (champ "commentaire sur l'intervention" de la pop-up de clôture)
+    /*****************************************************************/
+    public function fetchVerifObservations($verif_id)
+    {
+        if (empty($verif_id)) return '';
+
+        $sql = "SELECT commentaires FROM ".MAIN_DB_PREFIX.$this->table_element;
+        $sql .= " WHERE rowid = ".(int) $verif_id;
+        $res = $this->db->query($sql);
+        if (!$res || $this->db->num_rows($res) == 0) return '';
+        $obj = $this->db->fetch_object($res);
+
+        return (string) $obj->commentaires;
+    }
+
+    /*****************************************************************/
+    // COMPLETE UN SNAPSHOT ANTERIEUR AUX BLOCS OBSERVATIONS / LEGENDE
+    //
+    // Les instantanés figés avant ces fonctionnalités n'en portent pas les
+    // clés : on les renseigne à la volée pour que la régénération d'un ancien
+    // rapport affiche quand même les deux blocs. La légende est une clé de
+    // lecture, pas une donnée de campagne : on prend donc celle en vigueur.
+    /*****************************************************************/
+    public function backfillReportData(&$report_data, $verif_id)
+    {
+        if (!is_array($report_data)) return;
+
+        if (!isset($report_data['observations'])) {
+            $report_data['observations'] = $this->fetchVerifObservations($verif_id);
+        }
+
+        if (empty($report_data['sections'])) return;
+
+        $gestionparc = new GestionParc($this->db);
+        $parcs = $gestionparc->list_parcType();
+        if (empty($parcs)) return;
+
+        // Index par clé et par libellé : les anciennes sections ne portent que le libellé
+        $by_key = array();
+        $by_label = array();
+        foreach ($parcs as $parc_id => $parc) {
+            $by_key[$parc['key']] = $parc_id;
+            $by_label[dol_strtolower(trim($parc['label']))] = $parc_id;
+        }
+
+        foreach ($report_data['sections'] as $idx => $section) {
+            if (isset($section['legend'])) continue;
+
+            $parc_id = 0;
+            if (!empty($section['key']) && isset($by_key[$section['key']])) {
+                $parc_id = $by_key[$section['key']];
+            } elseif (!empty($section['label'])) {
+                $lookup = dol_strtolower(trim($section['label']));
+                if (isset($by_label[$lookup])) $parc_id = $by_label[$lookup];
+            }
+
+            $report_data['sections'][$idx]['legend'] = $parc_id
+                ? GestionParc::parseReportLegend($gestionparc->getReportLegend($parc_id))
+                : array();
+        }
+    }
+
+    /*****************************************************************/
+    // RETROUVE LA CAMPAGNE DE VERIF LIEE A UNE INTERVENTION
+    // Sert aux exports régénérés a posteriori (photos de l'époque).
+    /*****************************************************************/
+    public function getVerifIdByFichinter($fichinter_id)
+    {
+        $sql = "SELECT rowid FROM ".MAIN_DB_PREFIX.$this->table_element;
+        $sql .= " WHERE fichinter_id = ".(int) $fichinter_id;
+        $sql .= " ORDER BY rowid DESC";
+        $res = $this->db->query($sql);
+        if (!$res || $this->db->num_rows($res) == 0) return 0;
+        $obj = $this->db->fetch_object($res);
+
+        return (int) $obj->rowid;
+    }
+
+    /*****************************************************************/
     // RECUPERE L'INSTANTANE D'UNE VERIF A PARTIR DE L'INTERVENTION
     // Retourne le tableau report_data figé à la clôture, ou null.
     /*****************************************************************/
@@ -2428,19 +2620,39 @@ class GestionParcVerif
     }
 
     /*****************************************************************/
-    // RESOLUTION D'UN CHAMP PERSONNALISE EN TEXTE (pour exports)
-    // Lit en priorité le snapshot de l'intervention ; repli sur le tiers
-    // (anciennes interventions). Retourne les libelles separes par ", ".
+    // ENREGISTRE UN CHAMP PERSONNALISE SUR LE TIERS
+    // $selected : cles cochees (les cles inconnues sont ignorees).
+    // Retourne true si l'ecriture a reussi.
     /*****************************************************************/
-    public static function resolveCustomSocField($db, $fieldkey, $intervention, $customer = null)
+    public function setCustomSocField($societe, $fieldkey, $selected)
     {
         $fields = self::getCustomSocFields();
-        if (!isset($fields[$fieldkey])) return '';
-        $opt_key = 'options_'.$fieldkey;
+        if (!is_object($societe) || empty($societe->id) || !isset($fields[$fieldkey])) return false;
 
+        $this->ensureSocieteExtrafields();
+
+        $valid_keys = array_keys($fields[$fieldkey]['options']);
+        $clean = array();
+        foreach ((array) $selected as $key) {
+            if (in_array($key, $valid_keys, true) && !in_array($key, $clean, true)) $clean[] = $key;
+        }
+
+        $societe->fetch_optionals();
+        $societe->array_options['options_'.$fieldkey] = implode(',', $clean);
+
+        return ($societe->updateExtraField($fieldkey) > 0);
+    }
+
+    /*****************************************************************/
+    // LECTURE BRUTE D'UN CHAMP PERSONNALISE
+    // Priorite au snapshot porte par l'intervention ; repli sur le tiers
+    // (anciennes interventions).
+    /*****************************************************************/
+    protected static function readCustomSocFieldRaw($fieldkey, $intervention, $customer = null)
+    {
+        $opt_key = 'options_'.$fieldkey;
         $raw = '';
 
-        // 1. Snapshot porté par l'intervention
         if (is_object($intervention)) {
             if (empty($intervention->array_options)) $intervention->fetch_optionals();
             if (!empty($intervention->array_options[$opt_key])) {
@@ -2448,23 +2660,51 @@ class GestionParcVerif
             }
         }
 
-        // 2. Repli sur le tiers si l'intervention ne porte pas la valeur
         if ($raw === '' && is_object($customer)) {
             if (empty($customer->array_options)) $customer->fetch_optionals();
             $raw = isset($customer->array_options[$opt_key]) ? $customer->array_options[$opt_key] : '';
         }
 
-        if ($raw === '' || $raw === null) return '';
+        return (string) $raw;
+    }
 
-        $options = $fields[$fieldkey]['options'];
-        $labels = array();
-        foreach (explode(',', $raw) as $key) {
-            $key = trim($key);
-            if ($key === '') continue;
-            $labels[] = isset($options[$key]) ? $options[$key] : $key;
+    /*****************************************************************/
+    // ETAT DE TOUTES LES OPTIONS D'UN CHAMP PERSONNALISE (pour exports)
+    // Les exports affichent la totalite des cases, cochees ou non.
+    // Retourne une liste de array('key', 'label', 'checked').
+    /*****************************************************************/
+    public static function getCustomSocFieldOptionsState($db, $fieldkey, $intervention, $customer = null)
+    {
+        $fields = self::getCustomSocFields();
+        if (!isset($fields[$fieldkey])) return array();
+
+        $raw = self::readCustomSocFieldRaw($fieldkey, $intervention, $customer);
+        $selected = array_filter(array_map('trim', explode(',', $raw)), 'strlen');
+
+        $state = array();
+        foreach ($fields[$fieldkey]['options'] as $key => $label) {
+            $state[] = array(
+                'key'     => $key,
+                'label'   => $label,
+                'checked' => in_array($key, $selected, true),
+            );
         }
 
-        return implode(', ', $labels);
+        return $state;
+    }
+
+    /*****************************************************************/
+    // RENDU TEXTE DES CASES A COCHER (exports sans dessin vectoriel)
+    // Ex. : "☒ APSAD R4     ☐ Code du Travail"
+    /*****************************************************************/
+    public static function formatCustomSocFieldCheckboxes($options, $separator = '     ')
+    {
+        $parts = array();
+        foreach ((array) $options as $opt) {
+            $parts[] = (!empty($opt['checked']) ? "\xE2\x98\x92" : "\xE2\x98\x90").' '.$opt['label'];
+        }
+
+        return implode($separator, $parts);
     }
 
     /*****************************************************************/
@@ -2629,6 +2869,11 @@ class GestionParcVerif
                 }
             }
         }
+
+        // Les clichés pris pendant la campagne annulée n'ont plus de rapport où figurer
+        dol_include_once('/gestionparc/class/gestionparcphoto.class.php');
+        $gpphoto = new GestionParcPhoto($this->db);
+        $gpphoto->deleteByVerif($verif_id);
 
         $sql = "DELETE FROM ".MAIN_DB_PREFIX.$this->table_element." WHERE rowid = ".(int) $verif_id;
         $result = $this->db->query($sql);
@@ -2906,16 +3151,23 @@ class GestionParcVerif
         $upload_dir = $base_dir.'/'.dol_sanitizeFileName($intervention->ref);
         dol_mkdir($upload_dir);
 
+        // Les clichés de la campagne sont recopiés dans les documents de l'intervention
+        // (le dossier de la vérif reste la source utilisée par les exports).
+        dol_include_once('/gestionparc/class/gestionparcphoto.class.php');
+        $gpphoto = new GestionParcPhoto($this->db);
+        $gpphoto->copyToIntervention($this->rowid, $upload_dir);
+
+        $report_data = $this->getReportData($list_parctypes, $customer, $this->rowid, $description);
+
         $sheetfile = new GestionParcExport($this->db);
         $excel_filename = 'rapport_'.dol_sanitizeFileName($intervention->ref).'.'.$sheetfile->extension;
         $excel_file     = $upload_dir.'/'.$excel_filename;
         if (file_exists($excel_file)) dol_delete_file($excel_file);
-        $this->_renderExcelReport($intervention, $list_parctypes, $customer, $excel_file);
+        $this->_renderExcelReport($intervention, $list_parctypes, $customer, $excel_file, $report_data);
 
         $pdf_filename = 'rapport_'.dol_sanitizeFileName($intervention->ref).'.pdf';
         $pdf_file     = $upload_dir.'/'.$pdf_filename;
         if (file_exists($pdf_file)) dol_delete_file($pdf_file);
-        $report_data = $this->getReportData($list_parctypes, $customer);
         $this->_renderPDFReport($intervention, $report_data, $customer, $pdf_file);
 
         // Snapshot des données d'organes en BDD : fige l'état au moment de la
@@ -2982,7 +3234,14 @@ class GestionParcVerif
 
         // Données figées à la clôture si disponibles (export historique fidèle),
         // sinon données live (anciennes vérifs sans snapshot).
+        $verif_id = $this->getVerifIdByFichinter($fichinter_id);
         $report_data = $this->getVerifSnapshotByFichinter($fichinter_id);
+        if ($report_data === null) {
+            $report_data = $this->getReportData($list_parctypes, $customer, $verif_id);
+        } else {
+            // Snapshot antérieur aux blocs observations / légende
+            $this->backfillReportData($report_data, $verif_id);
+        }
 
         // Render
         if ($this->_renderExcelReport($intervention, $list_parctypes, $customer, $dir_file, $report_data)) {
@@ -3030,9 +3289,13 @@ class GestionParcVerif
 
         // Données figées à la clôture si disponibles (export historique fidèle),
         // sinon données live (anciennes vérifs sans snapshot).
+        $verif_id = $this->getVerifIdByFichinter($fichinter_id);
         $report_data = $this->getVerifSnapshotByFichinter($fichinter_id);
         if ($report_data === null) {
-            $report_data = $this->getReportData($list_parctypes, $customer);
+            $report_data = $this->getReportData($list_parctypes, $customer, $verif_id);
+        } else {
+            // Snapshot antérieur aux blocs observations / légende
+            $this->backfillReportData($report_data, $verif_id);
         }
 
         // Render
@@ -3071,16 +3334,27 @@ class GestionParcVerif
         return true;
     }
 
-    public function getReportData($list_parctypes, $customer)
+    public function getReportData($list_parctypes, $customer, $verif_id = 0, $observations = null)
     {
         global $db, $langs, $conf;
         include_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
-        
+        dol_include_once('/gestionparc/class/gestionparcphoto.class.php');
+
         $gestionparc = new GestionParc($this->db);
         $data = array(
             'max_cols' => 4,
             'sections' => array()
         );
+
+        // Photos de la campagne : indexées [parc_key][item_id]
+        if (empty($verif_id)) $verif_id = (int) $this->rowid;
+        $gpphoto    = new GestionParcPhoto($this->db);
+        $photos_map = $verif_id ? $gpphoto->mapByVerif($verif_id) : array();
+
+        // Observations de clôture : passées explicitement pendant la clôture
+        // (la colonne n'est écrite qu'après la génération des rapports), relues
+        // en base pour toute régénération ultérieure.
+        $data['observations'] = ($observations === null) ? $this->fetchVerifObservations($verif_id) : (string) $observations;
 
         // 1. Determine max columns
         foreach ($list_parctypes as $parctype_id => $parctype_infos) {
@@ -3093,10 +3367,14 @@ class GestionParcVerif
 
         // 2. Gather sections data
         foreach ($list_parctypes as $parctype_id => $parctype_infos) {
+            // Légende propre à l'organe, figée dans le snapshot comme le reste
             $section = array(
                 'label' => $parctype_infos['label'],
+                'key' => $parctype_infos['key'],
                 'fields' => array(),
                 'lines' => array(),
+                'photos' => array(),
+                'legend' => GestionParc::parseReportLegend($gestionparc->getReportLegend($parctype_id)),
                 'stats' => array('total' => 0, 'verified' => 0)
             );
 
@@ -3118,9 +3396,12 @@ class GestionParcVerif
             $section['stats']['total'] = count($parc_lines);
             if ($section['stats']['total'] <= 0) continue;
 
+            // Le n° affiché en légende des photos vient du champ de numérotation
+            $num_field = $gestionparc->getNumeroFieldKey($parctype_infos['key']);
+
             foreach ($parc_lines as $parcline) {
                 if ($parcline->verif) $section['stats']['verified']++;
-                
+
                 $row_values = array();
                 foreach ($section['fields'] as $fkey => $fdata) {
                     if ($fdata['type'] == 'prodserv') {
@@ -3132,6 +3413,18 @@ class GestionParcVerif
                     }
                 }
                 $section['lines'][] = $row_values;
+
+                // Photos de l'élément : chemins relatifs à DOL_DATA_ROOT, figés dans le snapshot
+                $item_photos = isset($photos_map[$parctype_infos['key']][(int) $parcline->rowid])
+                    ? $photos_map[$parctype_infos['key']][(int) $parcline->rowid]
+                    : array();
+                foreach ($item_photos as $photo) {
+                    $section['photos'][] = array(
+                        'item'  => ($num_field !== '' && !empty($parcline->{$num_field})) ? $parcline->{$num_field} : '#'.$parcline->rowid,
+                        'path'  => $photo->filepath,
+                        'label' => $photo->filename,
+                    );
+                }
             }
 
             $data['sections'][] = $section;
@@ -3176,15 +3469,22 @@ class GestionParcVerif
         $inter_date = !empty($intervention->dateo) ? $intervention->dateo : (!empty($intervention->datec) ? $intervention->datec : null);
         $export_users = self::resolveExportUsers($this->db, $intervention, $customer);
         $extra_header_rows = array();
+        // Toutes les cases sont affichees, cochees ou non
         foreach (self::getCustomSocFields() as $code => $def) {
-            $val = self::resolveCustomSocField($this->db, $code, $intervention, $customer);
-            if ($val !== '') $extra_header_rows[] = array('label' => $langs->transnoentities($def['label']), 'value' => $val);
+            $opts = self::getCustomSocFieldOptionsState($this->db, $code, $intervention, $customer);
+            if (empty($opts)) continue;
+            $extra_header_rows[] = array(
+                'label' => $langs->transnoentities($def['label']),
+                'value' => self::formatCustomSocFieldCheckboxes($opts),
+            );
         }
         // En-tête figé (backport) : technicien/commercial/champs client de l'époque, sinon valeurs live
         $snapHeader = (isset($report_data['header']) && is_array($report_data['header'])) ? $report_data['header'] : array();
         $hdr_interv = !empty($snapHeader['technicien']) ? $snapHeader['technicien'] : $export_users['intervenant'];
         $hdr_comm   = !empty($snapHeader['commercial']) ? $snapHeader['commercial'] : $export_users['commercial'];
+        $observations = isset($report_data['observations']) ? $report_data['observations'] : '';
         $full_row = $sheetfile->customHeader($full_sheet, 1, $max_cols_global, $customer, '', $inter_date, $hdr_interv, $hdr_comm, $extra_header_rows, $snapHeader);
+        $full_row = $sheetfile->writeObservations($full_sheet, $full_row, $max_cols_global, $observations);
 
         foreach ($report_data['sections'] as $section) {
             // Render Individual Worksheets
@@ -3205,6 +3505,7 @@ class GestionParcVerif
             $sheetfile->setupSheet($sheet, $section['label'], $nb_data_cols);
 
             $row = $sheetfile->customHeader($sheet, 1, $nb_data_cols, $customer, $section['label'], $inter_date, $hdr_interv, $hdr_comm, $extra_header_rows, $snapHeader);
+            $row = $sheetfile->writeObservations($sheet, $row, $nb_data_cols, $observations);
             $row = $sheetfile->writeColumnHeaders($sheet, $row, $col_labels);
 
             // Feuille consolidée : chaque organe occupe la largeur totale (max_cols_global) ;
@@ -3221,8 +3522,18 @@ class GestionParcVerif
             $row      = $sheetfile->writeSummaryRow($sheet, $row, $section['stats']['verified'], $section['stats']['total'], $nb_data_cols);
             $full_row = $sheetfile->writeSummaryRow($full_sheet, $full_row, $section['stats']['verified'], $section['stats']['total'], $max_cols_global);
             $full_row += 2;
+
+            // Chaque feuille d'organe se termine par sa propre légende
+            $sheetfile->writeLegend($sheet, $row, $nb_data_cols, array($section));
         }
 
+        // Feuille consolidée : toutes les légendes regroupées en fin de rapport
+        $full_row = $sheetfile->writeLegend($full_sheet, $full_row, $max_cols_global, $report_data['sections']);
+
+        // Annexe photographique (option globale du module)
+        if (getDolGlobalInt('GESTIONPARC_EXPORT_PHOTOS')) {
+            $sheetfile->writePhotoSheet($report_data['sections'], $langs);
+        }
 
         $sheetfile->write_footer($langs);
         $sheetfile->close_file();
