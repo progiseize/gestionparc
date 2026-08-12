@@ -4,6 +4,20 @@
 [comment]: <> (Modele pdf)
 [comment]: <> (Harmoniser les constantes du module)
 
+### 1.9.1
+- NEW : "Report legend" per component, editable from the component configuration page - one entry per line, formatted "CODE = meaning" (e.g. "VR = Annual inspection"), so new cases can be added without any code change. Printed in small type at the end of the report, grouped by component: after the last table in the PDF, at the end of the consolidated sheet in Excel (each component sheet also ends with its own legend). Components with no legend print nothing. Reports closed before this version pick up the legend currently configured on the component when regenerated (a legend is a decoding key, not campaign data).
+- NEW : Extinguisher components ship with a default legend (VR, VR + CHARGE, NEUF, ABSENT, NON CONTROLE, SUPPRIME, RECHARGE) actually stored on the component, so it is editable right away. Seeding only ever touches a legend that was never filled in - editing or clearing it is never overwritten.
+- NEW : "Observations" block on the reports, right under the header - it carries over the comment typed in the verification close pop-up. Present in the PDF and on every sheet of the Excel export, hidden when the field is empty. Frozen in the verification snapshot; reports closed before this version fall back to the comment stored on the campaign.
+- NEW : "Photos" tab on the intervention - the shots taken during the verification that produced it, grouped by park item and captioned with the component, the item number and the linked product, with a shortcut back to the park. Each shot can be replaced or deleted; the copy stored in the intervention's documents is kept in sync. The tab is hidden when the verification has no photo.
+- NEW : Two dedicated permissions for that tab (view / replace-delete), both OFF by default - only administrators have access until they are granted. Requires deactivating and reactivating the module to register them.
+- NEW : Photos during verifications - each park item can carry several shots, taken with the phone/tablet camera or picked from the gallery, added and removed without leaving the tab (AJAX). Available in both card and list views.
+- NEW : Photos are attached to the verification campaign, so an item keeps a distinct set of shots from one year to the next and past reports stay faithful. They are stored under documents/gestionparc/verif/<id>/ and copied into the intervention's documents (photos/ subfolder) at close; cancelling a verification deletes them.
+- NEW : Per-component option "Photo required" (component configuration page) - an item of that component cannot be marked as checked until it carries at least one photo. Enforced in instant mode, in manual mode and server-side.
+- NEW : Module-wide option "Photos in exports" - adds a photo annex to BOTH exports (a "PHOTO ANNEX" sheet in Excel, a final section in the PDF), shots grouped by component and captioned with the item number. All-or-nothing, off by default.
+- MAJ : Thirdparty custom fields (compliance framework, fire safety signage) are now always displayed as checkboxes on the GestionParc tab - no more pencil to click, each click is saved instantly (AJAX).
+- MAJ : Excel and PDF exports now print every option of these fields, checked or not (☒ / ☐), instead of only the selected labels.
+- CHANGE : "Plan type" field renamed to "Fire safety signage" (options unchanged).
+
 ### 1.9.0
 - NEW : Revert mode on verifications - a checked component can be un-checked in one click during an ongoing verification (the green "checked" button turns into "undo check" on hover); the verified counter is kept in sync. Works in card and list views, instant and manual modes.
 - NEW : When closing a verification with components left uncontrolled, a Yes/No confirmation pop-up ("Warning, some components have not been controlled. Do you want to continue?") is shown.

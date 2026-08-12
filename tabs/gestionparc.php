@@ -17,6 +17,7 @@ require_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/fichinter/class/fichinter.class.php';
 dol_include_once('/gestionparc/class/gestionparc.class.php');
+dol_include_once('/gestionparc/class/gestionparcphoto.class.php');
 
 $langs->loadLangs(array('interventions', 'gestionparc@gestionparc'));
 
@@ -54,6 +55,11 @@ if ($modeVerifID && $modeVerifID > 0) {
 } else if ($modeVerifID && $modeVerifID <= 0) {
 	$error++; setEventMessages($langs->trans('gp_verif_error_twice'), null, 'warnings');
 }
+
+// Photos de la vérif en cours, indexées [parc_key][item_id]
+$gpphoto = new GestionParcPhoto($db);
+$gp_photos_map = ($isModeVerif && $modeVerifID > 0) ? $gpphoto->mapByVerif($modeVerifID) : array();
+$gp_can_photo  = ($user->hasRight('gestionparc', 'parc', 'write') || $user->admin);
 
 /*******************************************************************
 * ACTIONS
@@ -122,45 +128,6 @@ switch ($action):
 				}
 			}
 			setEventMessages($langs->trans('gp_users_saved'), null, 'mesgs');
-			header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype);
-			exit;
-		}
-		break;
-
-	// ENREGISTRER UN CHAMP PERSONNALISE TIERS (extrafield societe, cases à cocher)
-	case 'gp_set_socfield':
-
-		if (GETPOST('token') != $_SESSION['token']) {
-			$error++; setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings');
-		}
-		if (!$user->hasRight('gestionparc', 'parc', 'write') && !$user->admin) {
-			$error++; setEventMessages($langs->trans('NotEnoughPermissions'), null, 'warnings');
-		}
-		$gp_fieldkey = GETPOST('gp_fieldkey', 'aZ09');
-		$gp_socfields = GestionParcVerif::getCustomSocFields();
-		if (!isset($gp_socfields[$gp_fieldkey])) {
-			$error++; setEventMessages($langs->trans('gp_error'), null, 'warnings');
-		}
-
-		if (!$error) {
-			// S'assure que les extrafields existent (upgrade-safe)
-			$gpverif_ensure = new GestionParcVerif($db);
-			$gpverif_ensure->ensureSocieteExtrafields();
-
-			$valid_keys = array_keys($gp_socfields[$gp_fieldkey]['options']);
-			$posted = GETPOST('gp_socfield', 'array');
-			$selected = array();
-			foreach ((array) $posted as $optk) {
-				if (in_array($optk, $valid_keys, true)) $selected[] = $optk;
-			}
-
-			$object->fetch_optionals();
-			$object->array_options['options_'.$gp_fieldkey] = implode(',', $selected);
-			if ($object->updateExtraField($gp_fieldkey) > 0) {
-				setEventMessages($langs->trans('RecordSaved'), null, 'mesgs');
-			} else {
-				setEventMessages($object->error, null, 'errors');
-			}
 			header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype);
 			exit;
 		}
@@ -639,6 +606,15 @@ switch ($action):
 					}
 				}
 			}
+
+			// Photo obligatoire sur cet organe : au moins un cliché avant de valider la vérif de l'élément
+			if ($isModeVerif && $isFromVerif && getDolGlobalString('GESTIONPARC_VERIF_MODE') == 'manual') {
+				if ($gpphoto->isPhotoRequired($gestionparc->parc_key)
+					&& $gpphoto->countByItem($verification->rowid, $gestionparc->parc_key, GETPOSTINT('itemid')) == 0) {
+					$error++;
+					setEventMessages($langs->trans('gp_photo_error_required'), null, 'errors');
+				}
+			}
 		endif;
 
 		// SI IL Y A DES ERREURS, ON RESTE EN MODE EDITION
@@ -972,42 +948,25 @@ print '<div class="park-main-wrapper">';
 							print '</td>';
 						print '</tr>';
 					}
-					// Champs personnalisés tiers (extrafields societe, gérés uniquement depuis cet onglet)
+					// Champs personnalisés tiers (extrafields societe, gérés uniquement depuis cet onglet).
+					// Cases toujours visibles, enregistrées en AJAX au clic.
 					$object->fetch_optionals();
 					$gp_can_edit_socf = ($user->hasRight('gestionparc', 'parc', 'write') || $user->admin);
 					foreach (GestionParcVerif::getCustomSocFields() as $gp_fk => $gp_fdef) {
 						$gp_f_options  = $gp_fdef['options'];
 						$gp_f_value    = isset($object->array_options['options_'.$gp_fk]) ? $object->array_options['options_'.$gp_fk] : '';
 						$gp_f_selected = array_filter(array_map('trim', explode(',', (string) $gp_f_value)));
-						$gp_f_editing  = ($action == 'gp_edit_socfield' && GETPOST('gp_fieldkey', 'aZ09') == $gp_fk);
 						print '<tr>';
 							print '<td class="titlefieldmiddle">'.$langs->trans($gp_fdef['label']).'</td>';
 							print '<td>';
-							if ($gp_f_editing && $gp_can_edit_socf) {
-								print '<form action="'.$_SERVER["PHP_SELF"].'?socid='.$object->id.'&parctype='.$parctype.'" method="POST">';
-								print '<input type="hidden" name="token" value="'.newToken().'">';
-								print '<input type="hidden" name="action" value="gp_set_socfield">';
-								print '<input type="hidden" name="gp_fieldkey" value="'.$gp_fk.'">';
+								print '<span class="gp-socfield" data-fieldkey="'.dol_escape_htmltag($gp_fk).'">';
 								foreach ($gp_f_options as $gp_optk => $gp_optlabel) {
 									$gp_chk = in_array($gp_optk, $gp_f_selected, true) ? ' checked' : '';
-									print '<label class="marginrightonly"><input type="checkbox" name="gp_socfield[]" value="'.$gp_optk.'"'.$gp_chk.'> '.$gp_optlabel.'</label> ';
+									$gp_dis = $gp_can_edit_socf ? '' : ' disabled';
+									print '<label class="gp-socfield-opt"><input type="checkbox" class="gp-socfield-cb" value="'.dol_escape_htmltag($gp_optk).'"'.$gp_chk.$gp_dis.'> '.dol_escape_htmltag($gp_optlabel).'</label>';
 								}
-								print '<input type="submit" class="button smallpaddingimp small nomarginleft" value="'.$langs->trans('Save').'">';
-								print '</form>';
-							} else {
-								if (!empty($gp_f_selected)) {
-									$gp_f_labels = array();
-									foreach ($gp_f_selected as $gp_optk) {
-										$gp_f_labels[] = isset($gp_f_options[$gp_optk]) ? $gp_f_options[$gp_optk] : $gp_optk;
-									}
-									print dol_escape_htmltag(implode(', ', $gp_f_labels));
-								} else {
-									print '<span class="opacitymedium">'.$langs->trans('None').'</span>';
-								}
-								if ($gp_can_edit_socf) {
-									print ' <a class="editfielda" href="'.$_SERVER["PHP_SELF"].'?socid='.$object->id.'&parctype='.$parctype.'&action=gp_edit_socfield&gp_fieldkey='.$gp_fk.'">'.img_edit().'</a>';
-								}
-							}
+								print '<span class="gp-socfield-status"></span>';
+								print '</span>';
 							print '</td>';
 						print '</tr>';
 					}
@@ -1249,6 +1208,17 @@ if ((int) $gestionparc->rowid > 0) {
 							print '</div>';
 						}
 					}
+					// Photos de la vérification en cours (appareil photo / galerie)
+					if ($isModeVerif) {
+						$gp_item_photos    = isset($gp_photos_map[$parc->parc_key][$linecontent->rowid]) ? $gp_photos_map[$parc->parc_key][$linecontent->rowid] : array();
+						$gp_photo_required = $gpphoto->isPhotoRequired($parc->parc_key);
+						print '<div class="park-field">';
+							print '<div class="park-field-label">'.$langs->trans('gp_photo_label').($gp_photo_required ? ' <span class="required">*</span>' : '').'</div>';
+							print '<div class="park-field-value">';
+							print GestionParcPhotoWidget($parc, $linecontent->rowid, $object->id, $gp_item_photos, $gp_can_photo, $gp_photo_required);
+							print '</div>';
+						print '</div>';
+					}
 					// Buttons
 					if ($action == 'edit' && $editItem_id == $linecontent->rowid) {
 						print '<div class="button-sets">';
@@ -1299,6 +1269,9 @@ if ((int) $gestionparc->rowid > 0) {
 							}
 							print '<th>'.$parcfield->label.($parcfield->required ? ' <span class="required">*</span>' : '').'</th>';
 						}
+					}
+					if ($isModeVerif) {
+						print '<th>'.$langs->trans('gp_photo_label').($gpphoto->isPhotoRequired($parc->parc_key) ? ' <span class="required">*</span>' : '').'</th>';
 					}
 					print '<th class="right"></th>';
 					print '</tr>';
@@ -1401,6 +1374,14 @@ if ((int) $gestionparc->rowid > 0) {
 						}
 
 						//
+						// Photos de la vérification en cours (appareil photo / galerie)
+						if ($isModeVerif) {
+							$gp_item_photos    = isset($gp_photos_map[$parc->parc_key][$linecontent->rowid]) ? $gp_photos_map[$parc->parc_key][$linecontent->rowid] : array();
+							$gp_photo_required = $gpphoto->isPhotoRequired($parc->parc_key);
+							print '<td class="gp-photos-cell">';
+							print GestionParcPhotoWidget($parc, $linecontent->rowid, $socid, $gp_item_photos, $gp_can_photo, $gp_photo_required);
+							print '</td>';
+						}
 						print '<td class="right">';
 						if ($action != "edit") {
 							print '<a class="parclink gp-duplicate" href="'.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parc->parc_key.'&action=duplicate&itemid='.$linecontent->rowid.'&parcid='.$parc->rowid.'&token='.newToken().'"><i class="fas fa-clone"></i></a> &nbsp; ';
@@ -1535,6 +1516,142 @@ $(function() {
 	var GP_VERIFY_URL   = '<?php echo dol_buildpath('/gestionparc/ajax/verify-items.php', 1); ?>';
 	var GP_TOKEN        = '<?php echo newToken(); ?>';
 
+	// ── Photos de vérification ────────────────────────────────────────────
+	var GP_PHOTOS_URL   = '<?php echo dol_buildpath('/gestionparc/ajax/photos.php', 1); ?>';
+	var GP_TXT_PHOTO_KO = <?php echo json_encode($langs->transnoentities('gp_photo_error_upload')); ?>;
+	var GP_TXT_PHOTO_REQ = <?php echo json_encode($langs->transnoentities('gp_photo_error_required')); ?>;
+
+	function gpPhotoStatus($zone, state, message) {
+		var $st = $zone.find('.gp-photos-status');
+		$st.attr('class', 'gp-photos-status ' + (state || ''));
+		if (state === 'saving') { $st.html('<span class="fas fa-spinner fa-spin"></span>'); }
+		else if (state === 'saved') {
+			$st.html('<span class="fas fa-check"></span>');
+			setTimeout(function() { $st.attr('class', 'gp-photos-status').empty(); }, 1500);
+		} else if (state === 'error') {
+			$st.html('<span class="fas fa-exclamation-triangle"></span> ' + $('<i>').text(message || GP_TXT_PHOTO_KO).html());
+		} else { $st.empty(); }
+	}
+
+	// Un élément a-t-il la photo exigée par son organe ?
+	function gpPhotoSatisfied($item) {
+		var $zone = $item.find('.gp-photos');
+		if (!$zone.length || !$zone.data('required')) return true;
+		return $zone.find('.gp-photo-thumb').length > 0;
+	}
+
+	// Envoi des clichés (appareil photo ou galerie)
+	$(document).on('change', '.gp-photo-input', function() {
+		var input = this;
+		if (!input.files || !input.files.length) return;
+
+		var $zone = $(input).closest('.gp-photos');
+		var data  = new FormData();
+		data.append('action', 'upload');
+		data.append('token', GP_TOKEN);
+		data.append('socid', $zone.data('socid'));
+		data.append('parcid', $zone.data('parcid'));
+		data.append('parctype', $zone.data('parctype'));
+		data.append('itemid', $zone.data('itemid'));
+		for (var i = 0; i < input.files.length; i++) {
+			data.append('photo[]', input.files[i]);
+		}
+
+		gpPhotoStatus($zone, 'saving');
+		$.ajax({
+			url: GP_PHOTOS_URL,
+			type: 'POST',
+			dataType: 'json',
+			data: data,
+			processData: false,
+			contentType: false,
+			success: function(response) {
+				input.value = '';
+				if (!response.success) { gpPhotoStatus($zone, 'error', response.error); return; }
+				$.each(response.photos, function(i, photo) {
+					var $thumb = $('<span class="gp-photo-thumb"></span>').attr('data-photoid', photo.id);
+					$thumb.append($('<a target="_blank" rel="noopener"></a>').attr('href', photo.url)
+						.append($('<img loading="lazy">').attr('src', photo.thumb).attr('alt', photo.name)));
+					$thumb.append('<button type="button" class="gp-photo-del"><span class="fas fa-times"></span></button>');
+					$zone.find('.gp-photos-list').append($thumb);
+				});
+				gpPhotoStatus($zone, response.partial ? 'error' : 'saved', response.partial ? GP_TXT_PHOTO_KO : '');
+			},
+			error: function(xhr, status, error) {
+				input.value = '';
+				gpPhotoStatus($zone, 'error');
+				console.error('Erreur AJAX:', error);
+			}
+		});
+	});
+
+	// Suppression d'un cliché (confirmation par la modale du module)
+	var gpPhotoPendingDelete = null;
+	$(document).on('click', '.gp-photo-del', function(e) {
+		e.preventDefault();
+		gpPhotoPendingDelete = $(this).closest('.gp-photo-thumb');
+		$('#gp-photo-delete-overlay').css('display', 'flex');
+	});
+	$(document).on('click', '#gp-photo-delete-no, #gp-photo-delete-overlay .gp-modal-close', function() {
+		gpPhotoPendingDelete = null;
+		$('#gp-photo-delete-overlay').hide();
+	});
+	$(document).on('click', '#gp-photo-delete-yes', function() {
+		if (!gpPhotoPendingDelete) return;
+		var $thumb = gpPhotoPendingDelete;
+		var $zone  = $thumb.closest('.gp-photos');
+		gpPhotoPendingDelete = null;
+		$('#gp-photo-delete-overlay').hide();
+
+		gpPhotoStatus($zone, 'saving');
+		$.ajax({
+			url: GP_PHOTOS_URL,
+			type: 'POST',
+			dataType: 'json',
+			data: { action: 'delete', token: GP_TOKEN, socid: $zone.data('socid'), photoid: $thumb.data('photoid') },
+			success: function(response) {
+				if (!response.success) { gpPhotoStatus($zone, 'error', response.error); return; }
+				$thumb.remove();
+				gpPhotoStatus($zone, 'saved');
+			},
+			error: function() { gpPhotoStatus($zone, 'error'); }
+		});
+	});
+
+	// Champs personnalisés tiers : enregistrement au clic sur une case
+	$(document).on('change', '.gp-socfield-cb', function() {
+		var $field   = $(this).closest('.gp-socfield');
+		var $status  = $field.find('.gp-socfield-status');
+		var selected = $field.find('.gp-socfield-cb:checked').map(function() { return this.value; }).get();
+
+		$status.attr('class', 'gp-socfield-status saving').html('<span class="fas fa-spinner fa-spin"></span>');
+		$.ajax({
+			url: "<?php echo dol_buildpath('/gestionparc/ajax/soc-fields.php', 1); ?>",
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				action: 'set_socfield',
+				socid: <?php echo (int) $socid; ?>,
+				fieldkey: $field.data('fieldkey'),
+				selected: selected,
+				token: GP_TOKEN
+			},
+			success: function(response) {
+				if (response.success) {
+					$status.attr('class', 'gp-socfield-status saved').html('<span class="fas fa-check"></span>');
+					setTimeout(function() { $status.attr('class', 'gp-socfield-status').empty(); }, 1500);
+				} else {
+					$status.attr('class', 'gp-socfield-status error').html('<span class="fas fa-exclamation-triangle"></span>');
+					console.error(response.error);
+				}
+			},
+			error: function(xhr, status, error) {
+				$status.attr('class', 'gp-socfield-status error').html('<span class="fas fa-exclamation-triangle"></span>');
+				console.error('Erreur AJAX:', error);
+			}
+		});
+	});
+
 	// Construit le bouton "élément vérifié" (cliquable pour revert)
 	function gpVerifiedBtn(d) {
 		var $b = $('<a class="button-verify verified js-revert-item" href="#"></a>')
@@ -1562,6 +1679,13 @@ $(function() {
 
 		var $btn = $(this);
 		var d = { itemId: $btn.data('itemid'), parcId: $btn.data('parcid'), socId: $btn.data('socid'), parcType: $btn.data('parctype'), mode: 'instant', editUrl: '' };
+
+		// Photo exigée par l'organe : on bloque avant l'aller-retour serveur
+		var $itemCard = $('#item-' + d.itemId);
+		if (!gpPhotoSatisfied($itemCard)) {
+			gpPhotoStatus($itemCard.find('.gp-photos'), 'error', GP_TXT_PHOTO_REQ);
+			return;
+		}
 
 		// Désactiver le bouton pendant le traitement
 		$btn.css('pointer-events', 'none').text('Vérification...');
@@ -1655,6 +1779,13 @@ $(function() {
 
 		var $link = $(this);
 		var d = { itemId: $link.data('itemid'), parcId: $link.data('parcid'), socId: $link.data('socid'), parcType: $link.data('parctype'), mode: 'instant', editUrl: '' };
+
+		// Photo exigée par l'organe : on bloque avant l'aller-retour serveur
+		var $itemRow = $('#item-' + d.itemId);
+		if (!gpPhotoSatisfied($itemRow)) {
+			gpPhotoStatus($itemRow.find('.gp-photos'), 'error', GP_TXT_PHOTO_REQ);
+			return;
+		}
 
 		$link.css('pointer-events', 'none').css('opacity', '0.5');
 
@@ -1942,6 +2073,23 @@ $(function() {
 		<div class="gp-modal-footer gp-modal-footer-split">
 			<button type="button" class="button gp-modal-close-btn" id="gp-confirm-close-no"><?php echo $langs->trans('No'); ?></button>
 			<button type="button" class="button gp-modal-btn-primary" id="gp-confirm-close-yes"><?php echo $langs->trans('gp_verif_continue_anyway'); ?></button>
+		</div>
+	</div>
+</div>
+
+<!-- Modale de confirmation : suppression d'une photo de vérification -->
+<div id="gp-photo-delete-overlay" class="gp-modal-overlay" style="display:none;">
+	<div class="gp-modal-container gp-modal-sm">
+		<div class="gp-modal-header">
+			<h3><?php echo $langs->trans('gp_photo_delete_title'); ?></h3>
+			<span class="gp-modal-close">&times;</span>
+		</div>
+		<div class="gp-modal-body">
+			<p class="gp-modal-desc"><i class="fas fa-exclamation-triangle"></i> <?php echo $langs->trans('gp_photo_delete_confirm'); ?></p>
+		</div>
+		<div class="gp-modal-footer gp-modal-footer-split">
+			<button type="button" class="button gp-modal-close-btn" id="gp-photo-delete-no"><?php echo $langs->trans('Cancel'); ?></button>
+			<button type="button" class="button gp-modal-btn-primary" id="gp-photo-delete-yes"><?php echo $langs->trans('Delete'); ?></button>
 		</div>
 	</div>
 </div>

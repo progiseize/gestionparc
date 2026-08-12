@@ -28,7 +28,7 @@ gp_extrafieldFichInter_isverif=Verification identifier
 gp_extrafieldFichInter_commercial=Sales representative
 gp_extrafieldFichInter_intervenant=Technician
 gp_referentiel_conformite=Compliance framework
-gp_typedeplan=Plan type
+gp_typedeplan=Fire safety signage
 
 # BOX
 gp_boxNb_title=Customer Base Management
@@ -100,6 +100,8 @@ gp_setup_default_view=Default view
 gp_setup_default_view_desc=Sets the default view for displaying assets (cards or list)
 gp_setup_useAdvancedExport=Advanced Exports
 gp_setup_useAdvancedExportDesc=Use advanced exports in Excel format
+gp_setup_exportPhotos=Photos in exports
+gp_setup_exportPhotosDesc=Append the photo annex (shots taken during the verification) to the Excel and PDF exports
 gp_setup_AdvancedExportLineSet=Row Groups
 gp_setup_AdvancedExportLineSetDesc=Separate your data into groups of x rows (0 = all rows)
 
@@ -249,3 +251,31 @@ gp_export_choice_desc=Select the document format to generate for this interventi
 gp_export_success=Report generated successfully
 ExportExcel=Export Excel
 ExportPDF=Export PDF
+
+# VERIFICATION PHOTOS
+gp_photo_label=Photos
+gp_photo_add=Add a photo
+gp_photo_delete_title=Delete photo
+gp_photo_delete_confirm=This photo will be permanently removed from the ongoing verification. Continue?
+gp_photo_error_required=At least one photo is required on this component to mark the item as checked.
+gp_photo_error_upload=Photo upload failed
+gp_photo_error_nofile=No file received
+gp_photo_error_noverif=No ongoing verification for this thirdparty
+gp_photo_error_closed=This photo belongs to a closed verification and can no longer be changed
+gp_photo_replace=Replace
+gp_photo_replaced=Photo replaced
+gp_photo_deleted=Photo deleted
+gp_photo_item_number=No.
+gp_photo_item_removed=Item removed from the park since
+gp_photo_see_in_parc=View in park
+gp_photo_none_on_inter=No photo was taken during this verification.
+gp_photo_delete_confirm_inter=This photo will be permanently removed from the verification and from the intervention documents. Continue?
+gp_photo_error_notonthisinter=This photo does not belong to this intervention's verification
+gp_parc_photorequired=Photo required
+gp_parc_photorequired_desc=Require at least one photo per item of this component before it can be marked as checked during a verification
+gp_advexp_photoannex=Photo annex
+gp_advexp_observations=Observations
+gp_advexp_legend=Legend
+gp_parc_reportlegend=Report legend
+gp_parc_reportlegend_desc=Codes used in this component's columns, printed at the end of the export. One entry per line, formatted as <b>CODE = meaning</b>. Leave empty to print no legend.
+gp_parc_reportlegend_placeholder=VR = Annual inspection\nVR + CHARGE = Five-year service\nNEUF = Added or replaced unit

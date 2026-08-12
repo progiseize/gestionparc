@@ -28,7 +28,7 @@ gp_extrafieldFichInter_isverif=Identifiant vérification
 gp_extrafieldFichInter_commercial=Commercial
 gp_extrafieldFichInter_intervenant=Intervenant
 gp_referentiel_conformite=Référentiel de conformité
-gp_typedeplan=Type de plan
+gp_typedeplan=Signalétique incendie
 
 # BOX
 gp_boxNb_title=Gestion des parcs clients
@@ -106,6 +106,8 @@ gp_setup_default_view=Vue par défaut
 gp_setup_default_view_desc=Définit la vue par défaut pour l'affichage des parcs (cartes ou liste)
 gp_setup_useAdvancedExport=Exports avancés
 gp_setup_useAdvancedExportDesc=Utiliser les exports avancés au format Excel
+gp_setup_exportPhotos=Photos dans les exports
+gp_setup_exportPhotosDesc=Ajouter l'annexe photographique (clichés pris pendant la vérification) aux exports Excel et PDF
 gp_setup_AdvancedExportLineSet=Groupes de lignes
 gp_setup_AdvancedExportLineSetDesc=Séparez les données de votre parc en groupes de x lignes (0=toutes les lignes)
 
@@ -259,3 +261,31 @@ gp_export_choice_desc=Sélectionnez le format du document à générer pour cett
 gp_export_success=Rapport généré avec succès
 ExportExcel=Export Excel
 ExportPDF=Export PDF
+
+# PHOTOS DE VERIFICATION
+gp_photo_label=Photos
+gp_photo_add=Ajouter une photo
+gp_photo_delete_title=Supprimer la photo
+gp_photo_delete_confirm=Cette photo sera définitivement supprimée de la vérification en cours. Continuer ?
+gp_photo_error_required=Une photo au moins est obligatoire sur cet organe pour valider le contrôle de l'élément.
+gp_photo_error_upload=Échec de l'envoi de la photo
+gp_photo_error_nofile=Aucun fichier reçu
+gp_photo_error_noverif=Aucune vérification en cours sur ce tiers
+gp_photo_error_closed=Cette photo appartient à une vérification close et ne peut plus être modifiée
+gp_photo_replace=Remplacer
+gp_photo_replaced=Photo remplacée
+gp_photo_deleted=Photo supprimée
+gp_photo_item_number=N°
+gp_photo_item_removed=Élément retiré du parc depuis
+gp_photo_see_in_parc=Voir dans le parc
+gp_photo_none_on_inter=Aucune photo n'a été prise pendant cette vérification.
+gp_photo_delete_confirm_inter=Cette photo sera définitivement supprimée de la vérification et des documents de l'intervention. Continuer ?
+gp_photo_error_notonthisinter=Cette photo n'appartient pas à la vérification de cette intervention
+gp_parc_photorequired=Photo obligatoire
+gp_parc_photorequired_desc=Exiger au moins une photo par élément de cet organe pour pouvoir le marquer comme contrôlé pendant une vérification
+gp_advexp_photoannex=Annexe photographique
+gp_advexp_observations=Observations
+gp_advexp_legend=Légende
+gp_parc_reportlegend=Légende du rapport
+gp_parc_reportlegend_desc=Codes employés dans les colonnes de cet organe, repris en fin d'export. Une entrée par ligne, au format <b>CODE = signification</b>. Laisser vide pour n'afficher aucune légende.
+gp_parc_reportlegend_placeholder=VR = Vérification annuelle\nVR + CHARGE = Quinquennal à 5 ans\nNEUF = Ajout ou remplacement de l'extincteur percuté ou +10 ans

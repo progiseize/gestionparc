@@ -67,7 +67,7 @@ class modGestionParc extends DolibarrModules
         $this->editor_url = 'https://progiseize.fr';
 
         // Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-        $this->version = '1.9.0';
+        $this->version = '1.9.1';
         $this->url_last_version ="	https://modules-api.progiseize.fr/modules/version/300320";
 
         // Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
@@ -144,6 +144,7 @@ class modGestionParc extends DolibarrModules
             5=>array('GESTIONPARC_ADVANCED_EXPORT','chaine',0,'',0),
             6=>array('GESTIONPARC_ADVANCED_EXPORT_LINESPLIT','chaine',20,'',0),
             7=>array('GESTIONPARC_DEFAULT_VIEW','chaine','cards','',0),
+            8=>array('GESTIONPARC_EXPORT_PHOTOS','chaine',0,'',0),
         );
 
         // Array to add new pages in new tabs
@@ -259,6 +260,23 @@ class modGestionParc extends DolibarrModules
         $this->rights[$r][3] = 0;
         $this->rights[$r][4] = 'parc';
         $this->rights[$r][5] = 'verifall';
+        $r++;
+
+        // Photos de vérification rattachées aux interventions (onglet dédié).
+        // Désactivés par défaut : seuls les administrateurs y accèdent tant que
+        // le droit n'a pas été donné explicitement.
+        $this->rights[$r][0] = $this->numero . sprintf("%02d", $r + 1);
+        $this->rights[$r][1] = 'Voir les photos de vérification sur les interventions';
+        $this->rights[$r][3] = 0;
+        $this->rights[$r][4] = 'photo';
+        $this->rights[$r][5] = 'read';
+        $r++;
+
+        $this->rights[$r][0] = $this->numero . sprintf("%02d", $r + 1);
+        $this->rights[$r][1] = 'Remplacer / supprimer les photos de vérification sur les interventions';
+        $this->rights[$r][3] = 0;
+        $this->rights[$r][4] = 'photo';
+        $this->rights[$r][5] = 'write';
         $r++;
 
         // Add here list of permission defined by an id, a label, a boolean and two constant strings.
@@ -399,6 +417,14 @@ class modGestionParc extends DolibarrModules
         // Ajoute la colonne manual_position aux tables par-parc (tri par défaut sur la numérotation)
         $gpparc = new GestionParc($db);
         $gpparc->ensureManualPositionColumn();
+
+        // Légende de rapport par organe
+        $gpparc->ensureReportLegendColumn();
+
+        // Table des photos de vérification + option "photo obligatoire" par organe
+        dol_include_once('/gestionparc/class/gestionparcphoto.class.php');
+        $gpphoto = new GestionParcPhoto($db);
+        $gpphoto->ensureSchema();
 
         $sql = array();
         return $this->_init($sql, $options);
