@@ -38,7 +38,11 @@ $object->fetch($socid);
 // Gestion parc
 $gestionparc = new GestionParc($db);
 $list_parctypes = $gestionparc->list_parcType(1, 1, $object->getCategoriesCommon('customer'));
-$parctype = GETPOSTISSET('parctype') ? GETPOST('parctype', 'alphanohtml'): (!empty($list_parctypes) ? (reset($list_parctypes))['key'] : '');
+// parctype entre dans des noms de table : seuls les organes de ce tiers sont acceptés
+$parctype = GETPOST('parctype', 'alphanohtml');
+if (!in_array($parctype, array_column($list_parctypes, 'key'), true)) {
+	$parctype = !empty($list_parctypes) ? (reset($list_parctypes))['key'] : '';
+}
 $view = getDolGlobalString('GESTIONPARC_DEFAULT_VIEW') ? getDolGlobalString('GESTIONPARC_DEFAULT_VIEW') : 'cards';
 
 $form = new Form($db);
@@ -55,17 +59,47 @@ if ($modeVerifID && $modeVerifID > 0) {
 } else if ($modeVerifID && $modeVerifID <= 0) {
 	$error++; setEventMessages($langs->trans('gp_verif_error_twice'), null, 'warnings');
 }
+if ($isModeVerif) {
+	$verification->refreshVerifCounters($socid, $list_parctypes);
+}
 
 // Photos de la vérif en cours, indexées [parc_key][item_id]
 $gpphoto = new GestionParcPhoto($db);
 $gp_photos_map = ($isModeVerif && $modeVerifID > 0) ? $gpphoto->mapByVerif($modeVerifID) : array();
 $gp_can_photo  = ($user->hasRight('gestionparc', 'parc', 'write') || $user->admin);
 
+// L'entrée de l'onglet n'exige que parc.read : chaque action d'écriture contrôle son propre droit
+$gp_can_write  = ($user->hasRight('gestionparc', 'parc', 'write') || $user->admin);
+$gp_can_delete = ($user->hasRight('gestionparc', 'parc', 'delete') || $user->admin);
+$gp_can_verif  = ($user->hasRight('gestionparc', 'parc', 'verif') || $user->admin);
+// En vérification manuelle, contrôler un élément passe par son formulaire d'édition
+$gp_can_edit   = ($gp_can_write || ($gp_can_verif && $isModeVerif && GETPOSTINT('fromverif')));
+
 /*******************************************************************
 * ACTIONS
 ********************************************************************/
 if ($cancel) {
 	header("Location: ".$_SERVER['PHP_SELF'].'?socid='.$object->id.'&parctype='.$parctype);
+	exit;
+}
+
+$gp_action_rights = array(
+	'additem'           => $gp_can_write,
+	'add'               => $gp_can_write,
+	'duplicate'         => $gp_can_write,
+	'edit'              => $gp_can_edit,
+	'edit_item'         => $gp_can_edit,
+	'delete'            => $gp_can_delete,
+	'confirm_delete'    => $gp_can_delete,
+	'mode_verif'        => $gp_can_verif,
+	'initclose_verif'   => $gp_can_verif,
+	'close_verif'       => $gp_can_verif,
+	'set_line_verify'   => $gp_can_verif,
+	'set_line_unverify' => $gp_can_verif,
+);
+if (isset($gp_action_rights[$action]) && !$gp_action_rights[$action]) {
+	setEventMessages($langs->trans('NotEnoughPermissions'), null, 'errors');
+	header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype);
 	exit;
 }
 
@@ -84,7 +118,13 @@ switch ($action):
 		}
 
 		if (GETPOSTISSET('cancel_verif') && GETPOSTISSET('verif_id') && !$error) {
-			if ($verification->cancelVerif(GETPOST('verif_id', 'int'))) {
+			// Seule la vérif en cours de ce tiers s'annule : une page restée ouverte peut viser une vérif déjà close
+			if (!$isModeVerif || GETPOSTINT('verif_id') !== (int) $modeVerifID) {
+				setEventMessages($langs->trans('gp_verif_error_notopen'), null, 'errors');
+				header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype);
+				exit;
+			}
+			if ($verification->cancelVerif($modeVerifID)) {
 				setEventMessages($langs->trans('gp_verif_success_oncancel'), null, 'mesgs'); $action=''; $isModeVerif = false;
 				// Redirect to first item
 				$gestionparc->fetch_parcType(0, 0, $parctype);
@@ -94,6 +134,15 @@ switch ($action):
 				header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.$anchor);
 				exit;
 			}
+			setEventMessages($langs->trans('gp_error'), null, 'errors');
+			header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype);
+			exit;
+		}
+
+		// Les cases requises se cochent sur cette page : la pop-up de clôture ne s'ouvre pas tant qu'elles sont vides
+		if (!$error && !GETPOSTISSET('cancel_verif') && $verification->checkRequiredSocFields($object)) {
+			header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype);
+			exit;
 		}
 		break;
 
@@ -148,6 +197,13 @@ switch ($action):
 		}
 
 		if (isset($verification->rowid)) {
+			// Au moins une case doit être cochée sur les champs requis pour valider l'intervention.
+			// Ces cases se cochent sur cette page : on referme la pop-up pour y laisser l'accès.
+			if ($verification->checkRequiredSocFields($object)) {
+				header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype);
+				exit;
+			}
+
 			if ($verification->nb_verified != $verification->nb_total) {
 				if (empty(GETPOST('intercom'))) {
 					$error++; $action = 'initclose_verif';
@@ -159,17 +215,6 @@ switch ($action):
 			if ($t2s <= 0) {
 				$error++; $action = 'initclose_verif';
 				setEventMessages($langs->trans('gp_verif_error_needDuration'), null, 'errors');
-			}
-
-			// Au moins une case doit être cochée sur les champs requis pour valider l'intervention
-			$object->fetch_optionals();
-			foreach (GestionParcVerif::getCustomSocFields() as $gp_fk => $gp_fdef) {
-				if (empty($gp_fdef['required'])) continue;
-				$gp_val = isset($object->array_options['options_'.$gp_fk]) ? trim((string) $object->array_options['options_'.$gp_fk]) : '';
-				if ($gp_val === '') {
-					$error++; $action = 'initclose_verif';
-					setEventMessages($langs->trans('gp_verif_error_needSocField', $langs->transnoentities($gp_fdef['label'])), null, 'errors');
-				}
 			}
 
 			if (!$error) {
@@ -248,8 +293,8 @@ switch ($action):
 		}
 
 		if (!$error) {
-			$gestionparc->fetch_parcType(GETPOST('parcid'));
-			$verification->setParcCheck($socid,$gestionparc->parc_key,1,$verification->rowid);
+			$gestionparc->fetch_parcType(GETPOSTINT('parcid'));
+			$verification->setParcCheck($socid, $gestionparc->parc_key, 1);
 			// Get first item ID to anchor
 			$firstLines = $gestionparc->getSocParcContent($socid, $gestionparc->parc_key);
 			$firstItemId = !empty($firstLines) ? reset($firstLines)->rowid : '';
@@ -276,11 +321,11 @@ switch ($action):
 		}
 
 		if (!$error) {
-			$gestionparc->fetch_parcType(GETPOST('parcid'));
-			if ($verification->setLineCheck($socid, $gestionparc->parc_key, GETPOST('itemid'), 1, $verification->rowid)) {
+			$gestionparc->fetch_parcType(GETPOSTINT('parcid'));
+			if ($verification->setLineCheck($socid, $gestionparc->parc_key, GETPOSTINT('itemid'), 1)) {
 				setEventMessages($langs->trans('gp_verifline_success'), null, 'mesgs');
 				// Redirect to keep position
-				header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'#item-'.GETPOST('itemid'));
+				header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'#item-'.GETPOSTINT('itemid'));
 				exit;
 			} else {
 				$error++; setEventMessages($langs->trans('gp_error'), null, 'warnings');
@@ -299,10 +344,10 @@ switch ($action):
 		if (empty(GETPOST('parcid'))) { $error++; setEventMessages($langs->trans('gp_error_needTypeId'), null, 'warnings'); }
 
 		if (!$error) {
-			$gestionparc->fetch_parcType(GETPOST('parcid'));
-			if ($verification->setLineCheck($socid, $gestionparc->parc_key, GETPOST('itemid'), 0, $verification->rowid)) {
+			$gestionparc->fetch_parcType(GETPOSTINT('parcid'));
+			if ($verification->setLineCheck($socid, $gestionparc->parc_key, GETPOSTINT('itemid'), 0)) {
 				setEventMessages($langs->trans('gp_verifline_reverted'), null, 'mesgs');
-				header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'#item-'.GETPOST('itemid'));
+				header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'#item-'.GETPOSTINT('itemid'));
 				exit;
 			} else {
 				$error++; setEventMessages($langs->trans('gp_error'), null, 'warnings');
@@ -360,7 +405,7 @@ switch ($action):
 		}
 
 		if (!$error) {
-			$gestionparc->fetch_parcType(GETPOST('parcid'));
+			$gestionparc->fetch_parcType(GETPOSTINT('parcid'));
 
 			// ON VERIFIE LES CHAMPS DYNAMIQUES
 			foreach ($gestionparc->fields as $parcfield) {
@@ -505,11 +550,11 @@ switch ($action):
 		}
 
 		if (!$error) {
-			$gestionparc->fetch_parcType(GETPOST('parcid'));
+			$gestionparc->fetch_parcType(GETPOSTINT('parcid'));
 
 			$db->begin();
 			$sql = "DELETE FROM ".MAIN_DB_PREFIX."gestionparc__".$gestionparc->parc_key;
-			$sql .= " WHERE rowid=".GETPOST('itemid')." AND socid=".GETPOST('socid');
+			$sql .= " WHERE rowid=".GETPOSTINT('itemid')." AND socid=".((int) $socid);
 
 			$result = $db->query($sql);
 			if (!$result) {
@@ -551,7 +596,7 @@ switch ($action):
 		}
 
 		if (!$error) {
-			$editItem_id = GETPOST('itemid');
+			$editItem_id = GETPOSTINT('itemid');
 		}
 		break;
 
@@ -579,7 +624,7 @@ switch ($action):
 		}
 
 		if (!$error) :
-			$gestionparc->fetch_parcType(GETPOST('parcid'));
+			$gestionparc->fetch_parcType(GETPOSTINT('parcid'));
 			$fieldsWithError = array(); // Pour stocker les champs en erreur
 
 			// ON VERIFIE LES CHAMPS DYNAMIQUES
@@ -620,7 +665,7 @@ switch ($action):
 		// SI IL Y A DES ERREURS, ON RESTE EN MODE EDITION
 		if ($error) {
 			$action = 'edit';
-			$editItem_id = GETPOST('itemid');
+			$editItem_id = GETPOSTINT('itemid');
 			// Stocker les champs en erreur dans une variable de session ou GET pour le CSS
 			if (isset($fieldsWithError) && !empty($fieldsWithError)) {
 				$_GET['fields_error'] = implode(',', $fieldsWithError);
@@ -635,13 +680,13 @@ switch ($action):
 					$sql_update .= ", ".$parcfield->field_key." = '".$db->escape(GETPOST('gpfield_'.$parcfield->field_key))."'";
 				}
 			}
-			$sql_update .= " WHERE rowid = '".GETPOST('itemid')."' AND socid = '".$socid."'";
+			$sql_update .= " WHERE rowid = ".GETPOSTINT('itemid')." AND socid = ".((int) $socid);
 
 			$result = $db->query($sql_update);
 			if ($result) {
 				// Si on est en mode vérification manuelle et qu'on vient d'une vérification, on marque l'élément comme vérifié
 				if ($isModeVerif && $isFromVerif && getDolGlobalString('GESTIONPARC_VERIF_MODE') == 'manual') {
-					if ($verification->setLineCheck($socid, $gestionparc->parc_key, GETPOST('itemid'), 1, $verification->rowid)) {
+					if ($verification->setLineCheck($socid, $gestionparc->parc_key, GETPOSTINT('itemid'), 1)) {
 						setEventMessages($langs->trans('RecordSaved').' - '.$langs->trans('gp_verifline_success'), null, 'mesgs');
 					} else {
 						setEventMessages($langs->trans('RecordSaved'), null, 'mesgs');
@@ -655,7 +700,7 @@ switch ($action):
 					unset($_POST['gpfield_'.$parcfield->field_key]);
 				}
 				// Redirect to keep position
-				header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'#item-'.GETPOST('itemid'));
+				header('Location: '.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'#item-'.GETPOSTINT('itemid'));
 				exit;
 			} else {
 				$error++; setEventMessages($langs->trans('gp_error'), null, 'warnings');
@@ -667,7 +712,9 @@ switch ($action):
 	// GENERATE EXCEL EXPORT
 	case 'generate_export_excel':
 		$id_inter = GETPOST('id_inter', 'int');
-		if ($id_inter > 0) {
+		if (GETPOST('token') != $_SESSION['token']) {
+			setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings');
+		} elseif ($id_inter > 0) {
 			$file_path = $verification->generateExcelExport($id_inter);
 			if ($file_path && file_exists($file_path)) {
 				// Native download for compatibility with all versions (including v23+)
@@ -689,7 +736,7 @@ switch ($action):
 
 				exit;
 			} else {
-				setEventMessages($langs->trans('gp_error'), null, 'errors');
+				setEventMessages($verification->error ? $verification->error : $langs->trans('gp_error'), null, 'errors');
 			}
 		}
 		break;
@@ -697,7 +744,9 @@ switch ($action):
 	// GENERATE PDF EXPORT
 	case 'generate_export_pdf':
 		$id_inter = GETPOST('id_inter', 'int');
-		if ($id_inter > 0) {
+		if (GETPOST('token') != $_SESSION['token']) {
+			setEventMessages($langs->trans('SecurityTokenHasExpiredSoActionHasBeenCanceledPleaseRetry'), null, 'warnings');
+		} elseif ($id_inter > 0) {
 			$file_path = $verification->generatePDFExport($id_inter);
 			if ($file_path && file_exists($file_path)) {
 				// Native download for compatibility
@@ -716,7 +765,7 @@ switch ($action):
 				readfile($file_path);
 				exit;
 			} else {
-				setEventMessages($langs->trans('gp_error'), null, 'errors');
+				setEventMessages($verification->error ? $verification->error : $langs->trans('gp_error'), null, 'errors');
 			}
 		}
 		break;
@@ -733,34 +782,13 @@ if (!empty($list_parctypes)) {
 	foreach($list_parctypes as $parctype_key => $parctype_infos) {
 
 		$gestionparc->fetch_parcType($parctype_key);
-		$show_parc = true;
 
 		if ($parctype == $parctype_infos['key']) {
 			$keyparc = $parctype_key;
 		}
 
-		// ON VERIFIE SI ON PEUT AFFICHER LE PARC EST ACTIF
-		if (!$gestionparc->enabled) {
-			$show_parc = false;
-		}
-
-		// ON VERIFIE S'IL CONTIENT DES CHAMPS
-		if (empty($gestionparc->fields)) {
-			$show_parc = false;
-		} else {
-			$nbEnabled = 0;
-			foreach ($gestionparc->fields as $field) {
-				if ($field->enabled && !$field->only_verif) {
-					$nbEnabled++;
-				}
-			}
-			if ($nbEnabled == 0) {
-				$show_parc = false;
-			}
-		}
-
 		// SI ON PEUT AFFICHER
-		if ($show_parc) {
+		if ($gestionparc->isDisplayable()) {
 			// ON COMPTE LES LIGNES
 			$nb_lines = $gestionparc->getSocParcCount($object->id, $gestionparc->parc_key);
 
@@ -851,10 +879,10 @@ if ($action == 'initclose_verif') {
 	$formconfirm = $form->formconfirm($urlformconfirm, $langs->transnoentities('gp_verif_close'), '', 'close_verif', $formarray, '', 1, 500, 500, 0, $langs->transnoentities('gp_verif_close'), $langs->transnoentities('Cancel'));
 }
 if ($action == 'delete') {
-	$formconfirm = $form->formconfirm($_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&itemid='.GETPOST('itemid').'&parcid='.GETPOST('parcid'), $langs->trans('gp_confirmDeleteTitle'), $langs->trans('gp_confirmDelete'), 'confirm_delete', '', '', 1, 0, 500, 0);
+	$formconfirm = $form->formconfirm($_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&itemid='.GETPOSTINT('itemid').'&parcid='.GETPOSTINT('parcid'), $langs->trans('gp_confirmDeleteTitle'), $langs->trans('gp_confirmDelete'), 'confirm_delete', '', '', 1, 0, 500, 0);
 }
 if ($action == 'verifall') {
-	$formconfirm = $form->formconfirm($_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&parcid='.GETPOST('parcid'), $langs->trans('gp_verifall'), $langs->trans('gp_confirmVerifAll'), 'verifall_confirm', '', '', 1, 0, 500, 0);
+	$formconfirm = $form->formconfirm($_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parctype.'&parcid='.GETPOSTINT('parcid'), $langs->trans('gp_verifall'), $langs->trans('gp_confirmVerifAll'), 'verifall_confirm', '', '', 1, 0, 500, 0);
 }
 
 if ($action == 'additem') {
@@ -1035,14 +1063,13 @@ print '<div class="park-main-wrapper">';
 							print '<td valign="middle">'.$langs->trans('gp_client_verifmode').'</td>';
 							print '<td>';
 							if ($isModeVerif) {
-								// Si tous les organes ne sont pas contrôlés, le bouton ouvre une
-								// modale de confirmation (gérée en JS) au lieu de clôturer directement.
-								$gp_uncontrolled = ($verification->nb_verified < $verification->nb_total) ? 1 : 0;
+								// Le bouton de clôture interroge le serveur (en JS) et ouvre une modale de
+								// confirmation si des organes restent à contrôler.
 								print '<form id="gp-close-verif-form" action="'.$_SERVER["PHP_SELF"].'?socid='.$object->id.'&parctype='.$parctype.'" method="POST">';
 									print '<input type="hidden" name="token" value="'.newToken().'">';
 									print '<input type="hidden" name="verif_id" value="'.$modeVerifID.'">';
 									print '<input type="hidden" name="action" value="initclose_verif">';
-									print '<input type="submit" name="close" value="'.$langs->trans('gp_verif_close').'" class="button smallpaddingimp small nomarginleft gp-close-verif-btn" data-uncontrolled="'.$gp_uncontrolled.'">';
+									print '<input type="submit" name="close" value="'.$langs->trans('gp_verif_close').'" class="button smallpaddingimp small nomarginleft gp-close-verif-btn">';
 									print '<input type="submit" name="cancel_verif" value="'.$langs->trans('gp_verif_cancel').'" class="button butActionDelete cancel smallpaddingimp small nomarginleft" >';
 								print '</form>';
 							} else {
@@ -1073,9 +1100,12 @@ if ((int) $gestionparc->rowid > 0) {
 	print '<div id="parc-content"></div>';
 
 	// New item
-	print '<div id="park-add-item">';
-		print '<a href="'.$_SERVER['PHP_SELF'].'?socid='.$object->id.'&parctype='.$parctype.'&action=additem&token='.newToken().'"><span class="fas fa-plus"></span></a>';
-	print '</div>';		// Count verified lines
+	if ($gp_can_write) {
+		print '<div id="park-add-item">';
+			print '<a href="'.$_SERVER['PHP_SELF'].'?socid='.$object->id.'&parctype='.$parctype.'&action=additem&token='.newToken().'"><span class="fas fa-plus"></span></a>';
+		print '</div>';
+	}
+	// Count verified lines
 		if (getDolGlobalInt('MAIN_MODULE_GESTIONPARC_USEVERIF') && isModEnabled('intervention') && $isModeVerif) {
 			$nb_verified = 0;
 			if (!empty($parcLines)) {
@@ -1112,7 +1142,9 @@ if ((int) $gestionparc->rowid > 0) {
 					// Item header
 					print '<div class="park-item-header">';
 						print '<div>';
-							print '<span class="paddingright fas fa-grip-vertical opacitylow grabbable" style="padding-right:6px;"></span>';
+							if ($gp_can_write) {
+								print '<span class="paddingright fas fa-grip-vertical opacitylow grabbable" style="padding-right:6px;"></span>';
+							}
 							print 'ID #'.$linecontent->rowid;
 							if ($isModeVerif && $linecontent->verif) {
 								print ' <span style="margin-left:4px;" class="text-success"><span class="fas fa-check-circle"></span></span>';
@@ -1121,14 +1153,16 @@ if ((int) $gestionparc->rowid > 0) {
 							}
 						print '</div>';
 						print '<div class="park-item-actions">';
-						if ($action != 'edit' || $action == 'edit' && $editItem_id != $linecontent->rowid) {
+						if (($gp_can_write || $gp_can_delete) && ($action != 'edit' || $action == 'edit' && $editItem_id != $linecontent->rowid)) {
 							print '<span class="fas fa-ellipsis-v icon-submenu"></span>';
 							print '<ul class="park-submenu-actions">';
+							if ($gp_can_write) {
 								print '<li><a class="item-action action-clone" data-cloneafter="1" href="'.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parc->parc_key.'&action=duplicate&after=1&itemid='.$linecontent->rowid.'&parcid='.$parc->rowid.'&token='.newToken().'"><span class="fas fa-clone paddingright"></span> '.$langs->trans('ToClone').'</a></li>';
 								print '<li><a class="item-action action-clone" data-cloneafter="0" href="'.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parc->parc_key.'&action=duplicate&after=0&itemid='.$linecontent->rowid.'&parcid='.$parc->rowid.'&token='.newToken().'"><span class="far fa-clone paddingright"></span> '.$langs->trans('gp_CloneAtEnd').'</a></li>';
 								print '<li class="separator"></li>';
 								print '<li><a class="item-action action-edit" href="#"><span class="fas fa-pencil-alt paddingright"></span> '.$langs->trans('Edit').'</a></li>';
-								if ($user->hasRight('gestionparc', 'parc', 'delete') || $user->admin) {
+							}
+								if ($gp_can_delete) {
 									print '<li><a class="item-action action-delete" href="'.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parc->parc_key.'&action=delete&itemid='.$linecontent->rowid.'&parcid='.$parc->rowid.'&token='.newToken().'"><span class="fas fa-trash-alt paddingright"></span> '.$langs->trans('Delete').'</a></li>';
 								}
 							print '</ul>';
@@ -1226,7 +1260,7 @@ if ((int) $gestionparc->rowid > 0) {
 							print '<button class="button-edit button-valid" type="submit"><span class="fas fa-check"></span></button>';
 						print '</div>';
 						print '</form>';
-					} else if ($isModeVerif && $linecontent->verif) {
+					} else if ($isModeVerif && $gp_can_verif && $linecontent->verif) {
 						// Élément contrôlé : cliquer permet de revenir en arrière (revert)
 						$gp_is_manual = (getDolGlobalString('GESTIONPARC_VERIF_MODE') == 'manual');
 						$gp_editurl = $_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parc->parc_key.'&action=edit&itemid='.$linecontent->rowid.'&parcid='.$parc->rowid.'&fromverif=1&token='.newToken().'#item-'.$linecontent->rowid;
@@ -1234,7 +1268,7 @@ if ((int) $gestionparc->rowid > 0) {
 							print '<span class="gp-verified-label"><span class="fas fa-check"></span> '.$langs->trans('gp_verif_verified').'</span>';
 							print '<span class="gp-revert-hint"><span class="fas fa-undo"></span> '.$langs->trans('gp_verif_revert').'</span>';
 						print '</a>';
-					} else if ($isModeVerif && !$linecontent->verif) {
+					} else if ($isModeVerif && $gp_can_verif && !$linecontent->verif) {
 						// Mode de vérification : manuel ou instantané
 						if (getDolGlobalString('GESTIONPARC_VERIF_MODE') == 'manual') {
 							// Mode manuel : redirection vers la page d'édition
@@ -1282,7 +1316,7 @@ if ((int) $gestionparc->rowid > 0) {
 
 						if ($isModeVerif) {
 							print '<td class="verify-cell">';
-							if ($action != "edit" || $action == "edit" && $editItem_id != $linecontent->rowid) {
+							if ($gp_can_verif && ($action != "edit" || $action == "edit" && $editItem_id != $linecontent->rowid)) {
 								if ($linecontent->verif) {
 									// Cliquer permet de revenir en arrière (revert)
 									$gp_is_manual = (getDolGlobalString('GESTIONPARC_VERIF_MODE') == 'manual');
@@ -1384,10 +1418,14 @@ if ((int) $gestionparc->rowid > 0) {
 						}
 						print '<td class="right">';
 						if ($action != "edit") {
+							if ($gp_can_write) {
 							print '<a class="parclink gp-duplicate" href="'.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parc->parc_key.'&action=duplicate&itemid='.$linecontent->rowid.'&parcid='.$parc->rowid.'&token='.newToken().'"><i class="fas fa-clone"></i></a> &nbsp; ';
 							print '<a class="parclink gp-edit paddingrightonly" href="'.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parc->parc_key.'&action=edit&itemid='.$linecontent->rowid.'&parcid='.$parc->rowid.'&token='.newToken().'"><i class="fas fa-pencil-alt"></i></a> &nbsp; ';
+							}
+							if ($gp_can_delete) {
 							print '<a class="parclink gp-trash paddingrightonly" href="'.$_SERVER['PHP_SELF'].'?socid='.$socid.'&parctype='.$parc->parc_key.'&action=delete&itemid='.$linecontent->rowid.'&parcid='.$parc->rowid.'&token='.newToken().'"><i class="fas fa-trash-alt"></i></a>';
-						} else if ($action == "edit" && GETPOST('itemid') == $linecontent->rowid) {
+							}
+						} else if ($action == "edit" && GETPOSTINT('itemid') == $linecontent->rowid) {
 							print '<input type="hidden" name="action" value="edit_item">';
 							print '<input type="hidden" name="itemid" value="'.$linecontent->rowid.'">';
 							if ($isFromVerif) {
@@ -2077,6 +2115,23 @@ $(function() {
 	</div>
 </div>
 
+<!-- Modale de confirmation : annulation de la vérification en cours -->
+<div id="gp-confirm-cancel-overlay" class="gp-modal-overlay" style="display:none;">
+	<div class="gp-modal-container gp-modal-sm">
+		<div class="gp-modal-header">
+			<h3><?php echo $langs->trans('gp_verif_cancel'); ?></h3>
+			<span class="gp-modal-close">&times;</span>
+		</div>
+		<div class="gp-modal-body">
+			<p class="gp-modal-desc"><i class="fas fa-exclamation-triangle"></i> <?php echo $langs->trans('gp_verif_cancel_confirm'); ?></p>
+		</div>
+		<div class="gp-modal-footer gp-modal-footer-split">
+			<button type="button" class="button gp-modal-close-btn" id="gp-confirm-cancel-no"><?php echo $langs->trans('No'); ?></button>
+			<button type="button" class="button gp-modal-btn-primary" id="gp-confirm-cancel-yes"><?php echo $langs->trans('gp_verif_cancel'); ?></button>
+		</div>
+	</div>
+</div>
+
 <!-- Modale de confirmation : suppression d'une photo de vérification -->
 <div id="gp-photo-delete-overlay" class="gp-modal-overlay" style="display:none;">
 	<div class="gp-modal-container gp-modal-sm">
@@ -2098,13 +2153,25 @@ $(function() {
 	const GP_EXPORT_BASE_URL = '<?php echo $_SERVER['PHP_SELF'].'?socid='.$socid.'&action=generate_export_excel&token='.newToken().'&id_inter='; ?>';
 	const GP_EXPORT_PDF_BASE_URL = '<?php echo $_SERVER['PHP_SELF'].'?socid='.$socid.'&action=generate_export_pdf&token='.newToken().'&id_inter='; ?>';
 
-	// Modale de confirmation de clôture (organes non contrôlés)
+	// Clôture : le serveur recompte depuis les lignes, la page peut avoir changé depuis son affichage
 	jQuery(document).on('click', '.gp-close-verif-btn', function(e) {
-		if (parseInt(jQuery(this).attr('data-uncontrolled'), 10) === 1) {
-			e.preventDefault();
-			jQuery('#gp-confirm-close-overlay').fadeIn(200);
-			jQuery('body').css('overflow', 'hidden');
-		}
+		e.preventDefault();
+		jQuery.ajax({
+			url: '<?php echo dol_buildpath('/gestionparc/ajax/verify-items.php', 1); ?>',
+			type: 'POST',
+			dataType: 'json',
+			data: { action: 'get_uncontrolled', socid: <?php echo (int) $socid; ?>, token: '<?php echo newToken(); ?>' },
+			success: function(response) {
+				if (response.success && response.uncontrolled) {
+					jQuery('#gp-confirm-close-overlay').fadeIn(200);
+					jQuery('body').css('overflow', 'hidden');
+				} else {
+					jQuery('#gp-close-verif-form').trigger('submit');
+				}
+			},
+			// Le serveur refait ses contrôles à la clôture : on ne bloque pas sur un aléa réseau
+			error: function() { jQuery('#gp-close-verif-form').trigger('submit'); }
+		});
 	});
 	jQuery(document).on('click', '#gp-confirm-close-yes', function() {
 		jQuery('#gp-confirm-close-overlay').fadeOut(100);
@@ -2116,6 +2183,27 @@ $(function() {
 		jQuery('body').css('overflow', '');
 	});
 	jQuery(document).on('click', '#gp-confirm-close-overlay', function(e) {
+		if (jQuery(e.target).hasClass('gp-modal-overlay')) {
+			jQuery(this).fadeOut(200);
+			jQuery('body').css('overflow', '');
+		}
+	});
+
+	// Modale de confirmation d'annulation : un clic par erreur effacerait les photos prises sur le terrain
+	jQuery(document).on('click', 'input[name="cancel_verif"]', function(e) {
+		e.preventDefault();
+		jQuery('#gp-confirm-cancel-overlay').fadeIn(200);
+		jQuery('body').css('overflow', 'hidden');
+	});
+	jQuery(document).on('click', '#gp-confirm-cancel-yes', function() {
+		// trigger('submit') n'envoie pas le bouton cliqué : son nom passe par un champ caché
+		jQuery('#gp-close-verif-form').append('<input type="hidden" name="cancel_verif" value="1">').trigger('submit');
+	});
+	jQuery(document).on('click', '#gp-confirm-cancel-no, #gp-confirm-cancel-overlay .gp-modal-close', function() {
+		jQuery('#gp-confirm-cancel-overlay').fadeOut(200);
+		jQuery('body').css('overflow', '');
+	});
+	jQuery(document).on('click', '#gp-confirm-cancel-overlay', function(e) {
 		if (jQuery(e.target).hasClass('gp-modal-overlay')) {
 			jQuery(this).fadeOut(200);
 			jQuery('body').css('overflow', '');

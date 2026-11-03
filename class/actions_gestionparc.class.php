@@ -134,7 +134,7 @@ class ActionsGestionParc
         if ($file_path && file_exists($file_path)) {
             setEventMessages($langs->trans('gp_export_success'), null, 'mesgs');
         } else {
-            setEventMessages($langs->trans('gp_error'), null, 'errors');
+            setEventMessages($verification->error ? $verification->error : $langs->trans('gp_error'), null, 'errors');
         }
 
         header('Location: '.dol_buildpath('fichinter/card.php?id='.$fichinter_id, 1));

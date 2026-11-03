@@ -36,6 +36,7 @@ gp_boxNb_parcType=Nom du parc
 gp_boxNb_countItems=Nombre d'éléments
 gp_boxNb_countParcs=Clients possédant un parc
 gp_boxNb_lastEntry=Dernier parc modifié
+gp_boxNb_ofWhichApsad=dont APSAD
 
 # ONGLETS TIERS
 gp_clientparc=Parc Client
@@ -51,6 +52,9 @@ gp_verif_cancel=Annuler vérification
 gp_verif_uncontrolled_title=Organes non contrôlés
 gp_verif_confirm_uncontrolled=Certains organes n'ont pas été contrôlés. Voulez-vous quand même clôturer la vérification ?
 gp_verif_continue_anyway=Continuer quand même
+gp_verif_cancel_confirm=Annuler cette vérification ? Les photos prises pendant celle-ci seront définitivement supprimées.
+gp_verif_error_notopen=Cette vérification n'est plus en cours. Rechargez la page pour voir son état.
+gp_export_no_data=Rapport indisponible : cette intervention n'a ni données figées ni fichier d'origine.
 gp_verif_label=Vérification
 gp_product_unknown=Produit inconnu
 gp_empty_parclist_message=Il semblerait qu'aucun parc ne soit actif pour ce tiers
@@ -287,5 +291,5 @@ gp_advexp_photoannex=Annexe photographique
 gp_advexp_observations=Observations
 gp_advexp_legend=Légende
 gp_parc_reportlegend=Légende du rapport
-gp_parc_reportlegend_desc=Codes employés dans les colonnes de cet organe, repris en fin d'export. Une entrée par ligne, au format <b>CODE = signification</b>. Laisser vide pour n'afficher aucune légende.
+gp_parc_reportlegend_desc=Codes employés dans les colonnes de cet organe, repris sous le tableau de l'organe dans les exports. Une entrée par ligne, au format <b>CODE = signification</b>. Laisser vide pour n'afficher aucune légende.
 gp_parc_reportlegend_placeholder=VR = Vérification annuelle\nVR + CHARGE = Quinquennal à 5 ans\nNEUF = Ajout ou remplacement de l'extincteur percuté ou +10 ans

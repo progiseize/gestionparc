@@ -260,9 +260,6 @@ class GestionParcPDF extends TCPDF
             $this->drawSection($section, ($idx === 0));
         }
 
-        // Légendes des organes, regroupées en fin de rapport
-        $this->drawLegend($report_data);
-
         // Annexe photographique (option globale du module)
         if (getDolGlobalInt('GESTIONPARC_EXPORT_PHOTOS')) {
             $this->drawPhotoAnnex($report_data);
@@ -659,48 +656,39 @@ class GestionParcPDF extends TCPDF
         // ── Bordure extérieure navy sur la (dernière) page du tableau ──
         $this->drawSectionBorder($x0, $page_top, $w, $this->GetY() - $page_top);
 
+        // ── Légende de l'organe, juste sous son tableau ──
+        $this->drawLegend($section);
+
         $this->Ln(8);
     }
 
     // ─────────────────────────────────────────────────────────────────────
     // LEGENDE
     //
-    // Regroupe en fin de rapport les légendes saisies sur chaque organe
-    // (page de configuration de l'organe), pour expliciter les codes employés
-    // dans les tableaux. Petit corps de texte, un bloc par organe concerné.
+    // Légende saisie sur la page de configuration de l'organe, pour expliciter
+    // les codes de son tableau. Dessinée juste sous celui-ci, en petit corps.
     //
-    //   LÉGENDE
-    //   EXTINCTEUR
-    //     VR = Vérification annuelle
-    //     NEUF = Ajout ou remplacement…
+    //   LÉGENDE : EXTINCTEUR
+    //     VR     Vérification annuelle
+    //     NEUF   Ajout ou remplacement…
     // ─────────────────────────────────────────────────────────────────────
 
     const LG_LH   = 3.8;   // hauteur de ligne (mm)
     const LG_CODE = 30;    // largeur de la colonne des codes (mm)
 
-    private function drawLegend($report_data)
+    private function drawLegend($section)
     {
         global $langs;
 
-        $groups = array();
-        foreach ($report_data['sections'] as $section) {
-            if (empty($section['legend'])) continue;
-            $groups[] = array('label' => $section['label'], 'entries' => $section['legend']);
-        }
-        if (empty($groups)) return;
+        if (empty($section['legend'])) return;
 
         $x0 = self::ML;
         $w  = self::CW;
 
         // Hauteur totale, pour garder le bloc d'un seul tenant si possible
-        $this->SetFont('helvetica', '', 7);
-        $needed = 6;
-        foreach ($groups as $group) {
-            $needed += 5;
-            foreach ($group['entries'] as $entry) {
-                $needed += $this->legendEntryHeight($entry, $w);
-            }
-            $needed += 2;
+        $needed = 7;
+        foreach ($section['legend'] as $entry) {
+            $needed += $this->legendEntryHeight($entry, $w);
         }
         if ($this->GetY() + min($needed, 60) > $this->getPageHeight() - 20) {
             $this->AddPage();
@@ -708,51 +696,40 @@ class GestionParcPDF extends TCPDF
             $this->Ln(2);
         }
 
-        // Titre
+        // Titre (l'organe y figure pour rester lisible si le bloc passe à la page suivante)
         $this->SetFont('helvetica', 'B', 8);
         $this->sc(self::INFO_LABEL);
         $this->SetXY($x0, $this->GetY());
-        $this->Cell($w, 5, mb_strtoupper($this->t($langs->trans('gp_advexp_legend'))), 0, 1, 'L');
+        $this->Cell($w, 5, mb_strtoupper($this->t($langs->trans('gp_advexp_legend').' : '.$section['label'])), 0, 1, 'L');
         $this->sd(self::BDR_DARK);
         $this->SetLineWidth(0.3);
         $this->Line($x0, $this->GetY(), $x0 + $w, $this->GetY());
         $this->Ln(1.5);
 
-        foreach ($groups as $group) {
-            if ($this->GetY() + 10 > $this->getPageHeight() - 20) $this->AddPage();
+        foreach ($section['legend'] as $entry) {
+            $h = $this->legendEntryHeight($entry, $w);
+            if ($this->GetY() + $h > $this->getPageHeight() - 20) $this->AddPage();
 
-            $this->SetFont('helvetica', 'B', 7);
-            $this->sc(self::INFO_LABEL);
-            $this->SetXY($x0, $this->GetY());
-            $this->Cell($w, 4, mb_strtoupper($this->t($group['label'])), 0, 1, 'L');
+            $y = $this->GetY();
+            $code  = $this->t($entry['code']);
+            $label = $this->t($entry['label']);
 
-            foreach ($group['entries'] as $entry) {
-                $h = $this->legendEntryHeight($entry, $w);
-                if ($this->GetY() + $h > $this->getPageHeight() - 20) $this->AddPage();
+            if ($code !== '') {
+                $this->SetFont('helvetica', 'B', 7);
+                $this->sc(self::INFO_LABEL);
+                $this->SetXY($x0 + 2, $y);
+                $this->Cell(self::LG_CODE, self::LG_LH, $code, 0, 0, 'L');
 
-                $y = $this->GetY();
-                $code  = $this->t($entry['code']);
-                $label = $this->t($entry['label']);
-
-                if ($code !== '') {
-                    $this->SetFont('helvetica', 'B', 7);
-                    $this->sc(self::INFO_LABEL);
-                    $this->SetXY($x0 + 2, $y);
-                    $this->Cell(self::LG_CODE, self::LG_LH, $code, 0, 0, 'L');
-
-                    $this->SetFont('helvetica', '', 7);
-                    $this->sc(self::TEXT_MUTED);
-                    $this->SetXY($x0 + 2 + self::LG_CODE, $y);
-                    $this->MultiCell($w - 4 - self::LG_CODE, self::LG_LH, $label, 0, 'L', false, 1);
-                } else {
-                    $this->SetFont('helvetica', '', 7);
-                    $this->sc(self::TEXT_MUTED);
-                    $this->SetXY($x0 + 2, $y);
-                    $this->MultiCell($w - 4, self::LG_LH, $label, 0, 'L', false, 1);
-                }
+                $this->SetFont('helvetica', '', 7);
+                $this->sc(self::TEXT_MUTED);
+                $this->SetXY($x0 + 2 + self::LG_CODE, $y);
+                $this->MultiCell($w - 4 - self::LG_CODE, self::LG_LH, $label, 0, 'L', false, 1);
+            } else {
+                $this->SetFont('helvetica', '', 7);
+                $this->sc(self::TEXT_MUTED);
+                $this->SetXY($x0 + 2, $y);
+                $this->MultiCell($w - 4, self::LG_LH, $label, 0, 'L', false, 1);
             }
-
-            $this->Ln(1.5);
         }
     }
 

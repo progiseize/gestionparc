@@ -34,11 +34,22 @@ if (GETPOST('token') != $_SESSION['token']) {
 $gestionparc = new GestionParc($db);
 if (isModEnabled('intervention')) {
 	$verification = new GestionParcVerif($db);
-	// Charge la vérif en cours pour que rowid soit défini (compteur nb_verified à jour)
+	// Charge la vérif en cours pour que rowid soit défini
 	$verification->isVerif($socid);
 }
 
 header('Content-Type: application/json');
+
+// Contrôler un élément demande le droit de vérification, parc.read ne suffit pas
+if (!$user->hasRight('gestionparc', 'parc', 'verif') && !$user->admin) {
+	echo json_encode(array('success' => false, 'error' => $langs->transnoentities('NotEnoughPermissions')));
+	exit;
+}
+// La page peut être restée ouverte après la clôture de la vérif
+if (empty($verification->rowid)) {
+	echo json_encode(array('success' => false, 'error' => $langs->transnoentities('gp_verif_error_notopen')));
+	exit;
+}
 
 switch ($action) {
 	case 'set_line_verify':
@@ -72,7 +83,7 @@ switch ($action) {
 				exit;
 			}
 
-			if ($verification->setLineCheck($socid, $gestionparc->parc_key, $itemid, 1, $verification->rowid)) {
+			if ($verification->setLineCheck($socid, $gestionparc->parc_key, $itemid, 1)) {
 				echo json_encode(array(
 					'success' => true,
 					'message' => $langs->transnoentities('gp_verifline_success')
@@ -90,7 +101,7 @@ switch ($action) {
 		if (empty($parcid)) { echo json_encode(array('success' => false, 'error' => 'Missing parcid')); exit; }
 
 		$gestionparc->fetch_parcType($parcid);
-		if ($verification->setLineCheck($socid, $gestionparc->parc_key, $itemid, 0, $verification->rowid)) {
+		if ($verification->setLineCheck($socid, $gestionparc->parc_key, $itemid, 0)) {
 			echo json_encode(array(
 				'success' => true,
 				'message' => $langs->transnoentities('gp_verifline_reverted')
@@ -98,6 +109,14 @@ switch ($action) {
 		} else {
 			echo json_encode(array('success' => false, 'error' => 'Revert failed'));
 		}
+		break;
+
+	// Reste-t-il des éléments à contrôler ? Compté depuis les lignes au moment de clôturer.
+	case 'get_uncontrolled':
+		$societe = new Societe($db);
+		$societe->fetch($socid);
+		$verification->refreshVerifCounters($socid, $gestionparc->list_parcType(1, 1, $societe->getCategoriesCommon('customer')));
+		echo json_encode(array('success' => true, 'uncontrolled' => ($verification->nb_verified < $verification->nb_total) ? 1 : 0));
 		break;
 
 	default:

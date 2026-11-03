@@ -44,8 +44,38 @@ $gestionparc = new GestionParc($db);
 $gpphoto = new GestionParcPhoto($db);
 $gpverif = new GestionParcVerif($db);
 $action = GETPOST('action', 'alpha');
-$parckey = GETPOST('parckey', 'alphanohtml');
 $results = array();
+
+/**
+ * Stoppe la requête avec un message d'erreur.
+ */
+function gpManageItemsRefuse($message)
+{
+	echo json_encode(array('success' => false, 'error' => $message));
+	exit;
+}
+
+// Droit requis par action
+$gp_can_write = ($user->hasRight('gestionparc', 'parc', 'write') || $user->admin);
+$gp_action_rights = array(
+	'itemsort'    => $gp_can_write,
+	'cloneitem'   => $gp_can_write,
+	'deleteitem'  => ($user->hasRight('gestionparc', 'parc', 'delete') || $user->admin),
+	// En vérification manuelle, contrôler un élément passe par son formulaire d'édition
+	'getitemform' => ($gp_can_write || (GETPOSTINT('fromverif') && ($user->hasRight('gestionparc', 'parc', 'verif') || $user->admin))),
+);
+if ($user->socid > 0 || !$user->hasRight('gestionparc', 'parc', 'read') || empty($gp_action_rights[$action])) {
+	gpManageItemsRefuse($langs->transnoentities('NotEnoughPermissions'));
+}
+if (GETPOST('token') != $_SESSION['token']) {
+	gpManageItemsRefuse('Invalid token');
+}
+
+// La clé entre dans des noms de table : seule celle d'un organe existant est acceptée
+if ($gestionparc->fetch_parcType(0, 0, GETPOST('parckey', 'alphanohtml')) <= 0) {
+	gpManageItemsRefuse('Unknown component');
+}
+$parckey = $gestionparc->parc_key;
 
 // S'assure que la colonne manual_position existe (upgrade-safe) avant toute écriture d'ordre
 $gestionparc->ensureManualPositionColumnForParc($parckey);

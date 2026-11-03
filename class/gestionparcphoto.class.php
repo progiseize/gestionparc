@@ -421,6 +421,11 @@ class GestionParcPhoto
         // Suppression de la ligne temporaire sans toucher au fichier qu'elle a produit
         $this->db->query("DELETE FROM ".MAIN_DB_PREFIX.$this->table_element." WHERE rowid = ".(int) $newid);
 
+        // Le snapshot d'une vérif close doit pointer sur le nouveau fichier
+        dol_include_once('/gestionparc/class/gestionparc.class.php');
+        $gpverif = new GestionParcVerif($this->db);
+        $gpverif->replaceSnapshotPhoto($photo->verif_id, $old_path, $new->filepath, $new->filename);
+
         // Puis retrait de l'ancien fichier et de sa vignette
         $old_abs = self::getAbsolutePath($old_path);
         if (file_exists($old_abs)) dol_delete_file($old_abs);
@@ -486,6 +491,24 @@ class GestionParcPhoto
         $sql = "UPDATE ".MAIN_DB_PREFIX."gestionparc SET photo_required = ".($yesorno ? 1 : 0);
         $sql .= " WHERE rowid = ".(int) $parc_id;
         return (bool) $this->db->query($sql);
+    }
+
+    /*****************************************************************/
+    // DROIT DE VOIR UNE PHOTO
+    // Celles d'une vérif en cours servent au contrôle sur le terrain
+    // (parc.read), celles d'une vérif close relèvent du droit dédié.
+    /*****************************************************************/
+    public function userCanView($user, $photo)
+    {
+        if ($user->socid > 0) return false;
+        if ($user->admin || $user->hasRight('gestionparc', 'photo', 'read')) return true;
+        if (!$user->hasRight('gestionparc', 'parc', 'read')) return false;
+
+        $res = $this->db->query("SELECT is_close FROM ".MAIN_DB_PREFIX."gestionparc_verifs WHERE rowid = ".(int) $photo->verif_id);
+        if (!$res || $this->db->num_rows($res) == 0) return false;
+        $obj = $this->db->fetch_object($res);
+
+        return empty($obj->is_close);
     }
 
     /*****************************************************************/

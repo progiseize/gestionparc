@@ -36,6 +36,7 @@ gp_boxNb_parcType=Base Name
 gp_boxNb_countItems=Number of Items
 gp_boxNb_countParcs=Customers with a Base
 gp_boxNb_lastEntry=Last Base Modified
+gp_boxNb_ofWhichApsad=of which APSAD
 
 # ONGLETS TIERS
 gp_clientparc=Customer Base
@@ -51,6 +52,9 @@ gp_verif_cancel=Cancel verification
 gp_verif_uncontrolled_title=Uncontrolled components
 gp_verif_confirm_uncontrolled=Some components have not been controlled. Do you still want to close the verification?
 gp_verif_continue_anyway=Continue anyway
+gp_verif_cancel_confirm=Cancel this verification? The photos taken during it will be permanently deleted.
+gp_verif_error_notopen=This verification is no longer in progress. Reload the page to see its status.
+gp_export_no_data=Report unavailable: this intervention has neither frozen data nor an original file.
 gp_verif_label=Verification
 gp_product_unknown=Unknown product
 gp_empty_parclist_message=It appears that no bases are active for this third party
@@ -277,5 +281,5 @@ gp_advexp_photoannex=Photo annex
 gp_advexp_observations=Observations
 gp_advexp_legend=Legend
 gp_parc_reportlegend=Report legend
-gp_parc_reportlegend_desc=Codes used in this component's columns, printed at the end of the export. One entry per line, formatted as <b>CODE = meaning</b>. Leave empty to print no legend.
+gp_parc_reportlegend_desc=Codes used in this component's columns, printed under the component's table in the exports. One entry per line, formatted as <b>CODE = meaning</b>. Leave empty to print no legend.
 gp_parc_reportlegend_placeholder=VR = Annual inspection\nVR + CHARGE = Five-year service\nNEUF = Added or replaced unit
