@@ -81,6 +81,18 @@ class box_gestionparc extends ModeleBoxes
             $this->info_box_contents[$i][2] = array('td' => 'class="right"','text' => $last_entry['name'],'url'=> $last_entry['url']);
             $this->info_box_contents[$i][3] = array('td' => 'class="right"','text' => $nb_items);
             $i++;
+
+            // Sous-ligne "dont APSAD" des extincteurs
+            if(strpos($parc_infos['key'], 'extincteur') === 0) :
+                $apsad = $gestionparc->count_parcReferentiel($parc_infos['key'], 'apsadr4');
+                if($apsad) :
+                    $this->info_box_contents[$i][0] = array('td' => 'style="padding-left:20px"','text' => $langs->trans('gp_boxNb_ofWhichApsad'));
+                    $this->info_box_contents[$i][1] = array('td' => 'class="right"','text' => $apsad->nb_clients);
+                    $this->info_box_contents[$i][2] = array('td' => 'class="right"','text' => '');
+                    $this->info_box_contents[$i][3] = array('td' => 'class="right"','text' => $apsad->nb_items);
+                    $i++;
+                endif;
+            endif;
         endforeach;
     }
 

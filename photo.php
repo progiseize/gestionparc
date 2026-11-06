@@ -28,10 +28,6 @@ if (!$res && file_exists("../../../main.inc.php")) : $res = @include '../../../m
 
 dol_include_once('/gestionparc/class/gestionparcphoto.class.php');
 
-if ($user->socid > 0 || !$user->hasRight('gestionparc', 'parc', 'read')) {
-	accessforbidden();
-}
-
 $id    = GETPOSTINT('id');
 $thumb = GETPOSTINT('thumb');
 
@@ -40,6 +36,10 @@ $photo = $gpphoto->fetch($id);
 if (!$photo) {
 	header('HTTP/1.0 404 Not Found');
 	exit;
+}
+
+if (!$gpphoto->userCanView($user, $photo)) {
+	accessforbidden();
 }
 
 $file = GestionParcPhoto::getAbsolutePath($photo->filepath);

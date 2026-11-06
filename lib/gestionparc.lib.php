@@ -407,8 +407,8 @@ function GestionParcPhotoWidget($parc, $item_id, $socid, $photos, $can_write, $r
 
     if ($can_write) {
         $out .= '<label class="gp-photo-add">';
-        // Pas d'attribut capture : le mobile propose alors "Appareil photo" ET "Galerie"
-        $out .= '<input type="file" class="gp-photo-input" accept="image/*" multiple>';
+        // capture : le mobile ouvre directement l'appareil photo, l'ordinateur garde le sélecteur de fichiers
+        $out .= '<input type="file" class="gp-photo-input" accept="image/*" capture="environment" multiple>';
         $out .= '<span class="fas fa-camera"></span> '.$langs->trans('gp_photo_add');
         $out .= '</label>';
     }

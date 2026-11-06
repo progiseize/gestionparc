@@ -820,31 +820,26 @@ class GestionParcExport extends ExportExcel2007
 	// ── Légende ──────────────────────────────────────────────────────────────
 
 	/**
-	 * Écrit le bloc de légende en fin de feuille : les codes saisis sur chaque
-	 * organe (page de configuration de l'organe), en petit corps de texte.
+	 * Écrit la légende d'un organe juste sous son tableau : les codes saisis sur
+	 * la page de configuration de l'organe, en petit corps de texte.
 	 *
 	 * @param \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet
 	 * @param int   $row
 	 * @param int   $nb_data_cols
-	 * @param array $sections  Sections de report_data (clé 'legend' par section)
+	 * @param array $section  Section de report_data (clés 'label' et 'legend')
 	 * @return int  Next row
 	 */
-	public function writeLegend($sheet, $row, $nb_data_cols, $sections)
+	public function writeLegend($sheet, $row, $nb_data_cols, $section)
 	{
 		global $langs;
 
-		$groups = array();
-		foreach ($sections as $section) {
-			if (empty($section['legend'])) continue;
-			$groups[] = array('label' => $section['label'], 'entries' => $section['legend']);
-		}
-		if (empty($groups)) return $row;
+		if (empty($section['legend'])) return $row;
 
 		$last = $this->col(max($nb_data_cols - 1, 1));
 
-		$row++; // aération après le dernier tableau
+		$row++; // aération après le tableau
 
-		$sheet->setCellValue('A'.$row, mb_strtoupper($langs->transnoentities('gp_advexp_legend')));
+		$sheet->setCellValue('A'.$row, mb_strtoupper($langs->transnoentities('gp_advexp_legend').' : '.$section['label']));
 		$sheet->getStyle('A'.$row)->getFont()->setBold(true)->setSize(11);
 		$this->applyFontColor($sheet, 'A'.$row, self::COLOR_INFO_LABEL);
 		$sheet->getStyle('A'.$row.':'.$last.$row)->getBorders()->getBottom()
@@ -853,36 +848,26 @@ class GestionParcExport extends ExportExcel2007
 		$sheet->getRowDimension($row)->setRowHeight(20);
 		$row++;
 
-		foreach ($groups as $group) {
-			$sheet->setCellValue('A'.$row, mb_strtoupper($group['label']));
-			$sheet->getStyle('A'.$row)->getFont()->setBold(true)->setSize(9);
-			$this->applyFontColor($sheet, 'A'.$row, self::COLOR_INFO_LABEL);
-			$sheet->getRowDimension($row)->setRowHeight(16);
-			$row++;
-
-			foreach ($group['entries'] as $entry) {
-				// Code en colonne A, signification fusionnée sur le reste
-				if ($entry['code'] !== '') {
-					$sheet->setCellValueExplicit('A'.$row, $entry['code'], DataType::TYPE_STRING);
-					$sheet->getStyle('A'.$row)->getFont()->setBold(true)->setSize(9);
-					$this->applyFontColor($sheet, 'A'.$row, self::COLOR_INFO_LABEL);
-					$sheet->getStyle('A'.$row)->getAlignment()->setIndent(1);
-				}
-
-				$label_range = 'B'.$row.':'.$last.$row;
-				if ($nb_data_cols > 2) $sheet->mergeCells($label_range);
-				$sheet->setCellValueExplicit('B'.$row, $entry['label'], DataType::TYPE_STRING);
-				$sheet->getStyle('B'.$row)->getFont()->setSize(9);
-				$this->applyFontColor($sheet, 'B'.$row, self::COLOR_INFO_VALUE);
-				$sheet->getStyle('B'.$row)->getAlignment()
-					->setHorizontal(Alignment::HORIZONTAL_LEFT)
-					->setVertical(Alignment::VERTICAL_CENTER)
-					->setWrapText(true);
-
-				$sheet->getRowDimension($row)->setRowHeight(max(15, (int) ceil(mb_strlen($entry['label']) / 100) * 14));
-				$row++;
+		foreach ($section['legend'] as $entry) {
+			// Code en colonne A, signification fusionnée sur le reste
+			if ($entry['code'] !== '') {
+				$sheet->setCellValueExplicit('A'.$row, $entry['code'], DataType::TYPE_STRING);
+				$sheet->getStyle('A'.$row)->getFont()->setBold(true)->setSize(9);
+				$this->applyFontColor($sheet, 'A'.$row, self::COLOR_INFO_LABEL);
+				$sheet->getStyle('A'.$row)->getAlignment()->setIndent(1);
 			}
 
+			$label_range = 'B'.$row.':'.$last.$row;
+			if ($nb_data_cols > 2) $sheet->mergeCells($label_range);
+			$sheet->setCellValueExplicit('B'.$row, $entry['label'], DataType::TYPE_STRING);
+			$sheet->getStyle('B'.$row)->getFont()->setSize(9);
+			$this->applyFontColor($sheet, 'B'.$row, self::COLOR_INFO_VALUE);
+			$sheet->getStyle('B'.$row)->getAlignment()
+				->setHorizontal(Alignment::HORIZONTAL_LEFT)
+				->setVertical(Alignment::VERTICAL_CENTER)
+				->setWrapText(true);
+
+			$sheet->getRowDimension($row)->setRowHeight(max(15, (int) ceil(mb_strlen($entry['label']) / 100) * 14));
 			$row++;
 		}
 

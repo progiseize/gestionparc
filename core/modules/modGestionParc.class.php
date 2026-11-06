@@ -67,8 +67,8 @@ class modGestionParc extends DolibarrModules
         $this->editor_url = 'https://progiseize.fr';
 
         // Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-        $this->version = '1.9.1';
-        $this->url_last_version ="	https://modules-api.progiseize.fr/modules/version/300320";
+        $this->version = '1.9.2';
+        $this->url_last_version = "https://modules-api.progiseize.fr/modules/version/300320";
 
         // Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
         $this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);

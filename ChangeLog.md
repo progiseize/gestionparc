@@ -4,6 +4,23 @@
 [comment]: <> (Modele pdf)
 [comment]: <> (Harmoniser les constantes du module)
 
+### 1.9.2
+- MAJ : Verification photos - on phones and tablets the "Add a photo" button now opens the camera directly instead of the file picker (computers keep the file picker).
+- MAJ : Closing a verification with a required thirdparty checkbox left unticked (compliance framework, fire safety signage) no longer opens or keeps the "Observations" pop-up - the error is shown on the tab, where the boxes can be ticked.
+- MAJ : Report legends are now printed right under the table of their component, in the PDF and on every Excel sheet, instead of being grouped at the end of the report.
+- MAJ : The counter under each report table no longer counts items marked "NON CONTROLE", "ABSENT" or "SUPPRIME" as verified (e.g. 8 / 10). Reports closed before this version keep the counter frozen in their snapshot.
+- NEW : "of which APSAD" line under extinguishers in the home page widget, with its number of customers and of extinguishers.
+- FIX : Update check - removed a stray tab at the start of the last version URL.
+- FIX : Security - item deletion, cloning, sorting and edit form (AJAX) now require the matching permission and a valid token, and only accept an existing component key.
+- FIX : Security - every write action of the thirdparty tab now checks its own permission (write, delete, verification) and identifiers are forced to integers in SQL queries. Buttons are hidden accordingly.
+- FIX : Regenerating a report closed without a snapshot no longer overwrites it with today's data - the original file is served as is, and the export is refused when there is neither snapshot nor original. Excel originals rebuilt through the repair page are kept untouched too.
+- FIX : Cancelling a verification only applies to the one in progress on that thirdparty - a page left open can no longer delete a closed verification. A confirmation pop-up now protects it.
+- FIX : Verification counters are computed from the items at close time, so items added, cloned or deleted during the visit no longer trigger a false "not controlled" warning or a mandatory comment.
+- FIX : A photo replaced from the intervention tab no longer disappears from the photo annex when the report is regenerated.
+- FIX : Component tables created without the "position" column are now repaired for every component, which removes the SQL error raised when opening a verification. The column is added when the module is reactivated or its setup page is opened.
+- FIX : Reactivating the module again no longer raises an SQL error while filling in the missing technicians on past interventions.
+- FIX : Photo permissions - the images of the intervention tab now follow the dedicated view permission. Photos of a closed verification require it, photos of a verification in progress stay available with the park read permission.
+
 ### 1.9.1
 - NEW : "Report legend" per component, editable from the component configuration page - one entry per line, formatted "CODE = meaning" (e.g. "VR = Annual inspection"), so new cases can be added without any code change. Printed in small type at the end of the report, grouped by component: after the last table in the PDF, at the end of the consolidated sheet in Excel (each component sheet also ends with its own legend). Components with no legend print nothing. Reports closed before this version pick up the legend currently configured on the component when regenerated (a legend is a decoding key, not campaign data).
 - NEW : Extinguisher components ship with a default legend (VR, VR + CHARGE, NEUF, ABSENT, NON CONTROLE, SUPPRIME, RECHARGE) actually stored on the component, so it is editable right away. Seeding only ever touches a legend that was never filled in - editing or clearing it is never overwritten.

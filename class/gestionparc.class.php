@@ -281,6 +281,21 @@ class GestionParc
     }
 
     /*****************************************************************/
+    // UN ORGANE S'AFFICHE S'IL EST ACTIF ET A UN CHAMP VISIBLE
+    // HORS VERIFICATION (organe chargé par fetch_parcType)
+    /*****************************************************************/
+    public function isDisplayable()
+    {
+        if (!$this->enabled || empty($this->fields)) return false;
+
+        foreach ($this->fields as $field) {
+            if ($field->enabled && !$field->only_verif) return true;
+        }
+
+        return false;
+    }
+
+    /*****************************************************************/
     // RECUPERER LA LISTE DES TYPES DE PARC
     /*****************************************************************/
     public function list_parcType($enabled = 0,$isforsoc = 0,$soc_tags = array())
@@ -649,8 +664,8 @@ class GestionParc
     // LEGENDE DE RAPPORT D'UN ORGANE
     //
     // Texte libre saisi sur la page de config de l'organe, une entrée par
-    // ligne au format "CODE = signification". Il est repris en fin de rapport
-    // pour expliciter les valeurs employées dans les colonnes (VR, NEUF, ...).
+    // ligne au format "CODE = signification". Il est repris sous le tableau de
+    // l'organe pour expliciter les valeurs de ses colonnes (VR, NEUF, ...).
     /*****************************************************************/
 
     /**
@@ -755,11 +770,56 @@ class GestionParc
         return $entries;
     }
 
+    /**
+     * Indique si une ligne porte, dans un champ de type liste, un statut signifiant
+     * que l'élément n'a pas été contrôlé. Elle sort alors du compteur des rapports.
+     *
+     * @param object $line
+     * @param array  $list_fields  Clés des champs de type liste de l'organe
+     * @return bool
+     */
+    public static function isLineNotControlled($line, array $list_fields)
+    {
+        foreach ($list_fields as $field_key) {
+            $value = isset($line->{$field_key}) ? (string) $line->{$field_key} : '';
+            if (in_array(dol_strtoupper(dol_string_unaccent(trim($value))), array('NON CONTROLE', 'ABSENT', 'SUPPRIME'), true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function ensureManualPositionColumn()
     {
         $list_parcs = $this->list_parcType();
         foreach ($list_parcs as $parc_id => $parc) {
             $this->ensureManualPositionColumnForParc($parc['key']);
+        }
+    }
+
+    /*****************************************************************/
+    // AJOUTE LA COLONNE position A UNE TABLE PAR-PARC CREEE SANS ELLE
+    // Idempotent. Les positions reprennent l'ordre de création, par tiers.
+    /*****************************************************************/
+    public function ensurePositionColumnForParc($parc_key)
+    {
+        $table = MAIN_DB_PREFIX.$this->table_element.'__'.$this->db->escape($parc_key);
+        $rescol = $this->db->query("SHOW COLUMNS FROM ".$table." LIKE 'position'");
+        if (!$rescol || $this->db->num_rows($rescol) > 0) return;
+
+        if ($this->db->DDLAddField($table, 'position', array('type'=>'int','value'=>'11','null'=>'NOT NULL','default'=>'0')) <= 0) {
+            return;
+        }
+
+        $res = $this->db->query("SELECT rowid, socid FROM ".$table." ORDER BY socid ASC, rowid ASC");
+        if (!$res) return;
+
+        $positions = array();
+        while ($o = $this->db->fetch_object($res)) {
+            $socid = (int) $o->socid;
+            $positions[$socid] = isset($positions[$socid]) ? $positions[$socid] + 1 : 1;
+            $this->db->query("UPDATE ".$table." SET position = ".$positions[$socid]." WHERE rowid = ".(int) $o->rowid);
         }
     }
 
@@ -770,6 +830,8 @@ class GestionParc
     public function ensureManualPositionColumnForParc($parc_key)
     {
         if (empty($parc_key)) return;
+        $this->ensurePositionColumnForParc($parc_key);
+
         $table = MAIN_DB_PREFIX.$this->table_element.'__'.$this->db->escape($parc_key);
         $rescol = $this->db->query("SHOW COLUMNS FROM ".$table." LIKE 'manual_position'");
         if (!$rescol || $this->db->num_rows($rescol) > 0) return; // colonne déjà présente
@@ -932,6 +994,26 @@ class GestionParc
 
         $obj = $this->db->fetch_object($result);
         return $obj->nb_clients;
+    }
+
+    /*****************************************************************/
+    // COMPTER LES ELEMENTS ET LES CLIENTS D'UN PARC POUR UN REFERENTIEL
+    // Mêmes filtres que count_parcItems / count_parcSoc : le résultat en
+    // est un sous-ensemble. Retourne false si la requête échoue.
+    /*****************************************************************/
+    public function count_parcReferentiel($parc_key, $referentiel)
+    {
+        $sql = "SELECT COUNT(*) as nb_items, COUNT(DISTINCT p.socid) as nb_clients
+                FROM ".MAIN_DB_PREFIX.$this->table_element.'__'.$parc_key." p
+                JOIN ".MAIN_DB_PREFIX."societe s ON p.socid = s.rowid
+                JOIN ".MAIN_DB_PREFIX."societe_extrafields ef ON ef.fk_object = s.rowid
+                WHERE s.client = 1 AND s.status = 1
+                AND FIND_IN_SET('".$this->db->escape($referentiel)."', ef.gestionparc_referentiel) > 0";
+
+        $result = $this->db->query($sql);
+        if (!$result) return false;
+
+        return $this->db->fetch_object($result);
     }
 
     /*****************************************************************/
@@ -1820,11 +1902,41 @@ class GestionParcVerif
     public $files_list;
     public $commercial;
     public $intervenant;
+    public $error = '';
     public $db;
 
     public function __construct($db)
     {
         $this->db = $db;
+    }
+
+    /*****************************************************************/
+    // RECOMPTE LA VERIF EN COURS DEPUIS LES LIGNES DES ORGANES AFFICHES
+    // Les éléments ajoutés, clonés ou supprimés pendant la visite comptent
+    // donc automatiquement. $list_parctypes : organes du tiers.
+    /*****************************************************************/
+    public function refreshVerifCounters($socid, $list_parctypes)
+    {
+        $gestionparc = new GestionParc($this->db);
+        $nb_total = 0;
+        $nb_verified = 0;
+
+        foreach ($list_parctypes as $parctype_id => $parctype_infos) {
+            $gestionparc->fetch_parcType($parctype_id);
+            if (!$gestionparc->isDisplayable()) continue;
+            $nb_total += max(0, (int) $gestionparc->getSocParcCount($socid, $gestionparc->parc_key));
+            $nb_verified += max(0, (int) $gestionparc->getSocParcCount($socid, $gestionparc->parc_key, true));
+        }
+
+        if (!empty($this->rowid) && ($nb_total != $this->nb_total || $nb_verified != $this->nb_verified)) {
+            $sql = "UPDATE ".MAIN_DB_PREFIX.$this->table_element;
+            $sql .= " SET nb_total = ".$nb_total.", nb_verified = ".$nb_verified;
+            $sql .= " WHERE rowid = ".(int) $this->rowid." AND is_close = 0";
+            $this->db->query($sql);
+        }
+
+        $this->nb_total = $nb_total;
+        $this->nb_verified = $nb_verified;
     }
 
     /*****************************************************************/
@@ -1961,6 +2073,34 @@ class GestionParcVerif
 
         $data = json_decode($o->report_snapshot, true);
         return is_array($data) ? $data : null;
+    }
+
+    /*****************************************************************/
+    // REPERCUTE LE REMPLACEMENT D'UNE PHOTO SUR LE SNAPSHOT D'UNE VERIF
+    // Le snapshot pointe sur le fichier : sans cela, la photo disparaît
+    // de l'annexe à la régénération du rapport.
+    /*****************************************************************/
+    public function replaceSnapshotPhoto($verif_id, $old_path, $new_path, $new_label)
+    {
+        $res = $this->db->query("SELECT report_snapshot FROM ".MAIN_DB_PREFIX.$this->table_element." WHERE rowid = ".(int) $verif_id);
+        if (!$res || !$this->db->num_rows($res)) return;
+
+        $obj = $this->db->fetch_object($res);
+        $data = empty($obj->report_snapshot) ? null : json_decode($obj->report_snapshot, true);
+        if (!is_array($data) || empty($data['sections'])) return;
+
+        $changed = false;
+        foreach ($data['sections'] as $s => $section) {
+            if (empty($section['photos'])) continue;
+            foreach ($section['photos'] as $p => $photo) {
+                if ($photo['path'] !== $old_path) continue;
+                $data['sections'][$s]['photos'][$p]['path'] = $new_path;
+                $data['sections'][$s]['photos'][$p]['label'] = $new_label;
+                $changed = true;
+            }
+        }
+
+        if ($changed) $this->storeVerifSnapshot($verif_id, $data);
     }
 
     /*****************************************************************/
@@ -2484,7 +2624,7 @@ class GestionParcVerif
         $sql = "UPDATE ".MAIN_DB_PREFIX."fichinter_extrafields as ef";
         $sql.= " INNER JOIN ".MAIN_DB_PREFIX."fichinter as f ON f.rowid = ef.fk_object";
         $sql.= " SET ef.gestionparc_intervenant = f.fk_user_valid";
-        $sql.= " WHERE (ef.gestionparc_intervenant IS NULL OR ef.gestionparc_intervenant = '' OR ef.gestionparc_intervenant = '0')";
+        $sql.= " WHERE (ef.gestionparc_intervenant IS NULL OR ef.gestionparc_intervenant = 0)";
         $sql.= " AND ef.gestionparc_isverif IS NOT NULL AND ef.gestionparc_isverif > 0";
         $sql.= " AND f.fk_user_valid > 0";
         $this->db->query($sql);
@@ -2493,7 +2633,7 @@ class GestionParcVerif
         $sql = "SELECT ef.rowid as ef_rowid, f.fk_soc";
         $sql.= " FROM ".MAIN_DB_PREFIX."fichinter_extrafields as ef";
         $sql.= " INNER JOIN ".MAIN_DB_PREFIX."fichinter as f ON f.rowid = ef.fk_object";
-        $sql.= " WHERE (ef.gestionparc_commercial IS NULL OR ef.gestionparc_commercial = '' OR ef.gestionparc_commercial = '0')";
+        $sql.= " WHERE (ef.gestionparc_commercial IS NULL OR ef.gestionparc_commercial = 0)";
         $sql.= " AND ef.gestionparc_isverif IS NOT NULL AND ef.gestionparc_isverif > 0";
 
         $resql = $this->db->query($sql);
@@ -2596,6 +2736,29 @@ class GestionParcVerif
                 ),
             ),
         );
+    }
+
+    /*****************************************************************/
+    // CONTROLE LES CHAMPS PERSONNALISES REQUIS SUR LE TIERS
+    // Signale chaque champ sans case cochée et retourne leur nombre.
+    /*****************************************************************/
+    public function checkRequiredSocFields($societe)
+    {
+        global $langs;
+
+        $societe->fetch_optionals();
+
+        $nb_missing = 0;
+        foreach (self::getCustomSocFields() as $code => $def) {
+            if (empty($def['required'])) continue;
+            $value = isset($societe->array_options['options_'.$code]) ? trim((string) $societe->array_options['options_'.$code]) : '';
+            if ($value === '') {
+                $nb_missing++;
+                setEventMessages($langs->trans('gp_verif_error_needSocField', $langs->transnoentities($def['label'])), null, 'errors');
+            }
+        }
+
+        return $nb_missing;
     }
 
     /*****************************************************************/
@@ -2756,7 +2919,7 @@ class GestionParcVerif
     /*****************************************************************/
     // MODIFIER LE STATUT DE VERIF D'UNE LIGNE
     /*****************************************************************/
-    public function setLineCheck($socid,$parc_key,$item_id,$val,$maj_verifid = false)
+    public function setLineCheck($socid,$parc_key,$item_id,$val)
     {
 
         global $conf, $langs;
@@ -2764,25 +2927,11 @@ class GestionParcVerif
         $this->db->begin();
 
         $sql_update = "UPDATE ".MAIN_DB_PREFIX.$this->parent_table_element."__".$parc_key;
-        $sql_update .= " SET verif = '".$val."'";
-        $sql_update .= " WHERE rowid = '".$item_id."' AND socid = '".$socid."'";
+        $sql_update .= " SET verif = ".((int) $val);
+        $sql_update .= " WHERE rowid = ".((int) $item_id)." AND socid = ".((int) $socid);
 
         $resUpdate = $this->db->query($sql_update);
         if($resUpdate) :
-
-            if($maj_verifid) :
-                // Incrémente si on contrôle (val=1), décrémente si on revient en arrière (val=0)
-                $delta = $val ? 1 : -1;
-                $sql_bis = "UPDATE ".MAIN_DB_PREFIX.$this->table_element;
-                $sql_bis.= " SET nb_verified = GREATEST(0, nb_verified + (".$delta."))";
-                $sql_bis.= " WHERE rowid = '".$maj_verifid."'";
-                $res_bis = $this->db->query($sql_bis);
-
-                $this->nb_verified = max(0, (int) $this->nb_verified + $delta);
-
-            endif;
-
-
             $this->db->commit(); return true;
            else: $this->db->rollback(); return false;
            endif;
@@ -2791,7 +2940,7 @@ class GestionParcVerif
     /*****************************************************************/
     // MODIFIER LE STATUT VERIF DE TOUTES LES LIGNES D'UN PARC
     /*****************************************************************/
-    public function setParcCheck($socid,$parc_key,$val,$maj_verifid = false)
+    public function setParcCheck($socid,$parc_key,$val)
     {
 
         global $conf, $langs;
@@ -2799,23 +2948,12 @@ class GestionParcVerif
         $this->db->begin();
 
         $sql_update = "UPDATE ".MAIN_DB_PREFIX.$this->parent_table_element."__".$parc_key;
-        $sql_update .= " SET verif = '".$val."'";
-        $sql_update .= " WHERE socid = '".$socid."'";
+        $sql_update .= " SET verif = ".((int) $val);
+        $sql_update .= " WHERE socid = ".((int) $socid);
         $resUpdate = $this->db->query($sql_update);
 
         if(!$resUpdate): $this->db->rollback(); return false; endif;
 
-        if($maj_verifid):
-
-            $nb_verifrows = $this->db->affected_rows($resUpdate);
-
-            $sql_bis = "UPDATE ".MAIN_DB_PREFIX.$this->table_element;
-            $sql_bis.= " SET nb_verified = nb_verified + ".$nb_verifrows;
-            $sql_bis.= " WHERE rowid = '".$maj_verifid."'";
-            $res_bis = $this->db->query($sql_bis);
-
-            $this->nb_verified += $nb_verifrows;
-        endif;
         $this->db->commit();
         return true;
     }
@@ -2846,24 +2984,27 @@ class GestionParcVerif
     {
         $this->ensureVerifSnapshotColumn();
 
+        $resq = $this->db->query("SELECT socid, reset_backup, is_close FROM ".MAIN_DB_PREFIX.$this->table_element." WHERE rowid = ".(int) $verif_id);
+        if (!$resq || !$this->db->num_rows($resq)) return false;
+        $vrow = $this->db->fetch_object($resq);
+
+        // Une vérif close porte un rapport archivé et ses photos : elle ne s'annule pas
+        if (!empty($vrow->is_close)) return false;
+
         // Restaure les valeurs d'origine réinitialisées à l'ouverture (force_default_on_verif)
-        $resq = $this->db->query("SELECT socid, reset_backup FROM ".MAIN_DB_PREFIX.$this->table_element." WHERE rowid = ".(int) $verif_id);
-        if ($resq && $this->db->num_rows($resq)) {
-            $vrow = $this->db->fetch_object($resq);
-            if (!empty($vrow->reset_backup)) {
-                $backup = json_decode($vrow->reset_backup, true);
-                if (is_array($backup)) {
-                    $socid = (int) $vrow->socid;
-                    foreach ($backup as $parc_key => $lines) {
-                        if (!preg_match('/^[a-zA-Z0-9_]+$/', $parc_key)) continue;
-                        foreach ($lines as $line_rowid => $cfields) {
-                            foreach ($cfields as $field_key => $old_value) {
-                                if (!preg_match('/^[a-zA-Z0-9_]+$/', $field_key)) continue;
-                                $sql_r = "UPDATE ".MAIN_DB_PREFIX.$this->parent_table_element."__".$this->db->escape($parc_key);
-                                $sql_r .= " SET `".$field_key."` = '".$this->db->escape($old_value)."'";
-                                $sql_r .= " WHERE rowid = ".(int) $line_rowid." AND socid = ".$socid;
-                                $this->db->query($sql_r);
-                            }
+        if (!empty($vrow->reset_backup)) {
+            $backup = json_decode($vrow->reset_backup, true);
+            if (is_array($backup)) {
+                $socid = (int) $vrow->socid;
+                foreach ($backup as $parc_key => $lines) {
+                    if (!preg_match('/^[a-zA-Z0-9_]+$/', $parc_key)) continue;
+                    foreach ($lines as $line_rowid => $cfields) {
+                        foreach ($cfields as $field_key => $old_value) {
+                            if (!preg_match('/^[a-zA-Z0-9_]+$/', $field_key)) continue;
+                            $sql_r = "UPDATE ".MAIN_DB_PREFIX.$this->parent_table_element."__".$this->db->escape($parc_key);
+                            $sql_r .= " SET `".$field_key."` = '".$this->db->escape($old_value)."'";
+                            $sql_r .= " WHERE rowid = ".(int) $line_rowid." AND socid = ".$socid;
+                            $this->db->query($sql_r);
                         }
                     }
                 }
@@ -2875,7 +3016,7 @@ class GestionParcVerif
         $gpphoto = new GestionParcPhoto($this->db);
         $gpphoto->deleteByVerif($verif_id);
 
-        $sql = "DELETE FROM ".MAIN_DB_PREFIX.$this->table_element." WHERE rowid = ".(int) $verif_id;
+        $sql = "DELETE FROM ".MAIN_DB_PREFIX.$this->table_element." WHERE rowid = ".(int) $verif_id." AND is_close = 0";
         $result = $this->db->query($sql);
 
         if($result) : $this->db->commit(); return true;
@@ -3226,22 +3367,22 @@ class GestionParcVerif
         $filename = 'rapport_'.dol_sanitizeFileName($intervention->ref).'.'.$sheetfile->extension;
         $dir_file = $upload_dir.'/'.$filename;
 
-
-        // Force regeneration: delete existing new-style file AND legacy-style file in the CORRECT folder
-        if (file_exists($dir_file)) dol_delete_file($dir_file);
-        $legacy_file = $upload_dir.'/rapport_verification.'.$sheetfile->extension;
-        if (file_exists($legacy_file)) dol_delete_file($legacy_file);
-
-        // Données figées à la clôture si disponibles (export historique fidèle),
-        // sinon données live (anciennes vérifs sans snapshot).
         $verif_id = $this->getVerifIdByFichinter($fichinter_id);
         $report_data = $this->getVerifSnapshotByFichinter($fichinter_id);
+
+        // Rapport antérieur aux snapshots : l'original prime et n'est jamais réécrit
+        $original = $this->getOriginalReportFile($report_data, $verif_id, $upload_dir, $intervention->ref, $sheetfile->extension);
+        if ($original !== '') return $original;
         if ($report_data === null) {
-            $report_data = $this->getReportData($list_parctypes, $customer, $verif_id);
-        } else {
-            // Snapshot antérieur aux blocs observations / légende
-            $this->backfillReportData($report_data, $verif_id);
+            $this->error = $langs->trans('gp_export_no_data');
+            return false;
         }
+
+        // Snapshot antérieur aux blocs observations / légende
+        $this->backfillReportData($report_data, $verif_id);
+
+        // Force regeneration
+        if (file_exists($dir_file)) dol_delete_file($dir_file);
 
         // Render
         if ($this->_renderExcelReport($intervention, $list_parctypes, $customer, $dir_file, $report_data)) {
@@ -3283,20 +3424,22 @@ class GestionParcVerif
         $filename = 'rapport_'.dol_sanitizeFileName($intervention->ref).'.pdf';
         $dir_file = $upload_dir.'/'.$filename;
 
-        // Force regeneration
-        if (file_exists($dir_file)) dol_delete_file($dir_file);
-
-
-        // Données figées à la clôture si disponibles (export historique fidèle),
-        // sinon données live (anciennes vérifs sans snapshot).
         $verif_id = $this->getVerifIdByFichinter($fichinter_id);
         $report_data = $this->getVerifSnapshotByFichinter($fichinter_id);
+
+        // Rapport antérieur aux snapshots : l'original prime et n'est jamais réécrit
+        $original = $this->getOriginalReportFile($report_data, $verif_id, $upload_dir, $intervention->ref, 'pdf');
+        if ($original !== '') return $original;
         if ($report_data === null) {
-            $report_data = $this->getReportData($list_parctypes, $customer, $verif_id);
-        } else {
-            // Snapshot antérieur aux blocs observations / légende
-            $this->backfillReportData($report_data, $verif_id);
+            $this->error = $langs->trans('gp_export_no_data');
+            return false;
         }
+
+        // Snapshot antérieur aux blocs observations / légende
+        $this->backfillReportData($report_data, $verif_id);
+
+        // Force regeneration
+        if (file_exists($dir_file)) dol_delete_file($dir_file);
 
         // Render
         if ($this->_renderPDFReport($intervention, $report_data, $customer, $dir_file)) {
@@ -3304,6 +3447,37 @@ class GestionParcVerif
         }
 
         return false;
+    }
+
+    /**
+     * Fichier d'origine d'un rapport qui ne doit pas être régénéré : vérif sans
+     * snapshot, ou snapshot reconstruit depuis ce fichier (backport, clé 'header').
+     *
+     * @param array|null $report_data  Snapshot de la vérif
+     * @param int        $verif_id
+     * @param string     $dir          Documents de l'intervention
+     * @param string     $ref          Référence de l'intervention
+     * @param string     $extension    Extension du rapport
+     * @return string  Chemin du fichier, vide s'il n'y a pas d'original à servir
+     */
+    protected function getOriginalReportFile($report_data, $verif_id, $dir, $ref, $extension)
+    {
+        if ($report_data !== null && !array_key_exists('header', $report_data)) return '';
+
+        $ref = dol_sanitizeFileName($ref);
+        if ($extension !== 'xlsx') {
+            $file = $dir.'/rapport_'.$ref.'.'.$extension;
+            return is_file($file) ? $file : '';
+        }
+
+        $year = 0;
+        $res = $this->db->query("SELECT date_close FROM ".MAIN_DB_PREFIX.$this->table_element." WHERE rowid = ".(int) $verif_id);
+        if ($res && ($obj = $this->db->fetch_object($res)) && !empty($obj->date_close)) {
+            $year = (int) substr($obj->date_close, 0, 4);
+        }
+        list($file, $kind) = self::pickHistoryXlsx($dir, $ref, $year);
+
+        return $file;
     }
 
     /**
@@ -3379,7 +3553,9 @@ class GestionParcVerif
             );
 
             // Fields
+            $list_fields = array(); // champs de type liste, exportés ou non : ils portent le statut de contrôle
             foreach ($gestionparc->list_parcFields($parctype_id) as $parcfield) {
+                if ($parcfield->enabled && $parcfield->type == 'customlist') $list_fields[] = $parcfield->field_key;
                 if (!$parcfield->enabled || !$parcfield->view_excel) continue;
                 $section['fields'][$parcfield->field_key] = array(
                     'label' => $parcfield->label,
@@ -3400,7 +3576,7 @@ class GestionParcVerif
             $num_field = $gestionparc->getNumeroFieldKey($parctype_infos['key']);
 
             foreach ($parc_lines as $parcline) {
-                if ($parcline->verif) $section['stats']['verified']++;
+                if ($parcline->verif && !GestionParc::isLineNotControlled($parcline, $list_fields)) $section['stats']['verified']++;
 
                 $row_values = array();
                 foreach ($section['fields'] as $fkey => $fdata) {
@@ -3521,14 +3697,12 @@ class GestionParcVerif
 
             $row      = $sheetfile->writeSummaryRow($sheet, $row, $section['stats']['verified'], $section['stats']['total'], $nb_data_cols);
             $full_row = $sheetfile->writeSummaryRow($full_sheet, $full_row, $section['stats']['verified'], $section['stats']['total'], $max_cols_global);
+
+            // Légende de l'organe, juste sous son tableau sur les deux feuilles
+            $sheetfile->writeLegend($sheet, $row, $nb_data_cols, $section);
+            $full_row = $sheetfile->writeLegend($full_sheet, $full_row, $max_cols_global, $section);
             $full_row += 2;
-
-            // Chaque feuille d'organe se termine par sa propre légende
-            $sheetfile->writeLegend($sheet, $row, $nb_data_cols, array($section));
         }
-
-        // Feuille consolidée : toutes les légendes regroupées en fin de rapport
-        $full_row = $sheetfile->writeLegend($full_sheet, $full_row, $max_cols_global, $report_data['sections']);
 
         // Annexe photographique (option globale du module)
         if (getDolGlobalInt('GESTIONPARC_EXPORT_PHOTOS')) {
